@@ -48,3 +48,20 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
 export function formatCurrency(amount: number, currencyCode: string = 'vnd'): string {
     return amount.toLocaleString() + (currencyCode.toLowerCase() === 'vnd' ? 'đ' : ` ${currencyCode.toUpperCase()}`);
 }
+
+/**
+ * Format numbers with commas for display
+ */
+export function formatDisplayNumber(val: number | string): string {
+    if (val === undefined || val === null || val === '') return '';
+    const num = val.toString().replace(/[^0-9]/g, '');
+    return num.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+/**
+ * Parse comma-formatted strings back to numbers
+ */
+export function parseDisplayNumber(val: string): number {
+    const cleanValue = val.replace(/[^0-9]/g, '');
+    return cleanValue === '' ? 0 : Number(cleanValue);
+}

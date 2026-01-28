@@ -128,6 +128,15 @@ export interface ProductVariant {
     prices: MoneyAmount[]
 }
 
+export interface ProductTag {
+    id: string
+    value: string
+    metadata: Metadata | null
+    created_at: ISODateString
+    updated_at: ISODateString
+    deleted_at: ISODateString | null
+}
+
 export interface Product {
     id: string
     title: string
@@ -165,7 +174,7 @@ export interface Product {
     sales_channels?: SalesChannel[]
 
     options: ProductOption[]
-    tags: any[]
+    tags: ProductTag[]
 
     images: ProductImage[]
     variants: ProductVariant[]

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import "./globals.css";
 import { ReduxProvider } from "@/components/providers/ReduxProvider";
@@ -22,8 +22,12 @@ export const metadata: Metadata = {
   description: "Enterprise-grade Content Management System built with Next.js 15 and Tailwind CSS",
   keywords: ["CMS", "Next.js", "Content Management", "Tailwind CSS"],
   authors: [{ name: "TekNix" }],
-  viewport: "width=device-width, initial-scale=1",
   robots: "index, follow",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({

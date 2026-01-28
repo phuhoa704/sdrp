@@ -25,6 +25,7 @@ export const selectSelectedBranch = (state: RootState) => state.ui.selectedBranc
 export const selectNotifications = (state: RootState) => state.ui.notifications;
 export const selectUnreadNotificationCount = (state: RootState) =>
     state.ui.notifications.length;
+export const selectSelectedSalesChannelId = (state: RootState) => state.ui.selectedSalesChannelId;
 
 // Products selectors
 export const selectProducts = (state: RootState) => state.products;
@@ -36,3 +37,4 @@ export const selectSearchQuery = (state: RootState) => state.products.searchQuer
 export const selectSelectedCategory = (state: RootState) => state.products.selectedCategory;
 export const selectProductById = (state: RootState, productId: string) =>
     state.products.items.find((p) => p.id === productId);
+export const selectCurrencyCode = (state: RootState) => state.products.currencyCode;

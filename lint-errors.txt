@@ -1,7 +1,0 @@
-﻿C:\TekNix\sprd-platform\frontend-nextjs-cms\next-env.d.ts: line 3, col 1, Error - Do not use a triple slash reference for ./.next/types/routes.d.ts, use `import` style instead. (@typescript-eslint/triple-slash-reference)
-C:\TekNix\sprd-platform\frontend-nextjs-cms\src\app\not-found.tsx: line 10, col 33, Error - `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`. (react/no-unescaped-entities)
-C:\TekNix\sprd-platform\frontend-nextjs-cms\src\app\not-found.tsx: line 10, col 54, Error - `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`. (react/no-unescaped-entities)
-C:\TekNix\sprd-platform\frontend-nextjs-cms\src\lib\utils.ts: line 35, col 46, Error - Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
-C:\TekNix\sprd-platform\frontend-nextjs-cms\src\lib\utils.ts: line 35, col 56, Error - Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
-
-5 problems

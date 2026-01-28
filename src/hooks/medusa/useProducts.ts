@@ -6,13 +6,14 @@ export interface UseProductsOptions {
     q?: string;
     category_id?: string | string[];
     sales_channel_id?: string | string[];
+    tags?: string | string[];
     limit?: number;
     offset?: number;
     autoFetch?: boolean;
 }
 
 export const useProducts = (options: UseProductsOptions = {}) => {
-    const { q, category_id, sales_channel_id, limit = 10, offset = 0, autoFetch = true } = options;
+    const { q, category_id, sales_channel_id, tags, limit = 10, offset = 0, autoFetch = true } = options;
     const [products, setProducts] = useState<Product[]>([]);
     const [count, setCount] = useState<number>(0);
     const [loading, setLoading] = useState<boolean>(false);
@@ -26,6 +27,7 @@ export const useProducts = (options: UseProductsOptions = {}) => {
                 q,
                 category_id,
                 sales_channel_id,
+                tags,
                 limit,
                 offset,
                 fields: "*categories,*sales_channels,*variants.prices"
@@ -37,19 +39,35 @@ export const useProducts = (options: UseProductsOptions = {}) => {
         } finally {
             setLoading(false);
         }
-    }, [q, category_id, sales_channel_id, limit, offset]);
+    }, [q, category_id, sales_channel_id, tags, limit, offset]);
 
     useEffect(() => {
         if (autoFetch) {
             fetchProducts();
         }
-    }, [autoFetch, fetchProducts, q, category_id, sales_channel_id, limit, offset]);
+    }, [autoFetch, fetchProducts, q, category_id, sales_channel_id, tags, limit, offset]);
+
+    const deleteProduct = useCallback(async (id: string) => {
+        setLoading(true);
+        setError(null);
+        try {
+            await productService.deleteProduct(id);
+            await fetchProducts();
+            return { success: true };
+        } catch (err: any) {
+            setError(err.message || 'Failed to delete product');
+            return { success: false, error: err.message };
+        } finally {
+            setLoading(false);
+        }
+    }, [fetchProducts]);
 
     return {
         products,
         count,
         loading,
         error,
-        refresh: fetchProducts
+        refresh: fetchProducts,
+        deleteProduct
     };
 };

@@ -4,6 +4,8 @@ import { createPortal } from 'react-dom';
 import { X, Package, ShoppingCart, Plus, Minus, AlignLeft, Globe, Zap } from 'lucide-react';
 import { Product, ProductVariant } from '@/types/product';
 import { Button } from '@/components/Button';
+import { useAppSelector } from '@/store/hooks';
+import { selectCurrencyCode } from '@/store/selectors';
 
 interface ProductModalProps {
   product: Product | null;
@@ -24,6 +26,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   const [quantity, setQuantity] = useState(1);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [selectedUnit, setSelectedUnit] = useState('Chai/Gói');
+  const currencyCode = useAppSelector(selectCurrencyCode);
 
   useEffect(() => {
     setCurrentProduct(initialProduct);
@@ -46,7 +49,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
   const basePrice = isWholesale ? medusaPrice * 0.85 : medusaPrice;
   // Use metadata price if available on selected variant, otherwise base price
-  const currentPrice = (selectedVariant?.metadata?.price as number) || basePrice;
+  const currentPrice = selectedVariant?.prices?.find((price) => price.currency_code === currencyCode)?.amount || basePrice;
 
   const handleAddToCart = () => {
     if (onAddToCart) {

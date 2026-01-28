@@ -13,36 +13,33 @@ import {
   TrendingUp,
   Layers,
   Zap,
-  Filter,
-  ArrowUpDown,
   Globe,
   Layers3,
   Info,
   MapPin,
   ChevronLeft,
   ChevronRight,
-  Store,
-  ShoppingBag
+  Tag
 } from 'lucide-react';
-import { Breadcrumb } from '@/components/Breadcrumb';
-import { Card } from '@/components/Card';
-import { Button } from '@/components/Button';
+import { Breadcrumb, Card, Button, ConfirmModal, AlertModal } from '@/components';
+import { ProductModal } from '@/components/product/ProductModal';
 import { ProductForm } from '@/components/form/product/ProductForm';
 import { Product } from '@/types/product';
-import { useCategories, useMedusaProducts, useSalesChannels } from '@/hooks';
+import { productService } from '@/lib/api/medusa/productService';
+import { uploadService } from '@/lib/api/medusa/uploadService';
+import { useCategories, useMedusaProducts, useProductTags, useSalesChannels } from '@/hooks';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setPagination } from '@/store/slices/productsSlice';
+import { addToCart } from '@/store/slices/cartSlice';
 import { formatCurrency } from '@/lib/utils';
+import { selectSelectedSalesChannelId } from '@/store/selectors';
 
 interface Props {
   onRestockProduct?: (p: Product) => void;
-  localProducts: Product[];
-  setLocalProducts: (p: Product[]) => void;
   onGoToWholesale?: () => void;
 }
 
-export default function ProductCatalog({ onRestockProduct, localProducts, setLocalProducts, onGoToWholesale }: Props) {
-  const [searchQuery, setSearchQuery] = useState('');
+export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Props) {
 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isProductFormOpen, setIsProductFormOpen] = useState(false);
@@ -50,7 +47,26 @@ export default function ProductCatalog({ onRestockProduct, localProducts, setLoc
   const [expandedProducts, setExpandedProducts] = useState<string[]>([]);
 
   const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [selectedSalesChannel, setSelectedSalesChannel] = useState<string>("");
+  const [selectedTag, setSelectedTag] = useState<string>("");
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [selectedModalProduct, setSelectedModalProduct] = useState<Product | null>(null);
+  const [isFetchingDetail, setIsFetchingDetail] = useState(false);
+
+  const [alertConfig, setAlertConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    variant: 'danger' | 'warning' | 'info' | 'success';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    variant: 'info'
+  });
 
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -62,14 +78,11 @@ export default function ProductCatalog({ onRestockProduct, localProducts, setLoc
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const [categoryFilter, setCategoryFilter] = useState("Tất cả");
-  const [sortConfig, setSortConfig] = useState<{ key: 'title' | 'stock', direction: 'asc' | 'desc' }>({ key: 'title', direction: 'asc' });
-
   const dispatch = useAppDispatch();
 
   useEffect(() => {
     dispatch(setPagination({ offset: 0 }));
-  }, [searchTerm, selectedCategory, selectedSalesChannel, dispatch]);
+  }, [searchTerm, selectedCategory, selectedTag, dispatch]);
   const { pagination, currencyCode } = useAppSelector(state => state.products);
   const { limit, offset } = pagination;
 
@@ -78,17 +91,63 @@ export default function ProductCatalog({ onRestockProduct, localProducts, setLoc
     return priceObj ? priceObj.amount : (variant?.metadata?.price as number) || 0;
   };
 
+  const handleEdit = async (p: Product) => {
+    setIsFetchingDetail(true);
+    try {
+      const { product } = await productService.getProduct(p.id, {
+        fields: "*categories,*sales_channels,*variants.prices"
+      });
+      setEditingProduct(product);
+      setIsProductFormOpen(true);
+    } catch (err) {
+      console.error("Failed to fetch product detail:", err);
+      // Fallback to list data if fetch fails
+      setEditingProduct(p);
+      setIsProductFormOpen(true);
+    } finally {
+      setIsFetchingDetail(false);
+    }
+  };
+
+  const handleRestock = async (p: Product) => {
+    setIsFetchingDetail(true);
+    try {
+      const { product } = await productService.getProduct(p.id, {
+        fields: "*categories,*sales_channels,*variants.prices"
+      });
+      setSelectedModalProduct(product);
+      setIsProductModalOpen(true);
+    } catch (err) {
+      console.error("Failed to fetch product detail:", err);
+      setSelectedModalProduct(p);
+      setIsProductModalOpen(true);
+    } finally {
+      setIsFetchingDetail(false);
+    }
+  };
+  const selectedSalesChannelId = useAppSelector(selectSelectedSalesChannelId);
+
   // hooks
-  const { products: medusaProducts, count: medusaCount, loading: medusaLoading, error: medusaError } = useMedusaProducts({
+  const {
+    products: medusaProducts,
+    count: medusaCount,
+    loading: medusaLoading,
+    error: medusaError,
+    deleteProduct,
+    refresh
+  } = useMedusaProducts({
     q: debouncedSearch,
     category_id: selectedCategory || undefined,
-    sales_channel_id: selectedSalesChannel || undefined,
+    tags: selectedTag || undefined,
+    sales_channel_id: selectedSalesChannelId || undefined,
     limit: limit,
     offset: offset,
     autoFetch: true
   });
-  const { salesChannels } = useSalesChannels();
+  const [isSaving, setIsSaving] = useState(false);
+  const { tags } = useProductTags();
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
+  const { salesChannels } = useSalesChannels();
 
   const processedProducts = useMemo(() => {
     // We already filtered via API for medusaProducts
@@ -109,13 +168,105 @@ export default function ProductCatalog({ onRestockProduct, localProducts, setLoc
     );
   };
 
+  const handleSaveProduct = async (data: any) => {
+    setIsSaving(true);
+    try {
+      let currentThumbnail: string | undefined = undefined;
+
+      if (data.imageFile) {
+        const uploadResponse = await uploadService.upload(data.imageFile);
+        if (uploadResponse.uploads && uploadResponse.uploads.length > 0) {
+          currentThumbnail = uploadResponse.uploads[0].url;
+        }
+      } else if (data.thumbnail && !data.thumbnail.startsWith('data:')) {
+        currentThumbnail = data.thumbnail;
+      }
+
+      const productOptions = data.has_variants
+        ? data.options.map((o: any) => ({
+          title: o.title,
+          values: o.values
+        }))
+        : [{ title: 'Dung tích', values: ['Mặc định'] }];
+
+      const payload: any = {
+        title: data.title,
+        subtitle: data.subtitle || data.title,
+        description: data.description || "",
+        status: "published",
+        is_giftcard: false,
+        discountable: true,
+        images: currentThumbnail ? [{ url: currentThumbnail }] : [],
+        thumbnail: currentThumbnail || undefined,
+        handle: data.handle || undefined,
+        mid_code: data.mid_code || undefined,
+        hs_code: data.hs_code || undefined,
+        origin_country: data.origin_country || undefined,
+        material: data.material || undefined,
+        metadata: data.metadata || {},
+        categories: data.category_id ? [{ id: data.category_id }] : [],
+        tags: data.tag_ids?.map((id: string) => ({ id })) || [],
+        sales_channels: data.sales_channel_ids?.map((id: string) => ({ id })) || [],
+        options: productOptions,
+        variants: data.variants.map((v: any, index: number) => {
+          const variantOptions: Record<string, string> = {};
+
+          if (data.has_variants) {
+            const values = v.title.split(' / ');
+            data.options.forEach((opt: any, idx: number) => {
+              variantOptions[opt.title] = values[idx] || '-';
+            });
+          } else {
+            variantOptions["Dung tích"] = "Mặc định";
+          }
+
+          return {
+            title: v.title === 'Default' ? 'Mặc định' : v.title,
+            sku: v.sku || undefined,
+            manage_inventory: true,
+            allow_backorder: false,
+            variant_rank: index,
+            options: variantOptions,
+            prices: [
+              {
+                currency_code: 'vnd',
+                amount: v.price
+              }
+            ]
+          };
+        })
+      };
+
+      if (editingProduct?.id) {
+        await productService.updateProduct(editingProduct.id, payload);
+      } else {
+        await productService.createProduct(payload);
+      }
+
+      setIsProductFormOpen(false);
+      setEditingProduct(null);
+      refresh();
+    } catch (err: any) {
+      console.error("Failed to save product:", err);
+      setAlertConfig({
+        isOpen: true,
+        title: 'Lỗi hệ thống',
+        message: err.message || "Không thể lưu sản phẩm. Vui lòng thử lại sau.",
+        variant: 'danger'
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const renderContent = () => {
     if (isProductFormOpen) {
       return (
         <ProductForm
           onCancel={() => setIsProductFormOpen(false)}
-          onSave={() => console.log("abc")}
+          onSave={handleSaveProduct}
           initialData={editingProduct as any}
+          loading={isSaving}
         />
       )
     }
@@ -147,13 +298,6 @@ export default function ProductCatalog({ onRestockProduct, localProducts, setLoc
 
             <div className="flex items-center gap-3">
               <Button className="h-14 rounded-2xl bg-white text-primary border-2 border-primary" icon={<Plus size={20} />} onClick={() => { setEditingProduct(null); setIsProductFormOpen(true); }}>THÊM MỚI</Button>
-              <Button
-                className="h-14 rounded-2xl bg-amber-500 text-white"
-                icon={<ShoppingCart size={20} />}
-                onClick={onGoToWholesale}
-              >
-                NHẬP HÀNG SỈ
-              </Button>
             </div>
           </div>
 
@@ -216,38 +360,32 @@ export default function ProductCatalog({ onRestockProduct, localProducts, setLoc
             </div>
             <div className="flex flex-wrap gap-2 w-full xl:w-auto">
               <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-2xl items-center gap-1 shadow-inner">
-                <span className="text-[10px] font-black text-slate-400 uppercase px-3 hidden xl:block">KÊNH:</span>
+                <span className="text-[10px] font-black text-slate-400 uppercase px-3 hidden xl:block">NHÃN:</span>
 
                 <button
-                  onClick={() => setSelectedSalesChannel("")}
-                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 transition-all ${selectedSalesChannel === ""
+                  onClick={() => setSelectedTag("")}
+                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 transition-all ${selectedTag === ""
                     ? 'bg-slate-200 dark:bg-slate-700 text-emerald-600 shadow-sm shadow-emerald-500/10'
                     : 'text-slate-400 hover:text-slate-200'
                     }`}
                 >
-                  <Layers size={14} className={selectedSalesChannel === "" ? 'text-emerald-500' : 'text-slate-400'} />
-                  <span>Tất cả kênh</span>
+                  <Layers size={14} className={selectedTag === "" ? 'text-emerald-500' : 'text-slate-400'} />
+                  <span>Tất cả nhãn</span>
                 </button>
 
-                {salesChannels.map((sc) => {
-                  let Icon = Globe;
-                  if (sc.name.toLowerCase().includes('cửa hàng')) Icon = Store;
-                  if (sc.name.toLowerCase().includes('tmđt') || sc.name.toLowerCase().includes('sàn')) Icon = ShoppingBag;
-
-                  return (
-                    <button
-                      key={sc.id}
-                      onClick={() => setSelectedSalesChannel(sc.id)}
-                      className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 transition-all ${selectedSalesChannel === sc.id
-                        ? 'bg-slate-200 dark:bg-slate-700 text-emerald-600 shadow-sm shadow-emerald-500/10'
-                        : 'text-slate-400 hover:text-slate-200'
-                        }`}
-                    >
-                      <Icon size={14} className={selectedSalesChannel === sc.id ? 'text-emerald-500' : 'text-slate-400'} />
-                      <span>{sc.name}</span>
-                    </button>
-                  );
-                })}
+                {tags.map((tag) => (
+                  <button
+                    key={tag.id}
+                    onClick={() => setSelectedTag(tag.id)}
+                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 transition-all ${selectedTag === tag.id
+                      ? 'bg-slate-200 dark:bg-slate-700 text-emerald-600 shadow-sm shadow-emerald-500/10'
+                      : 'text-slate-400 hover:text-slate-200'
+                      }`}
+                  >
+                    <Tag size={14} className={selectedTag === tag.id ? 'text-emerald-500' : 'text-slate-400'} />
+                    <span>{tag.value}</span>
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -289,6 +427,7 @@ export default function ProductCatalog({ onRestockProduct, localProducts, setLoc
                   <th className="py-5 px-4 text-center">Kênh bán</th>
                   <th className="py-5 px-4 text-center">Phân loại</th>
                   <th className="py-5 px-4 text-center">Tồn kho</th>
+                  <th className="py-5 px-4 text-center">Nhãn</th>
                   <th className="py-5 px-4 text-right">Giá bán</th>
                   <th className="py-5 pr-8 text-right">Quản lý</th>
                 </tr>
@@ -324,32 +463,54 @@ export default function ProductCatalog({ onRestockProduct, localProducts, setLoc
                             </div>
                           </td>
                           <td className="px-6 py-5 text-center">
-                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-tighter">
+                            <span className="text-[9px] xl:text-xs font-black text-slate-500 uppercase tracking-tighter">
                               {p.sales_channels?.map(sc => sc.name).join(', ') || 'Global'}
                             </span>
                           </td>
                           <td className="px-6 py-5 text-center">
-                            <span className="text-[9px] font-black bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full text-slate-500 uppercase tracking-tighter">
-                              {p.categories?.map(c => c.name).join(', ') || (p.type as any)?.value || "Khác"}
+                            <span className="text-[9px] xl:text-xs font-black bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full text-slate-500 uppercase tracking-tighter">
+                              {p.categories?.map(c => c.name).join(', ') || "Khác"}
                             </span>
                           </td>
                           <td className="px-6 py-5 text-center font-black"><span className={isLowStock ? 'text-rose-600' : ''}>{stock} g</span></td>
+                          <td className="px-6 py-5 text-center font-black">
+                            <span className="text-[9px] xl:text-xs font-black bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full text-slate-500 uppercase tracking-tighter">
+                              {p.tags?.map(t => t.value).join(', ') || "Khác"}
+                            </span>
+                          </td>
                           <td className="px-6 py-5 text-right font-black text-primary">{formatCurrency(price, currencyCode)}</td>
                           <td className="px-6 py-5 text-right pr-8">
                             <div className="flex justify-end gap-2">
-                              <button onClick={(e) => { e.stopPropagation(); setEditingProduct(p); setIsProductFormOpen(true); }} className="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-blue-500"><Edit3 size={16} /></button>
-                              <button onClick={(e) => { e.stopPropagation(); if (confirm('Xóa sản phẩm này?')) setLocalProducts(localProducts.filter(item => item.id !== p.id)); }} className="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-rose-500"><Trash2 size={16} /></button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleEdit(p); }}
+                                disabled={isFetchingDetail}
+                                className="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-blue-500 disabled:opacity-50"
+                              >
+                                <Edit3 size={16} />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setProductToDelete(p);
+                                  setIsDeleteModalOpen(true);
+                                }}
+                                className="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-rose-500">
+                                <Trash2 size={16} />
+                              </button>
                             </div>
                           </td>
                         </tr>
                         {isExpanded && (
                           <tr>
-                            <td colSpan={7} className="px-10 py-10 bg-slate-50/40 dark:bg-slate-900/40 border-t border-b dark:border-slate-800">
+                            <td colSpan={8} className="px-10 py-10 bg-slate-50/40 dark:bg-slate-900/40 border-t border-b dark:border-slate-800">
                               <div className="animate-slide-up space-y-8">
                                 <div className="flex flex-wrap gap-6 items-start">
                                   <Card className="p-5 bg-white dark:bg-slate-900 border-none shadow-sm flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center"><Info size={20} /></div>
-                                    <div><p className="text-[10px] font-bold text-slate-400 uppercase mb-0.5">Giá vốn (Tham khảo)</p><p className="text-base font-black">{formatCurrency(Math.round(price * 0.7), currencyCode)}</p></div>
+                                    <div>
+                                      <p className="text-[10px] font-bold text-slate-400 uppercase mb-0.5">Giá vốn (Tham khảo)</p>
+                                      <p className="text-base font-black">{formatCurrency(Math.round(price * 0.7), currencyCode)}</p>
+                                    </div>
                                   </Card>
                                   <Card className="p-5 bg-white dark:bg-slate-900 border-none shadow-sm flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 flex items-center justify-center"><MapPin size={20} /></div>
@@ -360,7 +521,14 @@ export default function ProductCatalog({ onRestockProduct, localProducts, setLoc
                                     <div><p className="text-[10px] font-bold text-slate-400 uppercase mb-0.5">Kênh phân phối</p><p className="text-base font-black">{p.sales_channels?.map(sc => sc.name).join(', ') || 'Global'}</p></div>
                                   </Card>
                                   <div className="ml-auto">
-                                    <Button className="h-14 rounded-2xl bg-blue-600 text-white shadow-xl shadow-blue-500/20" icon={<ShoppingCart size={20} />} onClick={(e) => { e.stopPropagation(); onRestockProduct?.(p); }}>NHẬP THÊM HÀNG SỈ</Button>
+                                    <Button
+                                      className="h-14 rounded-2xl bg-blue-600 text-white shadow-xl shadow-blue-500/20"
+                                      icon={<ShoppingCart size={20} />}
+                                      onClick={(e) => { e.stopPropagation(); handleRestock(p); }}
+                                      disabled={isFetchingDetail}
+                                    >
+                                      {isFetchingDetail ? 'ĐANG TẢI...' : 'NHẬP THÊM HÀNG SỈ'}
+                                    </Button>
                                   </div>
                                 </div>
 
@@ -388,9 +556,6 @@ export default function ProductCatalog({ onRestockProduct, localProducts, setLoc
                                                 <p className="text-[10px] text-slate-400 font-medium">{v.sku || v.id}</p>
                                               </td>
                                               <td className="px-6 py-4 text-center">
-                                                {/* <div className="flex items-center justify-center gap-2 text-[10px] font-black text-slate-500 uppercase bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full w-fit mx-auto">
-                                                  <Globe size={12} className="text-blue-500" /> {v.origin_country || 'N/A'}
-                                                </div> */}
                                                 <div className="flex flex-col">
                                                   {v.options.map((opt, index) => (
                                                     <span key={index} className="text-[10px] font-black text-slate-800 dark:text-slate-100">{opt.option.title}: {opt.value}</span>
@@ -492,6 +657,55 @@ export default function ProductCatalog({ onRestockProduct, localProducts, setLoc
         </div>
       )}
       {renderContent()}
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setProductToDelete(null);
+        }}
+        onConfirm={async () => {
+          if (productToDelete) {
+            await deleteProduct(productToDelete.id);
+          }
+          setIsDeleteModalOpen(false);
+          setProductToDelete(null);
+        }}
+        isLoading={medusaLoading}
+        title="Xác nhận xóa sản phẩm"
+        message={`Bạn có chắc chắn muốn xóa sản phẩm "${productToDelete?.title}"? Hành động này không thể hoàn tác.`}
+        variant="danger"
+        confirmText="Xóa sản phẩm"
+        cancelText="Quay lại"
+      />
+
+      {isProductModalOpen && (
+        <ProductModal
+          product={selectedModalProduct}
+          onClose={() => {
+            setIsProductModalOpen(false);
+            setSelectedModalProduct(null);
+          }}
+          mode="WHOLESALE"
+          onAddToCart={(product, config) => {
+            dispatch(addToCart({
+              product,
+              quantity: config.quantity,
+              variant: config.variant,
+              unit: config.unit,
+              price: config.price,
+              techSpecs: config.tech_specs
+            }));
+          }}
+        />
+      )}
+
+      <AlertModal
+        isOpen={alertConfig.isOpen}
+        onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        variant={alertConfig.variant}
+      />
     </Fragment>
   );
 }

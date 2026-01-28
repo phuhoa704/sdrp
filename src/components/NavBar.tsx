@@ -74,7 +74,10 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, role, onLogout,
             </Fragment>
           )}
           {role === UserRole.RETAILER && (
-            <button className="flex items-center justify-center h-10 w-10 lg:w-auto lg:px-5 bg-gradient-to-br from-[#10B981] to-[#059669] text-white rounded-xl lg:rounded-2xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all border border-white/10 group">
+            <button
+              onClick={onGoToPOS}
+              className="flex items-center justify-center h-10 w-10 lg:w-auto lg:px-5 bg-gradient-to-br from-[#10B981] to-[#059669] text-white rounded-xl lg:rounded-2xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all border border-white/10 group"
+            >
               <MonitorPlay size={18} className='group-hover:scale-110 transition-transform' />
               <span className="hidden lg:inline ml-2.5 text-[10px] font-black uppercase tracking-widest">POS</span>
             </button>

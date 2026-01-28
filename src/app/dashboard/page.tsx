@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { selectIsAuthenticated, selectCurrentUser } from '@/store/selectors';
@@ -28,6 +28,7 @@ import Cashbook from './pages/Cashbook';
 import Customers from './pages/Customers';
 import Pricing from './pages/Pricing';
 import Promotions from './pages/Promotions';
+import POS from './pages/pos/POS';
 import { Loader2, Zap } from 'lucide-react';
 import { Product } from '@/types/product';
 import { NewsView } from './dashboards/News';
@@ -35,6 +36,7 @@ import { DiagnosisScreen } from './pages/DiagnosisScreen';
 import { DiseaseDetailScreen } from './pages/DiseaseDetailScreen';
 import { addToCart } from '@/store/slices/cartSlice';
 import { useMedusaProducts } from '@/hooks';
+import { B2COrder } from '@/types/order';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -51,6 +53,8 @@ export default function DashboardPage() {
   const { products: medusaProducts, loading: medusaLoading } = useMedusaProducts({ autoFetch: true });
 
   const [localProducts, setLocalProducts] = useState<Product[]>([]);
+
+  const [b2cHistory, setB2cHistory] = useState<B2COrder[]>([]);
 
   useEffect(() => {
     if (medusaProducts.length > 0) {
@@ -84,37 +88,37 @@ export default function DashboardPage() {
     );
   }
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     dispatch(logoutFromMedusa());
     router.push('/login');
-  };
+  }, [dispatch, router]);
 
-  const handleBrandChange = (newBrand: string) => {
+  const handleBrandChange = useCallback((newBrand: string) => {
     setIsGlobalLoading(true);
     setTimeout(() => {
       setIsGlobalLoading(false);
     }, 1500);
-  };
+  }, []);
 
-  const handleSetView = (view: any) => {
+  const handleSetView = useCallback((view: any) => {
     dispatch(setView(view));
-  };
+  }, [dispatch]);
 
-  const handleToggleSidebar = () => {
+  const handleToggleSidebar = useCallback(() => {
     dispatch(toggleSidebar());
-  };
+  }, [dispatch]);
 
-  const handleToggleTheme = () => {
+  const handleToggleTheme = useCallback(() => {
     dispatch(toggleTheme());
-  };
+  }, [dispatch]);
 
-  const handleGoToPOS = () => {
+  const handleGoToPOS = useCallback(() => {
     dispatch(setView('POS'));
-  };
+  }, [dispatch]);
 
-  const handleShowNotifications = () => {
+  const handleShowNotifications = useCallback(() => {
     setIsNotificationModalOpen(true);
-  };
+  }, []);
 
   const handleSelectNewsArticle = (id: string) => {
     setSelectedNewsArticleId(id);
@@ -135,10 +139,16 @@ export default function DashboardPage() {
     setSelectedProduct(product);
   };
 
+  const handlePOSOrder = (order: B2COrder) => {
+    setB2cHistory([order, ...b2cHistory]);
+  };
+
   // Render content based on current view
   const renderContent = () => {
     // View-based pages
     switch (currentView) {
+      case 'POS':
+        return <POS onBack={() => handleSetView('HOME')} onCompleteOrder={handlePOSOrder} b2cHistory={b2cHistory} />;
       case 'WHOLESALE_MARKETPLACE':
         return <WholesaleMarketplace role={user.role} />;
       case 'MARKETPLACE':
@@ -146,8 +156,6 @@ export default function DashboardPage() {
       case 'INVENTORY':
         return (
           <ProductCatalog
-            localProducts={localProducts}
-            setLocalProducts={setLocalProducts}
             onGoToWholesale={() => handleSetView('WHOLESALE_MARKETPLACE')}
           />
         );

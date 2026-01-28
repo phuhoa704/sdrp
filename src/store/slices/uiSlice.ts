@@ -6,6 +6,7 @@ interface UIState {
     isSidebarCollapsed: boolean;
     isDarkMode: boolean;
     selectedBranch: string;
+    selectedSalesChannelId: string | null;
     notifications: Array<{
         id: string;
         message: string;
@@ -19,6 +20,7 @@ const initialState: UIState = {
     isSidebarCollapsed: false,
     isDarkMode: false,
     selectedBranch: 'Chi nhánh Đồng Tháp',
+    selectedSalesChannelId: null,
     notifications: [],
 };
 
@@ -44,6 +46,9 @@ const uiSlice = createSlice({
         setSelectedBranch: (state, action: PayloadAction<string>) => {
             state.selectedBranch = action.payload;
         },
+        setSelectedSalesChannelId: (state, action: PayloadAction<string | null>) => {
+            state.selectedSalesChannelId = action.payload;
+        },
         addNotification: (state, action: PayloadAction<Omit<UIState['notifications'][0], 'id' | 'timestamp'>>) => {
             state.notifications.push({
                 ...action.payload,
@@ -67,6 +72,7 @@ export const {
     toggleTheme,
     setTheme,
     setSelectedBranch,
+    setSelectedSalesChannelId,
     addNotification,
     removeNotification,
     clearNotifications,
