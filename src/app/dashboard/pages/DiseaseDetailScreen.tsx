@@ -5,7 +5,7 @@ import { Card } from '@/components/Card';
 import { Product } from '@/types/product';
 import { ProductRow } from '@/components/product/ProductRow';
 import { MOCK_DISEASE_DATA } from '../../../../mocks/disease';
-import { MOCK_PRODUCTS } from '../../../../mocks/product';
+import { useMedusaProducts } from '@/hooks';
 
 interface DiseaseDetailScreenProps {
   id: string | null;
@@ -18,6 +18,8 @@ export const DiseaseDetailScreen: React.FC<DiseaseDetailScreenProps> = ({ id: in
   const [selectedDiseaseId, setSelectedDiseaseId] = useState<string | null>(initialId || null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<string>("Tất cả");
+
+  const { products: medusaProducts } = useMedusaProducts({ autoFetch: true, limit: 100 });
 
   const allDiseases = Object.values(MOCK_DISEASE_DATA);
 
@@ -42,8 +44,11 @@ export const DiseaseDetailScreen: React.FC<DiseaseDetailScreenProps> = ({ id: in
       return null;
     }
 
-    const recommendedProducts = MOCK_PRODUCTS.filter(p =>
-      disease.recommendedIngredients.some(ing => p.active_ingredient.toLowerCase().includes(ing.toLowerCase()))
+    const recommendedProducts = medusaProducts.filter(p =>
+      disease.recommendedIngredients.some(ing => {
+        const activeIngredient = (p as any).metadata?.active_ingredient || p.variants?.[0]?.metadata?.active_ingredient || "";
+        return activeIngredient.toLowerCase().includes(ing.toLowerCase());
+      })
     );
 
     return (

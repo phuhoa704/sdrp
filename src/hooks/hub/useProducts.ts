@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { productService, BridgeProduct, BridgeProductResponse } from '@/lib/api/productService';
+import { productService, BridgeProduct, BridgeProductResponse } from '@/lib/api/hub/productService';
 
 export const useProducts = (autoFetch = true) => {
     const [products, setProducts] = useState<BridgeProduct[]>([]);

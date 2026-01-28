@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { loginWithMedusa, login } from '@/store/slices/authSlice';
+import { loginWithMedusa } from '@/store/slices/authSlice';
 import { addNotification } from '@/store/slices/uiSlice';
 import { UserRole } from '@/types/enum';
 import { LogIn, Mail, Lock, User, Zap, AlertCircle } from 'lucide-react';
@@ -16,7 +16,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.RETAILER);
-  const [useMockAuth, setUseMockAuth] = useState(true); // Toggle: true = mock, false = Medusa
   const [error, setError] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -29,48 +28,16 @@ export default function LoginPage() {
     }
 
     try {
-      if (useMockAuth) {
-        // Mock authentication for testing without backend
-        dispatch(login({
-          user: {
-            id: Math.random().toString(36).substr(2, 9),
-            name: email.split('@')[0],
-            email: email,
-            role: selectedRole,
-            avatarUrl: 'https://picsum.photos/100/100',
-          },
-          token: 'mock-jwt-token-' + Date.now(),
-        }));
+      // Real Medusa.js authentication
+      const result = await dispatch(loginWithMedusa({ email, password })).unwrap();
 
-        // Add sample notifications
-        dispatch(addNotification({
-          message: 'Cảnh báo thời tiết. Đông Tháp dự kiến có mưa lớn trong 2 ngày tới. Cảnh báo rầy nâu phát triển.',
-          type: 'error',
-        }));
+      // Add welcome notification
+      dispatch(addNotification({
+        message: `Chào mừng ${result.user.name}! Đăng nhập thành công.`,
+        type: 'success',
+      }));
 
-        dispatch(addNotification({
-          message: 'Nhập hàng thành công. Lô hàng ORD-9928 đã được NPP xác nhận và đang đóng gói.',
-          type: 'success',
-        }));
-
-        dispatch(addNotification({
-          message: 'Hàng sắp hết hạn. Sản phẩm SuperKill 500WP (Lô 22) còn 15 ngày hết hạn.',
-          type: 'warning',
-        }));
-
-        router.push('/dashboard');
-      } else {
-        // Real Medusa.js authentication
-        const result = await dispatch(loginWithMedusa({ email, password })).unwrap();
-
-        // Add welcome notification
-        dispatch(addNotification({
-          message: `Chào mừng ${result.user.name}! Đăng nhập thành công.`,
-          type: 'success',
-        }));
-
-        router.push('/dashboard');
-      }
+      router.push('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
     }
@@ -128,27 +95,6 @@ export default function LoginPage() {
         </div>
 
         <div className="glass rounded-3xl p-8 shadow-2xl border border-white/10 mt-8">
-          {/* Auth Mode Toggle */}
-          <div className="mb-6 p-3 bg-slate-800/50 rounded-xl">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-400">Auth Mode:</span>
-              <button
-                type="button"
-                onClick={() => setUseMockAuth(!useMockAuth)}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${useMockAuth
-                    ? 'bg-amber-500/20 text-amber-400'
-                    : 'bg-emerald-500/20 text-emerald-400'
-                  }`}
-              >
-                {useMockAuth ? '🧪 Mock' : '🔗 Medusa.js'}
-              </button>
-            </div>
-            {!useMockAuth && (
-              <p className="text-[10px] text-slate-500 mt-2">
-                Connecting to: localhost:8888
-              </p>
-            )}
-          </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
@@ -187,35 +133,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {useMockAuth && (
-              <div className="space-y-3">
-                <label className="text-sm font-bold text-dark-200 flex items-center gap-2">
-                  <User size={16} className="text-primary-400" />
-                  Select Role (Mock Only)
-                </label>
-                <div className="grid grid-cols-3 gap-3">
-                  {roles.map((role) => (
-                    <button
-                      key={role.value}
-                      type="button"
-                      onClick={() => setSelectedRole(role.value)}
-                      disabled={loading}
-                      className={`p-4 rounded-2xl border-2 transition-all duration-300 group ${selectedRole === role.value
-                          ? 'bg-white/10 border-primary-500 shadow-lg shadow-primary-500/20'
-                          : 'bg-white/5 border-white/10 hover:bg-white/10'
-                        }`}
-                    >
-                      <div className="text-3xl mb-2">{role.icon}</div>
-                      <div className={`text-xs font-bold ${selectedRole === role.value ? 'text-primary-400' : 'text-dark-300'
-                        }`}>
-                        {role.label}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {(error || authError) && (
               <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3">
                 <AlertCircle size={20} className="text-red-400 flex-shrink-0 mt-0.5" />
@@ -240,14 +157,6 @@ export default function LoginPage() {
                 </>
               )}
             </button>
-
-            <div className="mt-6 p-4 bg-dark-800/50 rounded-xl border border-dark-700">
-              <p className="text-xs font-bold text-dark-400 mb-2">Demo Credentials:</p>
-              <div className="space-y-1 text-xs text-dark-300">
-                <p>Email: <span className="text-primary-400 font-mono">demo@sdrp.com</span></p>
-                <p>Password: <span className="text-primary-400 font-mono">demo123</span></p>
-              </div>
-            </div>
           </form>
         </div>
 

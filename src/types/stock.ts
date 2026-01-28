@@ -44,3 +44,13 @@ export interface StockAuditVoucher {
     totalVarianceValue: number;
     note?: string;
 }
+
+export interface StockLocation {
+    id: string;
+    name: string;
+    address_id?: string;
+    metadata?: Record<string, unknown>;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+}

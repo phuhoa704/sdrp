@@ -24,18 +24,22 @@ export const StockDisposalForm: React.FC<StockDisposalFormProps> = ({ products, 
   const filteredSearch = useMemo(() => {
     if (searchQuery.length < 1) return [];
     return products.filter(p =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.id.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [searchQuery, products]);
 
   const handleAddItem = (p: Product) => {
     if (selectedItems.find(i => i.productId === p.id)) return;
-    const costPrice = p.cost_price || Math.round(p.price * 0.7);
+    const price = (p.variants?.[0]?.prices?.[0]?.amount as number) ||
+      (p.variants?.[0]?.metadata?.price as number) || 0;
+    const costPrice = (p.variants?.[0]?.metadata?.cost_price as number) ||
+      (p.metadata?.cost_price as number) ||
+      Math.round(price * 0.7);
     const newItem: StockDisposalItem = {
       productId: p.id,
-      productName: p.name,
-      unit: p.weight_unit || 'Chai/Gói',
+      productName: p.title,
+      unit: (p as any).weight_unit || 'Chai/Gói',
       quantity: 1,
       costPrice: costPrice,
       subtotal: costPrice
@@ -104,10 +108,10 @@ export const StockDisposalForm: React.FC<StockDisposalFormProps> = ({ products, 
                   onClick={() => handleAddItem(p)}
                   className="p-3 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl hover:border-rose-500 cursor-pointer transition-all flex items-center gap-4 group"
                 >
-                  <img src={p.image_style} className="w-10 h-10 rounded-lg object-cover" />
+                  <img src={p.thumbnail || ""} className="w-10 h-10 rounded-lg object-cover" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold dark:text-white truncate">{p.name}</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase">{p.id} • Tồn: {p.current_stock || 0}</p>
+                    <p className="text-xs font-bold dark:text-white truncate">{p.title}</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase">{p.id} • Tồn: {(p.variants?.[0]?.metadata?.stock as number) || 0}</p>
                   </div>
                   <div className="p-1.5 bg-rose-50 text-rose-600 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
                     <Plus size={16} />

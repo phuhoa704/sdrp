@@ -185,10 +185,10 @@ export default function WholesaleMarketplace({ role }: Props) {
                     {cart.map((item, idx) => (
                       <div key={idx} className="flex items-center gap-4 p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100/50 dark:border-slate-800/50 group">
                         <div className="w-12 h-12 rounded-xl overflow-hidden border dark:border-slate-800 shrink-0">
-                          <img src={item.product.image_style} className="w-full h-full object-cover" alt="" />
+                          <img src={item.product.thumbnail || ""} className="w-full h-full object-cover" alt="" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-black dark:text-white truncate group-hover:text-emerald-500 transition-colors uppercase tracking-tighter">{item.product.name}</p>
+                          <p className="text-xs font-black dark:text-white truncate group-hover:text-emerald-500 transition-colors uppercase tracking-tighter">{item.product.title}</p>
                           <p className="text-[10px] text-slate-400 font-bold mt-0.5">x{item.quantity} {item.unit}</p>
                         </div>
                         <p className="text-xs font-black text-emerald-600">{(item.price * item.quantity).toLocaleString()}đ</p>

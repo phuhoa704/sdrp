@@ -3,13 +3,13 @@
 import { AlertTriangle, ArrowRight, Beaker, BookOpen, BrainCircuit, ChevronRight, History, Hourglass, Info, Newspaper, PackageCheck, Plus, Search, ShoppingBag, ShoppingCart, Stars, TrendingUp, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { MOCK_DISEASE_DATA } from '../../../../mocks/disease';
-import { MOCK_PRODUCTS } from '../../../../mocks/product';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { MOCK_NEWS } from '../../../../mocks/news';
 import { B2COrder } from '@/types/order';
 import { MOCK_B2C_HISTORY } from '../../../../mocks/order';
 import { Product } from '@/types/product';
+import { useMedusaProducts } from '@/hooks';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const salesData = [
@@ -62,6 +62,8 @@ export default function RetailerDashboard({ onSelectNewsArticle, onSelectDisease
   const [selectedDiseaseId, setSelectedDiseaseId] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
+  const { products: medusaProducts } = useMedusaProducts({ autoFetch: true, limit: 100 });
+
   const [b2cHistory, setB2cHistory] = useState<B2COrder[]>(MOCK_B2C_HISTORY);
   useEffect(() => {
     const timer = setInterval(() => {
@@ -87,19 +89,24 @@ export default function RetailerDashboard({ onSelectNewsArticle, onSelectDisease
     });
   });
 
-  const matchedProducts = MOCK_PRODUCTS.filter(p => {
-    const matchesDirectly = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.active_ingredient.toLowerCase().includes(searchQuery.toLowerCase());
+  const matchedProducts = medusaProducts.filter(p => {
+    const activeIngredient = (p as any).metadata?.active_ingredient || p.variants?.[0]?.metadata?.active_ingredient || "";
+    const matchesDirectly = p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      activeIngredient.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesViaDisease = Array.from(ingredientToDiseaseNames.keys()).some(ing =>
-      p.active_ingredient.toLowerCase().includes(ing)
+      activeIngredient.toLowerCase().includes(ing)
     );
     return matchesDirectly || matchesViaDisease;
   });
 
-  const criticalProducts = MOCK_PRODUCTS.filter(p => {
-    const expiryDate = new Date(p.expiry_date);
+  const criticalProducts = medusaProducts.filter(p => {
+    const stock = (p.variants?.[0]?.metadata?.stock as number) || 0;
+    const expiryDateStr = (p as any).expiry_date || p.metadata?.expiry_date;
+    if (!expiryDateStr) return stock < 20;
+
+    const expiryDate = new Date(expiryDateStr);
     const diffDays = Math.ceil((expiryDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-    return (diffDays <= 90 && diffDays > 0) || (p.stockLevel && p.stockLevel < 20);
+    return (diffDays <= 90 && diffDays > 0) || stock < 20;
   });
   return (
     <div className="pb-10 animate-fade-in space-y-8 md:space-y-10 px-1">
@@ -168,11 +175,11 @@ export default function RetailerDashboard({ onSelectNewsArticle, onSelectDisease
                   <div className="space-y-2">{matchedProducts.map(p => (
                     <div key={p.id} onClick={() => { onProductClick(p); setShowResults(false); }} className="flex items-start gap-4 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-50 dark:border-slate-700 hover:shadow-glow transition-all cursor-pointer group">
                       <div className="w-14 h-14 shrink-0 overflow-hidden rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm">
-                        <img src={p.image_style} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" alt={p.name} />
+                        <img src={p.thumbnail || ""} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" alt={p.title} />
                       </div>
                       <div className="flex-1 min-w-0 pt-1">
-                        <p className="font-extrabold text-sm text-slate-800 dark:text-slate-100 truncate group-hover:text-emerald-500 transition-colors">{p.name}</p>
-                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase mt-1 tracking-widest">{p.active_ingredient}</p>
+                        <p className="font-extrabold text-sm text-slate-800 dark:text-slate-100 truncate group-hover:text-emerald-500 transition-colors">{p.title}</p>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase mt-1 tracking-widest">{(p as any).metadata?.active_ingredient || p.variants?.[0]?.metadata?.active_ingredient || "N/A"}</p>
                       </div>
                     </div>
                   ))}</div>
@@ -198,136 +205,131 @@ export default function RetailerDashboard({ onSelectNewsArticle, onSelectDisease
                 >
                   PHÂN TÍCH NGAY
                 </Button>
+                <button className="flex items-center gap-3 px-6 text-white group/btn">
+                  <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center group-hover/btn:bg-white/20 transition-all">
+                    <History size={20} />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest">Lịch sử</span>
+                </button>
               </div>
             </div>
-            <div className="absolute right-0 top-0 bottom-0 w-1/2 flex items-center justify-center opacity-10 pointer-events-none pr-10">
-              <BrainCircuit size={320} className="text-white rotate-12 hidden md:block" />
+            <div className="hidden lg:block absolute right-[-50px] bottom-[-50px] text-white opacity-10 group-hover:scale-110 group-hover:rotate-6 transition-all duration-700">
+              <BrainCircuit size={450} strokeWidth={0.5} />
             </div>
           </Card>
         </div>
 
-        <div className="lg:col-span-4 relative overflow-hidden rounded-[40px] shadow-2xl min-h-[320px] md:min-h-[400px]">
-          {MARKETPLACE_PROMOS.map((promo, idx) => (
-            <div key={promo.id} className={`absolute inset-0 transition-all duration-1000 ease-in-out ${idx === promoIndex ? 'opacity-100 translate-x-0 scale-100' : 'opacity-0 translate-x-full scale-105'}`}>
-              <Card noPadding className={`relative h-full overflow-hidden bg-gradient-to-br ${promo.gradient} border-none flex items-center`}>
-                <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
-                <div className="p-10 md:p-12 text-white z-10 space-y-5 md:space-y-8 w-full relative">
-                  <span className="bg-white/15 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border border-white/20 shadow-inner-glow inline-block">{promo.subtitle}</span>
-                  <h2 className="text-3xl md:text-4xl font-black leading-tight tracking-tight text-white">{promo.title.split(' ')[0]}<br /><span className="opacity-80 font-medium italic">{promo.title.split(' ').slice(1).join(' ')}</span></h2>
-                  <p className="text-white/60 text-sm md:text-base font-medium leading-relaxed max-w-[280px]">{promo.desc}</p>
-                  <Button className="bg-white/10 hover:bg-white/20 text-white backdrop-blur-xl border border-white/25 w-full h-14 rounded-2xl font-black text-xs tracking-widest inner-border-glow shadow-xl" icon={<ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />}>{promo.btnText}</Button>
-                </div>
-                <div className="absolute -right-10 bottom-0 opacity-10 text-white transform rotate-12 pointer-events-none">{promo.icon}</div>
-              </Card>
+        <div className="lg:col-span-4 grid grid-cols-2 gap-4 h-full">
+          <Card className="bg-white dark:bg-slate-900 border-none shadow-glass p-8 flex flex-col justify-between group hover:shadow-glow transition-all">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform"><PackageCheck size={28} /></div>
+            <div>
+              <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2">Đơn hàng mới</p>
+              <h4 className="text-4xl font-black text-slate-800 dark:text-white">14</h4>
             </div>
-          ))}
+          </Card>
+          <Card className="bg-white dark:bg-slate-900 border-none shadow-glass p-8 flex flex-col justify-between group hover:shadow-glow transition-all">
+            <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform"><Hourglass size={28} /></div>
+            <div>
+              <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2">Chờ xử lý</p>
+              <h4 className="text-4xl font-black text-slate-800 dark:text-white">05</h4>
+            </div>
+          </Card>
+          <Card className="bg-white dark:bg-slate-900 border-none shadow-glass p-8 flex flex-col justify-between group hover:shadow-glow transition-all">
+            <div className="w-14 h-14 rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center group-hover:scale-110 transition-transform"><AlertTriangle size={28} /></div>
+            <div>
+              <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2">Cảnh báo kho</p>
+              <h4 className="text-4xl font-black text-slate-800 dark:text-white">{criticalProducts.length}</h4>
+            </div>
+          </Card>
+          <Card className="bg-white dark:bg-slate-900 border-none shadow-glass p-8 flex flex-col justify-between group hover:shadow-glow transition-all overflow-hidden relative">
+            <div className="absolute top-[-20%] right-[-20%] text-blue-500/5 group-hover:scale-110 transition-transform duration-700">
+              <TrendingUp size={200} />
+            </div>
+            <div className="w-14 h-14 rounded-2xl bg-blue-500/10 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform"><TrendingUp size={28} /></div>
+            <div>
+              <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2">Tăng trưởng</p>
+              <h4 className="text-4xl font-black text-slate-800 dark:text-white">+18%</h4>
+            </div>
+          </Card>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-10 gap-10">
-        <div className="lg:col-span-6 space-y-10">
-          <Card className="p-8 lg:p-10 bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-smooth space-y-8">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-3"><TrendingUp size={24} className="text-emerald-500" /> Doanh số vùng (Trđ)</h3>
-              <div className="flex bg-slate-50 dark:bg-slate-800 p-1 rounded-xl inner-border-glow">
-                <button className="px-4 py-1.5 text-[10px] font-black uppercase tracking-tighter bg-white dark:bg-slate-700 shadow-sm rounded-lg text-emerald-600">6 Tháng</button>
-                <button className="px-4 py-1.5 text-[10px] font-black uppercase tracking-tighter text-slate-400">1 Năm</button>
-              </div>
-            </div>
-            <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={salesData} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
-                <XAxis dataKey="name" axisLine={false} tickLine={false} style={{ fontSize: '11px', fontWeight: 700 }} tick={{ fill: '#94A3B8' }} />
-                <YAxis axisLine={false} tickLine={false} style={{ fontSize: '11px', fontWeight: 700 }} tick={{ fill: '#94A3B8' }} />
-                <Tooltip cursor={{ fill: 'rgba(16, 185, 129, 0.05)', radius: 10 }} contentStyle={{ backgroundColor: '#0F172A', border: 'none', borderRadius: '24px', color: '#F8FAFC', boxShadow: '0 20px 40px rgba(0,0,0,0.3)', padding: '12px 16px' }} />
-                <Bar dataKey="sales" fill="#10B981" radius={[12, 12, 0, 0]} barSize={32}>
-                  {salesData.map((e, i) => (<Cell key={i} fill={i === salesData.length - 1 ? '#10B981' : '#E2E8F0'} className="transition-all duration-500" />))}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div className="lg:col-span-8 space-y-8">
+          <div className="flex items-center justify-between px-2">
+            <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight flex items-center gap-3">
+              <History size={24} className="text-emerald-600" /> Nhật ký bán lẻ (B2C)
+            </h3>
+            <button className="text-[11px] font-black text-primary hover:underline tracking-widest uppercase">XEM TẤT CẢ →</button>
+          </div>
+          <Card noPadding className="bg-white dark:bg-slate-900 border-none shadow-glass overflow-hidden rounded-[32px]">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-slate-50/50 dark:bg-slate-800/50 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] border-b dark:border-slate-800">
+                  <th className="py-6 pl-8">Mã đơn</th>
+                  <th className="py-6 px-4">Khách hàng</th>
+                  <th className="py-6 px-4">Ngày đặt</th>
+                  <th className="py-6 px-4 font-right">Giá trị</th>
+                  <th className="py-6 pr-8 text-right">Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                {b2cHistory.slice(0, 5).map((order) => (
+                  <tr key={order.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all cursor-pointer">
+                    <td className="py-6 pl-8 font-black text-sm text-slate-800 dark:text-slate-200 group-hover:text-primary">{order.id}</td>
+                    <td className="py-6 px-4">
+                      <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{order.customer.name}</p>
+                      <p className="text-[10px] text-slate-400 font-medium">{order.customer.phone}</p>
+                    </td>
+                    <td className="py-6 px-4 text-xs font-bold text-slate-500">{order.date}</td>
+                    <td className="py-6 px-4 font-black text-slate-800 dark:text-white">{order.total.toLocaleString()}đ</td>
+                    <td className="py-6 pr-8 text-right">
+                      <span className={`text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-tighter ${order.status === 'completed' ? 'bg-emerald-100/50 text-emerald-600' :
+                        'bg-amber-100/50 text-amber-600'
+                        }`}>
+                        {order.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+        </div>
+
+        <div className="lg:col-span-4 space-y-8">
+          <div className="flex items-center justify-between px-2">
+            <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight flex items-center gap-3">
+              <TrendingUp size={24} className="text-emerald-600" /> Biểu đồ doanh thu
+            </h3>
+          </div>
+          <Card className="bg-white dark:bg-slate-900 border-none shadow-glass p-8 rounded-[32px] h-[350px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={salesData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 800, fill: '#94a3b8' }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 800, fill: '#94a3b8' }} />
+                <Tooltip
+                  cursor={{ fill: 'rgba(16, 185, 129, 0.05)' }}
+                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontWeight: 800 }}
+                />
+                <Bar dataKey="sales" radius={[6, 6, 0, 0]}>
+                  {salesData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={index === salesData.length - 1 ? '#10b981' : '#e2e8f0'} />
+                  ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+            <div className="mt-6 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800/30">
+              <div className="flex justify-between items-center">
+                <p className="text-[10px] font-black text-emerald-600 uppercase">Tăng trưởng tuần này</p>
+                <div className="flex items-center gap-1 text-emerald-600 font-black text-sm">
+                  <TrendingUp size={14} /> +12%
+                </div>
+              </div>
+            </div>
           </Card>
-
-          <div className="space-y-5">
-            <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] px-2 flex items-center gap-3"><History size={16} className="text-emerald-500" /> Giao dịch gần đây</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-5">
-              {b2cHistory.slice(0, 3).map(o => (
-                <Card key={o.id} className="flex items-center justify-between p-5 hover:border-emerald-500/30 bg-white dark:bg-slate-900 shadow-smooth group">
-                  <div className="flex items-center gap-5 min-w-0">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 shrink-0 shadow-inner group-hover:scale-110 transition-transform"><ShoppingCart size={24} /></div>
-                    <div className="min-w-0 pr-2">
-                      <h4 className="font-extrabold text-sm dark:text-slate-100 truncate group-hover:text-emerald-600 transition-colors">{o.customer.name}</h4>
-                      <p className="text-[10px] text-slate-400 mt-1 font-black uppercase tracking-widest">{o.id} • {o.date}</p>
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <span className="font-black text-emerald-600 text-lg md:text-xl">{o.total.toLocaleString()}đ</span>
-                    <ChevronRight size={18} className="inline-block ml-3 text-slate-200 group-hover:translate-x-1 group-hover:text-emerald-400 transition-all" />
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-4 space-y-10">
-          <div className="space-y-5">
-            <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Tình trạng vận hành</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <StatsCard title="Mã hàng" value={MOCK_PRODUCTS.length} icon={<PackageCheck size={20} />} color="green" />
-              <StatsCard title="Sắp hết" value={MOCK_PRODUCTS.filter(p => (p.stockLevel || 0) < 20).length} icon={<AlertTriangle size={20} />} color="rose" />
-              <StatsCard title="HSD Cận" value={criticalProducts.length} icon={<Hourglass size={20} />} color="amber" />
-              <StatsCard title="Đơn tuần" value={b2cHistory.length} icon={<ShoppingCart size={20} />} color="blue" />
-            </div>
-          </div>
-
-          <div className="space-y-5">
-            <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] px-1 flex items-center gap-3"><Newspaper size={16} className="text-emerald-500" /> Tin tức thị trường</h3>
-            <div className="space-y-5">
-              {MOCK_NEWS.slice(0, 3).map(a => (
-                <Card key={a.id} noPadding className="flex items-center gap-5 p-4 hover:border-emerald-500/20 bg-white dark:bg-slate-900 shadow-smooth overflow-hidden group" onClick={() => onSelectNewsArticle(a.id)}>
-                  <div className="w-20 h-20 md:w-24 md:h-24 overflow-hidden rounded-[24px] shrink-0 border border-slate-100 dark:border-slate-800 shadow-sm">
-                    <img src={a.image} alt={a.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-115" />
-                  </div>
-                  <div className="flex-1 min-w-0 pr-2">
-                    <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest block mb-1.5 opacity-80">{a.category}</span>
-                    <h4 className="font-extrabold text-[14px] md:text-[15px] text-slate-800 dark:text-slate-100 line-clamp-2 leading-[1.3] group-hover:text-emerald-600 transition-colors">{a.title}</h4>
-                    <p className="text-[10px] text-slate-400 font-bold mt-2 tracking-tighter">{a.date} • {a.author}</p>
-                  </div>
-                </Card>
-              ))}
-            </div>
-            <Button
-              variant="soft"
-              fullWidth
-              className="h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm"
-              onClick={onViewAllNews}
-            >
-              XEM TẤT CẢ TIN TỨC
-            </Button>
-          </div>
         </div>
       </div>
     </div>
   );
 }
-
-
-const StatsCard = ({ title, value, icon, color }: { title: string, value: number, icon: any, color: string }) => {
-  const styles: any = {
-    green: "bg-emerald-50/50 dark:bg-emerald-900/10 text-emerald-600 border-emerald-100/50 dark:border-emerald-800/50",
-    rose: "bg-rose-50/50 dark:bg-rose-900/10 text-rose-600 border-rose-100/50 dark:border-rose-800/50",
-    amber: "bg-amber-50/50 dark:bg-amber-900/10 text-amber-500 border-amber-100/50 dark:border-amber-800/50",
-    blue: "bg-blue-50/50 dark:bg-blue-900/10 text-blue-600 border-blue-100/50 dark:border-blue-800/50"
-  };
-  return (
-    <Card className={`p-6 ${styles[color]} border shadow-smooth flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-glow group relative overflow-hidden`}>
-      <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
-        {icon}
-      </div>
-      <div className="flex items-center justify-between mb-4 relative z-10">
-        <p className="text-[9px] font-black uppercase tracking-[0.15em] opacity-60">{title}</p>
-        <div className="opacity-80 group-hover:scale-110 transition-transform">{icon}</div>
-      </div>
-      <p className="text-2xl md:text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tighter relative z-10">{value}</p>
-    </Card>
-  );
-};

@@ -17,6 +17,7 @@ interface CartItem extends Product {
   quantity: number;
   selectedVariant?: any;
   isWholesale?: boolean;
+  price: number; // Price from cart item
 }
 
 interface CustomerInfo {
@@ -158,7 +159,6 @@ export const CheckoutWizard: React.FC<CheckoutWizardProps> = ({ cart, onBack, on
         </div>
       </div>
 
-      {/* REFERRAL CODE SECTION - UPDATED FOR SELLER AUTO-FILL */}
       {isWholesale && step === 2 && (
         <div className="pt-4 space-y-3">
           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 flex items-center gap-2">
@@ -251,14 +251,14 @@ export const CheckoutWizard: React.FC<CheckoutWizardProps> = ({ cart, onBack, on
                   {cart.map((item) => (
                     <div key={item.cartKey} className="p-6 md:p-8 flex flex-col md:flex-row gap-6 items-center group transition-all hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
                       <div className="relative shrink-0">
-                        <img src={item.image_style} className="h-24 w-24 rounded-3xl object-cover border-2 border-white dark:border-slate-700 shadow-xl group-hover:scale-105 transition-transform" alt={item.name} />
+                        <img src={item.thumbnail || "https://via.placeholder.com/150"} className="h-24 w-24 rounded-3xl object-cover border-2 border-white dark:border-slate-700 shadow-xl group-hover:scale-105 transition-transform" alt={item.title} />
                         {item.isWholesale && (
                           <div className="absolute -top-3 -left-3 bg-blue-600 text-white text-[9px] font-black px-2.5 py-1 rounded-full shadow-lg uppercase tracking-tighter border-2 border-white dark:border-slate-900">SỈ -15%</div>
                         )}
                       </div>
 
                       <div className="flex-1 min-w-0 text-center md:text-left">
-                        <h4 className="font-black text-lg text-slate-800 dark:text-slate-100 leading-tight mb-1">{item.name}</h4>
+                        <h4 className="font-black text-lg text-slate-800 dark:text-slate-100 leading-tight mb-1">{item.title}</h4>
                         <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-3">
                           <span className="text-[10px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase border border-primary/20">{item.selectedVariant?.unit || 'Thùng'}</span>
                           {item.selectedVariant?.tech_specs && (
@@ -303,7 +303,6 @@ export const CheckoutWizard: React.FC<CheckoutWizardProps> = ({ cart, onBack, on
 
           {step === 2 && (
             <div className="space-y-8 animate-fade-in">
-              {/* SELLER EXCLUSIVE: RETAILER SEARCH BOX */}
               {isSeller && (
                 <div className="relative group z-20">
                   <div className="flex items-center gap-4 mb-4 px-1">

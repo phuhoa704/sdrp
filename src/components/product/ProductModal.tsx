@@ -41,10 +41,12 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   if (!currentProduct) return null;
 
   const isWholesale = mode === 'WHOLESALE';
-  const basePrice = isWholesale ? currentProduct.price * 0.85 : currentProduct.price;
-  const currentPrice = selectedVariant
-    ? basePrice * selectedVariant.price_modifier
-    : basePrice;
+  const firstVariant = currentProduct?.variants?.[0];
+  const medusaPrice = (firstVariant?.metadata?.price as number) || 0;
+
+  const basePrice = isWholesale ? medusaPrice * 0.85 : medusaPrice;
+  // Use metadata price if available on selected variant, otherwise base price
+  const currentPrice = (selectedVariant?.metadata?.price as number) || basePrice;
 
   const handleAddToCart = () => {
     if (onAddToCart) {
@@ -52,7 +54,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         unit: selectedUnit,
         quantity: quantity,
         variant: selectedVariant,
-        tech_specs: selectedVariant ? `${selectedVariant.label} - ${selectedVariant.origin}` : '',
+        tech_specs: selectedVariant ? `${selectedVariant.title} - ${selectedVariant.origin_country || 'N/A'}` : '',
         price: currentPrice
       });
       onClose();
@@ -73,9 +75,9 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               <Package size={28} style={{ color: primaryColor }} />
             </div>
             <div>
-              <h2 className="text-xl md:text-2xl font-black text-[#1F2937] dark:text-slate-100 leading-tight">{currentProduct.name}</h2>
+              <h2 className="text-xl md:text-2xl font-black text-[#1F2937] dark:text-slate-100 leading-tight">{currentProduct.title}</h2>
               <p className="text-[10px] md:text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
-                Hoạt chất: {currentProduct.active_ingredient} • {currentProduct.category}
+                Hoạt chất: {(currentProduct as any).metadata?.active_ingredient || firstVariant?.metadata?.active_ingredient || "N/A"} • {(currentProduct.type as any)?.value || "General"}
               </p>
             </div>
           </div>
@@ -85,7 +87,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         <div className="flex-1 flex flex-col md:flex-row overflow-y-auto no-scrollbar">
           <div className="md:w-5/12 border-r border-gray-50 dark:border-slate-800 flex flex-col">
             <div className="relative h-64 md:h-80 shrink-0 p-6">
-              <img src={currentProduct.image_style} alt={currentProduct.name} className="w-full h-full rounded-3xl object-cover shadow-2xl border dark:border-slate-700" />
+              <img src={currentProduct.thumbnail || "https://via.placeholder.com/300"} alt={currentProduct.title} className="w-full h-full rounded-3xl object-cover shadow-2xl border dark:border-slate-700" />
             </div>
             <div className="p-6 md:p-8 space-y-6">
               <div className="space-y-4">
@@ -126,10 +128,10 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                       style={selectedVariant?.id === v.id ? { borderColor: primaryColor } : {}}
                     >
                       <span className={`text-sm font-black ${selectedVariant?.id === v.id ? 'text-slate-800 dark:text-white' : ''}`}>
-                        {v.label}
+                        {v.title}
                       </span>
                       <div className="flex items-center gap-2 text-[10px] font-bold opacity-70">
-                        <Globe size={12} /> {v.origin}
+                        <Globe size={12} /> {v.origin_country || 'N/A'}
                       </div>
                     </button>
                   ))}

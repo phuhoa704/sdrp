@@ -5,7 +5,7 @@ import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { Product } from '@/types/product';
 import { ProductRow } from '@/components/product/ProductRow';
-import { MOCK_PRODUCTS } from '../../../../mocks/product';
+import { useMedusaProducts } from '@/hooks';
 
 interface DiagnosisScreenProps {
   onBack: () => void;
@@ -19,6 +19,8 @@ export const DiagnosisScreen: React.FC<DiagnosisScreenProps> = ({ onBack, onAddT
   const [loading, setLoading] = useState(false);
   const [aiResult, setAiResult] = useState<any | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { products: medusaProducts } = useMedusaProducts({ autoFetch: true, limit: 100 });
 
   const handleDiagnose = async () => {
     if (!symptom && !image) return;
@@ -90,7 +92,7 @@ export const DiagnosisScreen: React.FC<DiagnosisScreenProps> = ({ onBack, onAddT
                   <h4 className="text-[10px] font-bold text-primary uppercase mb-4 flex items-center gap-2"><Syringe size={14} /> Kê đơn tham khảo</h4>
                   <div className="space-y-3">
                     {aiResult.suggestedPrescription.map((item: any, idx: number) => {
-                      const product = MOCK_PRODUCTS.find((p: Product) => p.id === item.productId);
+                      const product = medusaProducts.find((p: Product) => p.id === item.productId);
                       return product ? (
                         <ProductRow
                           key={idx}

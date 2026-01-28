@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { loginWithMedusa, registerWithMedusa, logoutFromMedusa, clearError } from '@/store/slices/authSlice';
 import { selectIsAuthenticated, selectCurrentUser, selectAuthLoading, selectAuthError } from '@/store/selectors';
-import { LoginCredentials, RegisterData } from '@/lib/api/auth';
+import { LoginCredentials, RegisterData } from '@/lib/api/medusa/auth';
 
 export const useAuth = () => {
     const dispatch = useAppDispatch();
@@ -20,10 +20,7 @@ export const useAuth = () => {
     }, [dispatch]);
 
     const logout = useCallback(() => {
-        const token = localStorage.getItem('token'); // Or wherever it's stored
-        if (token) {
-            return dispatch(logoutFromMedusa(token));
-        }
+        return dispatch(logoutFromMedusa());
     }, [dispatch]);
 
     const clearAuthError = useCallback(() => {

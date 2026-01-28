@@ -9,6 +9,7 @@
         "lint": "next lint"
     },
     "dependencies": {
+        "@medusajs/js-sdk": "^2.13.1",
         "@reduxjs/toolkit": "^2.11.2",
         "axios": "^1.13.3",
         "clsx": "^2.1.1",

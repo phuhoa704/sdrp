@@ -23,20 +23,22 @@ export const StockAuditForm: React.FC<StockAuditFormProps> = ({ products, onSave
 
   const filteredSearch = useMemo(() => {
     if (searchQuery.length < 1) return [];
-    return products.filter(p =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.active_ingredient.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    return products.filter(p => {
+      const activeIngredient = (p as any).metadata?.active_ingredient || p.variants?.[0]?.metadata?.active_ingredient || "";
+      return p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        activeIngredient.toLowerCase().includes(searchQuery.toLowerCase());
+    });
   }, [searchQuery, products]);
 
   const handleAddItem = (p: Product) => {
     if (selectedItems.find(i => i.productId === p.id)) return;
+    const stock = (p.variants?.[0]?.metadata?.stock as number) || 0;
     const newItem: StockAuditItem = {
       productId: p.id,
-      productName: p.name,
-      unit: p.weight_unit || 'Chai/Gói',
-      systemStock: p.current_stock || 0,
-      actualStock: p.current_stock || 0,
+      productName: p.title,
+      unit: (p as any).weight_unit || 'Chai/Gói',
+      systemStock: stock,
+      actualStock: stock,
       varianceQty: 0,
       varianceValue: 0
     };
@@ -48,8 +50,10 @@ export const StockAuditForm: React.FC<StockAuditFormProps> = ({ products, onSave
     setSelectedItems(prev => prev.map(item => {
       if (item.productId === id) {
         const product = products.find(p => p.id === id);
+        const costPrice = (product?.variants?.[0]?.metadata?.cost_price as number) ||
+          (product?.metadata?.cost_price as number) || 0;
         const varianceQty = actual - item.systemStock;
-        const varianceValue = varianceQty * (product?.cost_price || 0);
+        const varianceValue = varianceQty * costPrice;
         return { ...item, actualStock: actual, varianceQty, varianceValue };
       }
       return item;
@@ -108,10 +112,10 @@ export const StockAuditForm: React.FC<StockAuditFormProps> = ({ products, onSave
                   onClick={() => handleAddItem(p)}
                   className="p-3 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl hover:border-emerald-500 cursor-pointer transition-all flex items-center gap-4 group"
                 >
-                  <img src={p.image_style} className="w-10 h-10 rounded-lg object-cover" />
+                  <img src={p.thumbnail || ""} className="w-10 h-10 rounded-lg object-cover" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold dark:text-white truncate">{p.name}</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase">{p.id} • Tồn: {p.current_stock || 0}</p>
+                    <p className="text-xs font-bold dark:text-white truncate">{p.title}</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase">{p.id} • Tồn: {(p.variants?.[0]?.metadata?.stock as number) || 0}</p>
                   </div>
                   <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
                     <Plus size={16} />

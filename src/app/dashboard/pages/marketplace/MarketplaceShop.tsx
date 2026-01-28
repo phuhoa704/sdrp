@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Search, Heart, Star, LayoutGrid, Bug, Pipette,
   Sprout, Zap, ChevronRight,
@@ -9,7 +9,7 @@ import {
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { Product } from '@/types/product';
-import { MOCK_PRODUCTS } from '../../../../../mocks/product';
+import { useMedusaProducts } from '@/hooks';
 
 interface MarketplaceShopProps {
   onProductClick: (product: Product) => void;
@@ -20,6 +20,9 @@ export const MarketplaceShop: React.FC<MarketplaceShopProps> = ({ onProductClick
   const [activeCategory, setActiveCategory] = useState('Tất cả');
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [currentBanner, setCurrentBanner] = useState(0);
+
+  // Use Medusa Products
+  const { products: medusaProducts, loading, error } = useMedusaProducts({ autoFetch: true });
 
   const banners = [
     {
@@ -72,23 +75,28 @@ export const MarketplaceShop: React.FC<MarketplaceShopProps> = ({ onProductClick
     { name: 'Dụng cụ', icon: <Pipette size={20} /> },
   ];
 
-  const flashSaleProducts = MOCK_PRODUCTS.slice(0, 3);
+  const flashSaleProducts = medusaProducts.slice(0, 3);
 
   const toggleWishlist = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setWishlist(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   };
 
-  const filteredProducts = MOCK_PRODUCTS.filter(p => {
-    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.active_ingredient.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCat = activeCategory === 'Tất cả' || p.category === activeCategory;
-    return matchesSearch && matchesCat;
-  });
+  const filteredProducts = useMemo(() => {
+    return medusaProducts.filter(p => {
+      const activeIngredient = (p as any).metadata?.active_ingredient || p.variants?.[0]?.metadata?.active_ingredient || "";
+      const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        activeIngredient.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const category = (p.type as any)?.value || "Tất cả";
+      const matchesCat = activeCategory === 'Tất cả' || category === activeCategory;
+      return matchesSearch && matchesCat;
+    });
+  }, [medusaProducts, searchQuery, activeCategory]);
 
   return (
     <div className="space-y-10 animate-fade-in pb-10">
-      {/* Hero Banner Slider - Now starts higher */}
+      {/* Hero Banner Slider */}
       <div className="relative h-48 md:h-72 w-full rounded-[40px] overflow-hidden group shadow-2xl">
         {banners.map((b, i) => (
           <div
@@ -134,6 +142,19 @@ export const MarketplaceShop: React.FC<MarketplaceShopProps> = ({ onProductClick
         ))}
       </div>
 
+      {loading && (
+        <div className="flex justify-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 p-6 rounded-3xl flex items-center gap-4 text-rose-600">
+          <Zap className="shrink-0" />
+          <p className="text-sm font-bold">Lỗi kết nối Medusa: {error}</p>
+        </div>
+      )}
+
       {/* Flash Sale Section */}
       <div className="bg-rose-500/5 dark:bg-rose-900/10 rounded-[40px] p-6 md:p-8 border border-rose-100 dark:border-rose-900/20">
         <div className="flex justify-between items-center mb-6">
@@ -156,14 +177,18 @@ export const MarketplaceShop: React.FC<MarketplaceShopProps> = ({ onProductClick
           {flashSaleProducts.map((p) => (
             <Card key={`flash-${p.id}`} noPadding className="flex items-center gap-4 p-4 hover:shadow-xl transition-all border-none bg-white dark:bg-slate-900 shadow-sm" onClick={() => onProductClick(p)}>
               <div className="relative w-24 h-24 shrink-0 overflow-hidden rounded-2xl border dark:border-slate-800">
-                <img src={p.image_style} className="w-full h-full object-cover" />
+                <img src={p.thumbnail || ""} className="w-full h-full object-cover" />
                 <div className="absolute top-1 left-1 bg-rose-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm">-{Math.round(Math.random() * 15 + 15)}%</div>
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="font-bold text-sm text-slate-800 dark:text-white truncate">{p.name}</h4>
+                <h4 className="font-bold text-sm text-slate-800 dark:text-white truncate">{p.title}</h4>
                 <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-lg font-black text-rose-500">{(p.price * 0.7).toLocaleString()}đ</span>
-                  <span className="text-[10px] text-slate-400 line-through">{p.price.toLocaleString()}đ</span>
+                  <span className="text-lg font-black text-rose-500">
+                    {((p.variants?.[0]?.metadata?.price as number || 0) * 0.7).toLocaleString()}đ
+                  </span>
+                  <span className="text-[10px] text-slate-400 line-through">
+                    {(p.variants?.[0]?.metadata?.price as number || 0).toLocaleString()}đ
+                  </span>
                 </div>
                 <div className="mt-2 space-y-1">
                   <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
@@ -206,14 +231,14 @@ export const MarketplaceShop: React.FC<MarketplaceShopProps> = ({ onProductClick
                     </p>
                     <div className="flex gap-2">
                       {cat.products.map(pId => {
-                        const product = MOCK_PRODUCTS.find(p => p.id === pId);
+                        const product = filteredProducts.find(p => p.id === pId);
                         return product ? (
                           <div
                             key={pId}
                             onClick={() => onProductClick(product)}
                             className="w-12 h-12 rounded-xl overflow-hidden border-2 border-slate-100 dark:border-slate-800 cursor-pointer hover:border-primary transition-all shadow-sm"
                           >
-                            <img src={product.image_style} className="w-full h-full object-cover" title={product.name} />
+                            <img src={product.thumbnail || ""} className="w-full h-full object-cover" title={product.title} />
                           </div>
                         ) : null;
                       })}
@@ -222,22 +247,8 @@ export const MarketplaceShop: React.FC<MarketplaceShopProps> = ({ onProductClick
                 </div>
 
                 <div className="flex gap-3">
-                  <Button
-                    variant="soft"
-                    size="sm"
-                    className="flex-1 rounded-xl h-11 text-[10px] font-black"
-                    icon={<Info size={14} />}
-                  >
-                    XEM KỸ THUẬT
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    className="flex-1 rounded-xl h-11 text-[10px] font-black"
-                    icon={<ArrowUpRight size={14} />}
-                  >
-                    NHẬP BỘ SẢN PHẨM
-                  </Button>
+                  <Button variant="soft" size="sm" className="flex-1 rounded-xl h-11 text-[10px] font-black" icon={<Info size={14} />}>XEM KỸ THUẬT</Button>
+                  <Button variant="primary" size="sm" className="flex-1 rounded-xl h-11 text-[10px] font-black" icon={<ArrowUpRight size={14} />}>NHẬP BỘ SẢN PHẨM</Button>
                 </div>
               </div>
             </Card>
@@ -260,23 +271,18 @@ export const MarketplaceShop: React.FC<MarketplaceShopProps> = ({ onProductClick
             <Card key={p.id} noPadding className="flex flex-col group cursor-pointer relative h-full hover:shadow-2xl transition-all bg-white dark:bg-slate-900 border border-slate-50 dark:border-slate-800 rounded-[32px] overflow-hidden" onClick={() => onProductClick(p)}>
               <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
                 <div className="bg-primary/90 backdrop-blur-md text-white text-[8px] font-black px-2 py-1 rounded-lg shadow-sm uppercase tracking-wider">SỈ -15%</div>
-                {p.stockLevel && p.stockLevel < 30 && (
+                {(p.variants?.[0]?.metadata?.stock as number || 0) < 30 && (
                   <div className="bg-amber-500/90 backdrop-blur-md text-white text-[8px] font-black px-2 py-1 rounded-lg shadow-sm uppercase tracking-wider">Hot Sale</div>
                 )}
               </div>
 
               <div className="relative aspect-square overflow-hidden bg-slate-50 dark:bg-slate-800 transition-colors">
-                <img src={p.image_style} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-
+                <img src={p.thumbnail || ""} alt={p.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                 <div className="absolute bottom-4 right-4 translate-y-12 group-hover:translate-y-0 transition-transform duration-300">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onProductClick(p); }}
-                    className="w-12 h-12 bg-blue-600 text-white rounded-2xl shadow-xl flex items-center justify-center hover:bg-slate-900 transition-colors"
-                  >
+                  <button onClick={(e) => { e.stopPropagation(); onProductClick(p); }} className="w-12 h-12 bg-blue-600 text-white rounded-2xl shadow-xl flex items-center justify-center hover:bg-slate-900 transition-colors">
                     <ShoppingCart size={20} />
                   </button>
                 </div>
-
                 <button onClick={(e) => toggleWishlist(p.id, e)} className={`absolute top-3 right-3 backdrop-blur-md p-2 rounded-xl shadow-sm transition-all z-10 ${wishlist.includes(p.id) ? 'bg-rose-500 text-white' : 'bg-white/80 dark:bg-slate-700/80 text-rose-500 hover:bg-white'}`}>
                   <Heart size={16} fill={wishlist.includes(p.id) ? "currentColor" : "none"} />
                 </button>
@@ -284,16 +290,14 @@ export const MarketplaceShop: React.FC<MarketplaceShopProps> = ({ onProductClick
 
               <div className="p-5 flex flex-col flex-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[9px] font-black text-slate-400 uppercase border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded">{p.category}</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded">{(p.type as any)?.value || "Khác"}</span>
                   <div className="flex items-center text-amber-400"><Star size={10} fill="currentColor" /><span className="text-[9px] font-black ml-1">4.9</span></div>
                 </div>
-                <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 line-clamp-2 min-h-[40px] leading-snug group-hover:text-primary transition-colors">{p.name}</h4>
-
+                <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 line-clamp-2 min-h-[40px] leading-snug group-hover:text-primary transition-colors">{p.title}</h4>
                 <div className="mt-4 flex flex-col gap-0.5">
-                  <p className="text-primary dark:text-green-400 font-black text-xl">{(p.price * 0.85).toLocaleString()}đ</p>
-                  <p className="text-[10px] text-slate-400 line-through font-bold">{(p.price).toLocaleString()}đ</p>
+                  <p className="text-primary dark:text-green-400 font-black text-xl">{((p.variants?.[0]?.metadata?.price as number || 0) * 0.85).toLocaleString()}đ</p>
+                  <p className="text-[10px] text-slate-400 line-through font-bold">{(p.variants?.[0]?.metadata?.price as number || 0).toLocaleString()}đ</p>
                 </div>
-
                 <div className="pt-4 mt-auto">
                   <div className="w-full flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
                     <span>Đã bán 1.2k+</span>

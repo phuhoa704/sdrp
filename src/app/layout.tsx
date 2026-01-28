@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import "./globals.css";
 import { ReduxProvider } from "@/components/providers/ReduxProvider";
+import { AuthProvider } from "@/components/providers/AuthProvider";
+import { StockProvider } from "@/components/providers/StockProvider";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -33,8 +35,12 @@ export default function RootLayout({
     <html lang="en" className={`${plusJakartaSans.variable} ${inter.variable}`}>
       <body className="min-h-screen font-sans">
         <ReduxProvider>
-          {children}
-          <div id="modal-root" />
+          <AuthProvider>
+            <StockProvider>
+              {children}
+              <div id="modal-root" />
+            </StockProvider>
+          </AuthProvider>
         </ReduxProvider>
       </body>
     </html>

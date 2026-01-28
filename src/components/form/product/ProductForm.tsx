@@ -1,14 +1,15 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Camera, ChevronDown, HelpCircle,
   Settings, Info,
   Package, Banknote,
-  Beaker, ArrowLeft, Save
+  Beaker, ArrowLeft, Save,
+  X
 } from 'lucide-react';
 import { Product } from '@/types/product';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
+import { useCategories } from '@/hooks';
 
 interface ProductFormProps {
   onCancel: () => void;
@@ -17,43 +18,91 @@ interface ProductFormProps {
 }
 
 export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, initialData }) => {
-  const [activeTab, setActiveTab] = useState<'info' | 'desc'>('info');
-  const [formData, setFormData] = useState<Partial<Product>>({
+  const [formData, setFormData] = useState<any>({
     id: 'Tự động',
-    name: '',
-    barcode: '',
-    category: '',
-    brand: '',
-    cost_price: 0,
-    price: 0,
-    current_stock: 0,
-    min_stock: 0,
-    max_stock: 999999999,
-    location: '',
-    weight: 0,
-    weight_unit: 'g',
-    is_selling_directly: true,
-    active_ingredient: '',
-    image_style: 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&q=80&w=400',
+    title: '',
+    handle: '',
+    subtitle: '',
     description: '',
+    thumbnail: 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&q=80&w=400',
+    type_id: '',
+    collection_id: '',
+    weight: 0,
+    price: 0,
+    stock: 0,
+    active_ingredient: '',
+    barcode: '',
+    location: '',
+    cost_price: 0,
+    min_stock: 0,
+    max_stock: 0,
+    category_id: '',
   });
+
+  const { categories } = useCategories();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      // Map initial data to form state
+      setFormData({
+        ...initialData,
+        price: (initialData.variants?.[0]?.prices?.find(p => p.currency_code === 'vnd')?.amount) || (initialData.variants?.[0]?.metadata?.price as number) || 0,
+        stock: (initialData.variants?.[0]?.metadata?.stock as number) || 0,
+        active_ingredient: (initialData as any).metadata?.active_ingredient || initialData.variants?.[0]?.metadata?.active_ingredient || '',
+        category_id: initialData.categories?.[0]?.id || '',
+        type_name: (initialData.type as any)?.value || ''
+      });
     }
   }, [initialData]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, thumbnail: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFormData({ ...formData, thumbnail: '' });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const finalId = formData.id === 'Tự động' ? `PRD-${Math.floor(Math.random() * 10000)}` : formData.id;
-    onSave({
+
+    // Construct a Product-compliant object
+    const product: any = {
       ...formData,
       id: finalId,
-      active_ingredient: formData.active_ingredient || 'N/A',
-      regulatory_doc: 'Verified',
-      expiry_date: new Date().toISOString().split('T')[0]
-    } as Product);
+      title: formData.title,
+      handle: formData.handle || formData.title.toLowerCase().replace(/ /g, '-'),
+      thumbnail: formData.thumbnail,
+      type: { value: formData.type_name },
+      categories: formData.category_id ? [{ id: formData.category_id }] : [],
+      metadata: {
+        active_ingredient: formData.active_ingredient
+      },
+      variants: [
+        {
+          id: formData.variants?.[0]?.id || `var-${finalId}`,
+          title: 'Default Variant',
+          barcode: formData.barcode,
+          metadata: {
+            price: formData.price,
+            stock: formData.stock,
+            active_ingredient: formData.active_ingredient
+          }
+        }
+      ]
+    };
+
+    onSave(product as Product);
   };
 
   const inputClass = "w-full h-12 px-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-sm font-bold text-slate-700 dark:text-white placeholder:text-slate-300 shadow-sm";
@@ -90,8 +139,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
                   <label className={labelClass}>Tên sản phẩm <span className="text-rose-500">*</span></label>
                   <input
                     type="text"
-                    value={formData.name}
-                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    value={formData.title}
+                    onChange={e => setFormData({ ...formData, title: e.target.value })}
                     placeholder="VD: SuperKill 500WP"
                     className={inputClass}
                   />
@@ -111,14 +160,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
                   <label className={labelClass}>Nhóm hàng</label>
                   <div className="relative">
                     <select
-                      value={formData.category}
-                      onChange={e => setFormData({ ...formData, category: e.target.value })}
+                      value={formData.category_id}
+                      onChange={e => setFormData({ ...formData, category_id: e.target.value })}
                       className={`${inputClass} appearance-none pr-10 cursor-pointer`}
                     >
                       <option value="">Chọn nhóm hàng</option>
-                      <option value="Thuốc trừ sâu">Thuốc trừ sâu</option>
-                      <option value="Phân bón lá">Phân bón lá</option>
-                      <option value="Thuốc trừ bệnh">Thuốc trừ bệnh</option>
+                      {categories.map(cat => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      ))}
                     </select>
                     <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                   </div>
@@ -139,16 +188,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
           <hr className="dark:border-slate-800" />
 
           <section>
-            <h3 className={sectionTitleClass}><Banknote className="text-emerald-500" /> Giá vốn & Giá bán</h3>
+            <h3 className={sectionTitleClass}><Banknote className="text-emerald-500" /> Giá bán lẻ</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <Card className="p-6 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm">
-                <label className={labelClass}>Giá vốn (Ước tính)</label>
+              <Card className="p-6 bg-primary/5 border-2 border-primary/20 shadow-sm">
+                <label className={labelClass}>Giá vốn (ước tính)</label>
                 <div className="relative mt-2">
                   <input
                     type="number"
                     value={formData.cost_price}
                     onChange={e => setFormData({ ...formData, cost_price: Number(e.target.value) })}
-                    className={`${inputClass} text-right font-black text-lg`}
+                    className={`${inputClass} text-right font-black text-lg text-primary`}
                   />
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">VNĐ</span>
                 </div>
@@ -177,8 +226,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
                 <label className={labelClass}>Tồn kho hiện tại</label>
                 <input
                   type="number"
-                  value={formData.current_stock}
-                  onChange={e => setFormData({ ...formData, current_stock: Number(e.target.value) })}
+                  value={formData.stock}
+                  onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })}
                   className={`${inputClass} font-black`}
                 />
               </div>
@@ -188,7 +237,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
                   type="number"
                   value={formData.min_stock}
                   onChange={e => setFormData({ ...formData, min_stock: Number(e.target.value) })}
-                  className={`${inputClass} text-rose-500 font-bold`}
+                  className={`${inputClass} font-black`}
                 />
               </div>
               <div>
@@ -197,7 +246,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
                   type="number"
                   value={formData.max_stock}
                   onChange={e => setFormData({ ...formData, max_stock: Number(e.target.value) })}
-                  className={`${inputClass} text-emerald-500 font-bold`}
+                  className={`${inputClass} font-black`}
                 />
               </div>
             </div>
@@ -234,15 +283,46 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
         <div className="lg:col-span-4 space-y-8">
           <section>
             <label className={labelClass}>Hình ảnh sản phẩm</label>
-            <div className="aspect-square bg-white dark:bg-slate-800 rounded-[40px] border-4 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center p-10 group cursor-pointer hover:border-primary transition-all relative overflow-hidden shadow-sm">
-              <img src={formData.image_style} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform opacity-40" alt="" />
-              <div className="relative z-10 flex flex-col items-center">
-                <div className="w-20 h-20 bg-white dark:bg-slate-700 rounded-[24px] flex items-center justify-center shadow-2xl mb-4 text-primary border border-slate-100 dark:border-slate-600">
-                  <Camera size={40} />
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={handleImageChange}
+            />
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="aspect-square bg-white dark:bg-slate-800 rounded-[40px] border-4 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center p-10 group cursor-pointer hover:border-primary transition-all relative overflow-hidden shadow-sm"
+            >
+              {formData.thumbnail ? (
+                <>
+                  <img src={formData.thumbnail} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform" alt="" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                        className="p-3 bg-white rounded-xl text-primary hover:bg-slate-50 transition-all shadow-xl"
+                      >
+                        <Camera size={20} />
+                      </button>
+                      <button
+                        onClick={removeImage}
+                        className="p-3 bg-white rounded-xl text-rose-500 hover:bg-slate-50 transition-all shadow-xl"
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="relative z-10 flex flex-col items-center">
+                  <div className="w-20 h-20 bg-white dark:bg-slate-700 rounded-[24px] flex items-center justify-center shadow-2xl mb-4 text-primary border border-slate-100 dark:border-slate-600">
+                    <Camera size={40} />
+                  </div>
+                  <p className="text-sm font-black uppercase text-slate-700 dark:text-white">TẢI ẢNH LÊN</p>
+                  <p className="text-xs text-slate-400 font-medium mt-1">Hỗ trợ JPG, PNG (Max 5MB)</p>
                 </div>
-                <p className="text-sm font-black uppercase text-slate-700 dark:text-white">TẢI ẢNH LÊN</p>
-                <p className="text-xs text-slate-400 font-medium mt-1">Hỗ trợ JPG, PNG (Max 5MB)</p>
-              </div>
+              )}
             </div>
           </section>
 
@@ -268,19 +348,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
                   </select>
                   <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 opacity-40 pointer-events-none" />
                 </div>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10">
-                <div className="flex items-center gap-3">
-                  <HelpCircle size={20} className="text-emerald-400" />
-                  <span className="text-sm font-bold uppercase tracking-tighter">Bán trực tiếp</span>
-                </div>
-                <input
-                  type="checkbox"
-                  className="w-6 h-6 rounded-lg border-white/20 text-primary focus:ring-offset-slate-900"
-                  checked={formData.is_selling_directly}
-                  onChange={e => setFormData({ ...formData, is_selling_directly: e.target.checked })}
-                />
               </div>
             </div>
 

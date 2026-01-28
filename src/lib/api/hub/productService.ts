@@ -1,5 +1,5 @@
-import bridgeClient from './bridgeClient';
-import { BRIDGE_ENDPOINTS } from './config';
+import bridgeClient from '../bridgeClient';
+import { BRIDGE_ENDPOINTS } from '../config';
 
 export interface BridgeProduct {
     id: string;

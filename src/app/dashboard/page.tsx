@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { selectIsAuthenticated, selectCurrentUser } from '@/store/selectors';
-import { logout } from '@/store/slices/authSlice';
+import { logout, logoutFromMedusa } from '@/store/slices/authSlice';
 import { setView, toggleSidebar, toggleTheme } from '@/store/slices/uiSlice';
 import { selectIsSidebarCollapsed, selectIsDarkMode, selectCurrentView } from '@/store/selectors';
 import { UserRole } from '@/types/enum';
@@ -33,8 +33,8 @@ import { Product } from '@/types/product';
 import { NewsView } from './dashboards/News';
 import { DiagnosisScreen } from './pages/DiagnosisScreen';
 import { DiseaseDetailScreen } from './pages/DiseaseDetailScreen';
-import { MOCK_PRODUCTS } from '../../../mocks/product';
 import { addToCart } from '@/store/slices/cartSlice';
+import { useMedusaProducts } from '@/hooks';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -48,10 +48,20 @@ export default function DashboardPage() {
   const isDarkMode = useAppSelector(selectIsDarkMode);
   const [isGlobalLoading, setIsGlobalLoading] = useState(false);
 
-  const [localProducts, setLocalProducts] = useState<Product[]>(() => {
-    const saved = localStorage.getItem('retail_inventory');
-    return saved ? JSON.parse(saved) : MOCK_PRODUCTS;
-  });
+  const { products: medusaProducts, loading: medusaLoading } = useMedusaProducts({ autoFetch: true });
+
+  const [localProducts, setLocalProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    if (medusaProducts.length > 0) {
+      const saved = localStorage.getItem('retail_inventory');
+      if (saved) {
+        setLocalProducts(JSON.parse(saved));
+      } else {
+        setLocalProducts(medusaProducts);
+      }
+    }
+  }, [medusaProducts]);
 
   const [selectedDiseaseId, setSelectedDiseaseId] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -75,7 +85,7 @@ export default function DashboardPage() {
   }
 
   const handleLogout = () => {
-    dispatch(logout());
+    dispatch(logoutFromMedusa());
     router.push('/login');
   };
 
@@ -163,7 +173,7 @@ export default function DashboardPage() {
                 product,
                 quantity: config.quantity || 1,
                 unit: 'Thùng',
-                price: product.price
+                price: 0
               }));
             }}
           />
@@ -192,7 +202,7 @@ export default function DashboardPage() {
                 product,
                 quantity: config.quantity || 1,
                 unit: 'Thùng',
-                price: product.price
+                price: 0
               }));
             }}
           />

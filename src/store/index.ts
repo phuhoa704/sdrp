@@ -6,19 +6,21 @@ import authReducer from './slices/authSlice';
 import cartReducer from './slices/cartSlice';
 import uiReducer from './slices/uiSlice';
 import productsReducer from './slices/productsSlice';
+import stockReducer from './slices/stockSlice';
 
 const rootReducer = combineReducers({
     auth: authReducer,
     cart: cartReducer,
     ui: uiReducer,
     products: productsReducer,
+    stock: stockReducer,
 });
 
 const persistConfig = {
     key: 'root',
     version: 1,
     storage,
-    whitelist: ['auth', 'cart', 'ui'], // Only persist these reducers
+    whitelist: ['auth', 'cart', 'ui', 'stock'], // Only persist these reducers
     blacklist: ['products'], // Don't persist products (fetch from API)
 };
 

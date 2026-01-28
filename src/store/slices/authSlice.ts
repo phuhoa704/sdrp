@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { UserRole } from '@/types/enum';
-import { authService, LoginCredentials, RegisterData, MedusaCustomer } from '@/lib/api/auth';
+import { authService, LoginCredentials, RegisterData, MedusaCustomer } from '@/lib/api/medusa/auth';
 
 interface AuthState {
     isAuthenticated: boolean;
@@ -41,7 +41,7 @@ export const loginWithMedusa = createAsyncThunk(
             const response = await authService.login(credentials);
             return {
                 user: mapMedusaCustomerToUser(response.customer),
-                token: response.token,
+                token: response.token || null,
             };
         } catch (error) {
             return rejectWithValue(error instanceof Error ? error.message : 'Login failed');
@@ -56,7 +56,7 @@ export const registerWithMedusa = createAsyncThunk(
             const response = await authService.register(data);
             return {
                 user: mapMedusaCustomerToUser(response.customer),
-                token: response.token,
+                token: response.token || null,
             };
         } catch (error) {
             return rejectWithValue(error instanceof Error ? error.message : 'Registration failed');
@@ -66,9 +66,9 @@ export const registerWithMedusa = createAsyncThunk(
 
 export const fetchSession = createAsyncThunk(
     'auth/fetchSession',
-    async (token: string, { rejectWithValue }) => {
+    async (_, { rejectWithValue }) => {
         try {
-            const response = await authService.getSession(token);
+            const response = await authService.getSession();
             return {
                 user: mapMedusaCustomerToUser(response.customer),
             };
@@ -80,9 +80,9 @@ export const fetchSession = createAsyncThunk(
 
 export const logoutFromMedusa = createAsyncThunk(
     'auth/logoutFromMedusa',
-    async (token: string, { rejectWithValue }) => {
+    async (_, { rejectWithValue }) => {
         try {
-            await authService.logout(token);
+            await authService.logout();
         } catch (error) {
             // Continue with logout even if API call fails
             console.error('Logout API error:', error);
@@ -157,16 +157,19 @@ const authSlice = createSlice({
         builder
             .addCase(fetchSession.pending, (state) => {
                 state.loading = true;
+                state.error = null;
             })
             .addCase(fetchSession.fulfilled, (state, action) => {
                 state.loading = false;
                 state.user = action.payload.user;
+                state.error = null;
             })
-            .addCase(fetchSession.rejected, (state) => {
+            .addCase(fetchSession.rejected, (state, action) => {
                 state.loading = false;
                 state.isAuthenticated = false;
                 state.user = null;
                 state.token = null;
+                state.error = action.payload as string;
             });
 
         // Logout

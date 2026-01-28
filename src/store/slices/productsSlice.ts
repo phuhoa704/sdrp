@@ -8,6 +8,12 @@ interface ProductsState {
     selectedCategory: string | null;
     isLoading: boolean;
     error: string | null;
+    pagination: {
+        limit: number;
+        offset: number;
+        count: number;
+    };
+    currencyCode: string;
 }
 
 const initialState: ProductsState = {
@@ -17,15 +23,22 @@ const initialState: ProductsState = {
     selectedCategory: null,
     isLoading: false,
     error: null,
+    pagination: {
+        limit: 10,
+        offset: 0,
+        count: 0,
+    },
+    currencyCode: "vnd",
 };
 
 const productsSlice = createSlice({
     name: 'products',
     initialState,
     reducers: {
-        setProducts: (state, action: PayloadAction<Product[]>) => {
-            state.items = action.payload;
-            state.filteredItems = action.payload;
+        setProducts: (state, action: PayloadAction<{ products: Product[], count: number }>) => {
+            state.items = action.payload.products;
+            state.filteredItems = action.payload.products;
+            state.pagination.count = action.payload.count;
             state.isLoading = false;
             state.error = null;
         },
@@ -38,16 +51,25 @@ const productsSlice = createSlice({
         },
         setSearchQuery: (state, action: PayloadAction<string>) => {
             state.searchQuery = action.payload;
-            state.filteredItems = state.items.filter((product) =>
-                product.name.toLowerCase().includes(action.payload.toLowerCase()) ||
-                product.category.toLowerCase().includes(action.payload.toLowerCase()) ||
-                product.active_ingredient.toLowerCase().includes(action.payload.toLowerCase())
-            );
+            state.filteredItems = state.items.filter((product) => {
+                const title = product.title || "";
+                const category = (product.type as any)?.value || "";
+                const activeIngredient = (product as any).metadata?.active_ingredient || product.variants?.[0]?.metadata?.active_ingredient || "";
+
+                return (
+                    title.toLowerCase().includes(action.payload.toLowerCase()) ||
+                    category.toLowerCase().includes(action.payload.toLowerCase()) ||
+                    activeIngredient.toLowerCase().includes(action.payload.toLowerCase())
+                );
+            });
         },
         setSelectedCategory: (state, action: PayloadAction<string | null>) => {
             state.selectedCategory = action.payload;
             if (action.payload) {
-                state.filteredItems = state.items.filter((product) => product.category === action.payload);
+                state.filteredItems = state.items.filter((product) => {
+                    const category = (product.type as any)?.value || "";
+                    return category === action.payload;
+                });
             } else {
                 state.filteredItems = state.items;
             }
@@ -67,6 +89,9 @@ const productsSlice = createSlice({
             state.items = state.items.filter((p) => p.id !== action.payload);
             state.filteredItems = state.items;
         },
+        setPagination: (state, action: PayloadAction<Partial<ProductsState['pagination']>>) => {
+            state.pagination = { ...state.pagination, ...action.payload };
+        },
     },
 });
 
@@ -79,5 +104,6 @@ export const {
     updateProduct,
     addProduct,
     deleteProduct,
+    setPagination,
 } = productsSlice.actions;
 export default productsSlice.reducer;

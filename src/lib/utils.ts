@@ -42,3 +42,9 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
         timeout = setTimeout(() => func(...args), wait);
     };
 }
+/**
+ * Format currency based on amount and currency code
+ */
+export function formatCurrency(amount: number, currencyCode: string = 'vnd'): string {
+    return amount.toLocaleString() + (currencyCode.toLowerCase() === 'vnd' ? 'đ' : ` ${currencyCode.toUpperCase()}`);
+}

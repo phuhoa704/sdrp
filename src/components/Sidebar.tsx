@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import {
   Home, Package, User, ShoppingBag, BookOpen, Tag, Ticket,
   ChevronDown, ChevronRight, Zap, Moon, Sun, ChevronLeft,
@@ -8,6 +8,8 @@ import {
 import { UserRole } from '@/types/enum';
 import { ViewState } from '@/types/view-state';
 import { cn } from '@/lib/utils';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { setSelectedLocationId } from '@/store/slices/stockSlice';
 
 interface SidebarProps {
   currentView: ViewState;
@@ -44,12 +46,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
   toggleTheme,
   onBrandChange
 }) => {
-  const [selectedBrand, setSelectedBrand] = useState("Chi nhánh Đồng Tháp");
+  const dispatch = useAppDispatch();
   const [isBrandMenuOpen, setIsBrandMenuOpen] = useState(false);
   const brandMenuRef = useRef<HTMLDivElement>(null);
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['marketplace', 'warehouse']);
   const [hoveredMenu, setHoveredMenu] = useState<{ id: string, top: number } | null>(null);
-  const brands = ["Chi nhánh Đồng Tháp", "Chi nhánh Long An", "Chi nhánh An Giang"];
+
+  const { locations, selectedLocationId } = useAppSelector((state) => state.stock);
+
+  const selectedLocation = useMemo(() =>
+    locations.find(l => l.id === selectedLocationId) || locations[0],
+    [locations, selectedLocationId]
+  );
+
+  const selectedBrand = selectedLocation?.name || "Chi nhánh...";
+
+  const brands = useMemo(() =>
+    locations.length > 0 ? locations.map(l => l.name) : ["Đang tải..."],
+    [locations]
+  );
+
+  useEffect(() => {
+    if (selectedLocation && onBrandChange) {
+      onBrandChange(selectedLocation.name);
+    }
+  }, [selectedLocation, onBrandChange]);
+
 
   const toggleMenu = (menuId: string) => {
     setExpandedMenus(prev =>
@@ -341,14 +363,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {isBrandMenuOpen && !isCollapsed && (
               <div className="absolute bottom-full left-0 right-0 mb-3 glass-panel rounded-2xl shadow-2xl border border-white/20 overflow-hidden animate-slide-up z-[60]">
                 <div className="p-1.5 max-h-48 overflow-y-auto no-scrollbar">
-                  {brands.map(b => (
+                  {locations.map(loc => (
                     <button
-                      key={b}
-                      onClick={() => { setSelectedBrand(b); onBrandChange?.(b); setIsBrandMenuOpen(false); }}
-                      className={`w-full flex items-center justify-between p-3 rounded-xl text-[11px] font-bold tracking-wide transition-all ${selectedBrand === b ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-600 dark:text-slate-300 hover:bg-emerald-50'}`}
+                      key={loc.id}
+                      onClick={() => {
+                        dispatch(setSelectedLocationId(loc.id));
+                        onBrandChange?.(loc.name);
+                        setIsBrandMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between p-3 rounded-xl text-[11px] font-bold tracking-wide transition-all ${selectedLocationId === loc.id ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-600 dark:text-slate-300 hover:bg-emerald-50'}`}
                     >
-                      <span className="truncate pr-2">{b}</span>
-                      {selectedBrand === b && <Check size={14} className="shrink-0" />}
+                      <span className="truncate pr-2">{loc.name}</span>
+                      {selectedLocationId === loc.id && <Check size={14} className="shrink-0" />}
                     </button>
                   ))}
                 </div>
