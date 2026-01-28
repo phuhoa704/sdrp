@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchHubSession } from '@/store/slices/authSlice';
 import { hubAuthService } from '@/lib/api/hub/authService';
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function HubAuthProvider({ children }: { children: React.ReactNode }) {
     const dispatch = useAppDispatch();
     const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 

@@ -9,14 +9,14 @@ const bridgeClient = axios.create({
     },
 });
 
-// Add interceptors if needed (e.g., for auth tokens)
+// Add interceptors for auth tokens
 bridgeClient.interceptors.request.use(
     (config) => {
-        // You can get the token from local storage or state here
-        // const token = localStorage.getItem('token');
-        // if (token) {
-        //     config.headers.Authorization = `Bearer ${token}`;
-        // }
+        // Get the token from local storage
+        const token = localStorage.getItem('hub_auth_token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
         return config;
     },
     (error) => {

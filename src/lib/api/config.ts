@@ -30,7 +30,15 @@ export const API_ENDPOINTS = {
 } as const;
 
 export const BRIDGE_ENDPOINTS = {
+    // Products
     PRODUCTS: '/admin/products',
+
+    // Auth
+    AUTH_LOGIN: '/auth/login',
+    AUTH_REGISTER: '/auth/register',
+    AUTH_ME: '/auth/me',
+    AUTH_LOGOUT: '/auth/logout',
+    AUTH_PROFILE: '/auth/profile',
 } as const;
 
 // Request headers
