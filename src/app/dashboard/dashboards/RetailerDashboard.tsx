@@ -53,9 +53,10 @@ interface Props {
   onProductClick: (p: Product) => void;
   onViewAllNews?: () => void;
   onDiagnose?: () => void;
+  onGoToPOS?: () => void;
 }
 
-export default function RetailerDashboard({ onSelectNewsArticle, onSelectDisease, onProductClick, onViewAllNews, onDiagnose }: Props) {
+export default function RetailerDashboard({ onSelectNewsArticle, onSelectDisease, onProductClick, onViewAllNews, onDiagnose, onGoToPOS }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
   const [promoIndex, setPromoIndex] = useState(0);
@@ -129,6 +130,7 @@ export default function RetailerDashboard({ onSelectNewsArticle, onSelectDisease
           <Button
             className="h-14 rounded-2xl px-10 font-extrabold text-xs shadow-xl shadow-emerald-500/20 w-full md:w-auto tracking-widest"
             icon={<Plus size={20} />}
+            onClick={onGoToPOS}
           >
             BÁN HÀNG NGAY (POS)
           </Button>

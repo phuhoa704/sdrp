@@ -45,10 +45,26 @@ export interface StockAuditVoucher {
     note?: string;
 }
 
+export interface StockLocationAddress {
+    id: string;
+    address_1: string | null;
+    address_2: string | null;
+    city: string | null;
+    country_code: string | null;
+    phone: string | null;
+    postal_code: string | null;
+    province: string | null;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+    metadata: Record<string, unknown> | null;
+}
+
 export interface StockLocation {
     id: string;
     name: string;
     address_id?: string;
+    address?: StockLocationAddress | null;
     metadata?: Record<string, unknown>;
     created_at: string;
     updated_at: string;

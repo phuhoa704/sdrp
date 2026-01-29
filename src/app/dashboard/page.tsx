@@ -230,6 +230,7 @@ export default function DashboardPage() {
                   handleSetView('NEWS');
                 }}
                 onDiagnose={() => handleSetView('AI_DIAGNOSIS')}
+                onGoToPOS={handleGoToPOS}
               />
             );
           case UserRole.SELLER:
@@ -247,6 +248,7 @@ export default function DashboardPage() {
                   handleSetView('NEWS');
                 }}
                 onDiagnose={() => handleSetView('AI_DIAGNOSIS')}
+                onGoToPOS={handleGoToPOS}
               />
             );
         }

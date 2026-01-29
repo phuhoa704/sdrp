@@ -126,6 +126,18 @@ export interface ProductVariant {
 
     options: VariantOption[]
     prices: MoneyAmount[]
+
+    inventory_quantity?: number | null
+    inventory_items?: {
+        inventory: {
+            location_levels: {
+                id: string
+                location_id: string
+                available_quantity: number
+                stocked_quantity: number
+            }[]
+        }
+    }[]
 }
 
 export interface ProductTag {

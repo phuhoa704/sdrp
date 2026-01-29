@@ -7,5 +7,3 @@ export * from "./medusa/useSalesChannels";
 export * from "./medusa/useProduct";
 export * from "./medusa/useProductTags";
 
-// Hub / Bridge Hooks
-export { useProducts as useHubProducts } from "./hub/useProducts";

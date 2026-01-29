@@ -1,5 +1,6 @@
 import bridgeClient, { setBridgeAuthToken } from '../bridgeClient';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config';
 
 export interface MedusaAuthResponse {
     customer: {
@@ -75,6 +76,10 @@ class AuthService {
             if (token) {
                 setBridgeAuthToken(token);
             }
+
+            // Per Medusa session flow: calling /auth/session will return Set-Cookie.
+            // Browser will store/send cookies automatically because `withCredentials: true`.
+            await bridgeClient.post('/auth/session');
 
             // Retrieve admin user details after successful login
             const meRes = await bridgeClient.get<AdminMeResponse>('/admin/users/me');

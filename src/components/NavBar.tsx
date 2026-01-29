@@ -1,5 +1,6 @@
 
-import React, { Fragment } from 'react';
+import React, { Fragment, useState } from 'react';
+import { ConfirmModal } from '@/components';
 import { LogOut, Bell, MonitorPlay, BrainCircuit, Sparkles, BookOpen, Zap } from 'lucide-react';
 import { UserRole } from '@/types/enum';
 
@@ -23,6 +24,8 @@ const NEWS = [
 ]
 
 export const Header: React.FC<HeaderProps> = ({ title, subtitle, role, onLogout, onGoToPOS, onAIDiagnosis, onDiseaseLookup, avatarUrl = "https://picsum.photos/100/100", onShowNotifications }) => {
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+
   return (
     <header className="flex items-center justify-between py-6 px-8 sticky top-0 bg-[#F8FAFC]/80 dark:bg-slate-950/80 z-40 backdrop-blur-md border-b border-green-50/50 dark:border-slate-800/50 transition-colors duration-300">
       <div className="flex items-center gap-2 lg:gap-4 min-w-0 shrink">
@@ -91,13 +94,26 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, role, onLogout,
           <Bell size={18} />
           <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-400 rounded-full border-2 border-white dark:border-slate-900"></span>
         </button>
-        <button onClick={onLogout} className="p-2.5 bg-white dark:bg-slate-900 rounded-2xl shadow-smooth text-slate-400 dark:text-slate-500 hover:text-rose-400 transition-all border border-transparent dark:border-slate-800">
+        <button onClick={() => setIsLogoutModalOpen(true)} className="p-2.5 bg-white dark:bg-slate-900 rounded-2xl shadow-smooth text-slate-400 dark:text-slate-500 hover:text-rose-400 transition-all border border-transparent dark:border-slate-800">
           <LogOut size={18} />
         </button>
         <div className="w-11 h-11 rounded-2xl border-4 border-white dark:border-slate-800 shadow-smooth overflow-hidden">
           <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
         </div>
       </div>
+      <ConfirmModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={() => {
+          setIsLogoutModalOpen(false);
+          onLogout();
+        }}
+        title="Đăng xuất"
+        message="Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?"
+        confirmText="Đăng xuất"
+        cancelText="Hủy"
+        variant="danger"
+      />
     </header>
   );
 };

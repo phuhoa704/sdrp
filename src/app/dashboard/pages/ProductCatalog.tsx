@@ -24,10 +24,11 @@ import {
 import { Breadcrumb, Card, Button, ConfirmModal, AlertModal } from '@/components';
 import { ProductModal } from '@/components/product/ProductModal';
 import { ProductForm } from '@/components/form/product/ProductForm';
-import { Product } from '@/types/product';
+import { ProductVariantsModal } from '@/components/product/ProductVariantsModal';
+import { Product, ProductVariant } from '@/types/product';
 import { productService } from '@/lib/api/medusa/productService';
 import { uploadService } from '@/lib/api/medusa/uploadService';
-import { useCategories, useMedusaProducts, useProductTags, useSalesChannels } from '@/hooks';
+import { useCategories, useMedusaProducts, useProductTags } from '@/hooks';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setPagination } from '@/store/slices/productsSlice';
 import { addToCart } from '@/store/slices/cartSlice';
@@ -54,6 +55,11 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
 
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [selectedModalProduct, setSelectedModalProduct] = useState<Product | null>(null);
+
+  const [isVariantsModalOpen, setIsVariantsModalOpen] = useState(false);
+  const [variantsList, setVariantsList] = useState<ProductVariant[]>([]);
+  const [selectedVariantProduct, setSelectedVariantProduct] = useState<Product | null>(null);
+
   const [isFetchingDetail, setIsFetchingDetail] = useState(false);
 
   const [alertConfig, setAlertConfig] = useState<{
@@ -112,19 +118,46 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
   const handleRestock = async (p: Product) => {
     setIsFetchingDetail(true);
     try {
-      const { product } = await productService.getProduct(p.id, {
-        fields: "*categories,*sales_channels,*variants.prices"
+      // Fetch variants for this product
+      const response = await productService.getVariants(p.id, {
+        order: 'variant_rank',
+        limit: 10,
+        fields: 'title,sku,thumbnail,*options,created_at,*inventory_items.inventory.location_levels,inventory_quantity,manage_inventory'
       });
-      setSelectedModalProduct(product);
-      setIsProductModalOpen(true);
+      setVariantsList(response.variants || []);
+      setSelectedVariantProduct(p);
+      setIsVariantsModalOpen(true);
     } catch (err) {
-      console.error("Failed to fetch product detail:", err);
-      setSelectedModalProduct(p);
-      setIsProductModalOpen(true);
+      console.error("Failed to fetch product variants:", err);
+      setAlertConfig({
+        isOpen: true,
+        title: 'Lỗi',
+        message: 'Không thể tải danh sách biến thể',
+        variant: 'danger'
+      });
     } finally {
       setIsFetchingDetail(false);
     }
   };
+  const handleUpdateVariants = async () => {
+    if (!selectedVariantProduct) return;
+    try {
+      const { product } = await productService.getProduct(selectedVariantProduct.id, {
+        fields: "*categories,*sales_channels,*variants.prices,*options"
+      });
+      setSelectedVariantProduct(product);
+
+      const response = await productService.getVariants(product.id, {
+        order: 'variant_rank',
+        limit: 10,
+        fields: 'title,sku,thumbnail,*options,created_at,*inventory_items.inventory.location_levels,inventory_quantity,manage_inventory'
+      });
+      setVariantsList(response.variants || []);
+    } catch (err) {
+      console.error("Failed to refresh variants:", err);
+    }
+  };
+
   const selectedSalesChannelId = useAppSelector(selectSelectedSalesChannelId);
 
   // hooks
@@ -147,7 +180,6 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
   const [isSaving, setIsSaving] = useState(false);
   const { tags } = useProductTags();
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
-  const { salesChannels } = useSalesChannels();
 
   const processedProducts = useMemo(() => {
     // We already filtered via API for medusaProducts
@@ -696,6 +728,20 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
               techSpecs: config.tech_specs
             }));
           }}
+        />
+      )}
+
+      {isVariantsModalOpen && (
+        <ProductVariantsModal
+          isOpen={isVariantsModalOpen}
+          onClose={() => {
+            setIsVariantsModalOpen(false);
+            setVariantsList([]);
+            setSelectedVariantProduct(null);
+          }}
+          product={selectedVariantProduct}
+          variants={variantsList}
+          onUpdate={handleUpdateVariants}
         />
       )}
 

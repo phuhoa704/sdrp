@@ -41,9 +41,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
     collection_id: '',
     sales_channel_ids: [] as string[],
     price: 0,
-    stock: 0,
     options: [] as ProductOption[],
-    variantData: {} as Record<string, { price: number; stock: number; sku?: string }>
+    variantData: {} as Record<string, { price: number; sku?: string }>
   });
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -68,7 +67,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
         const variantKey = v.options.map(o => o.value).join(' / ') || 'Default';
         variantData[variantKey] = {
           price: (v.prices?.find(p => p.currency_code === 'vnd')?.amount) || (v.metadata?.price as number) || 0,
-          stock: (v.metadata?.stock as number) || 0,
           sku: v.sku || ''
         };
       });
@@ -84,7 +82,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
         collection_id: initialData.collection_id || '',
         sales_channel_ids: initialData.sales_channels?.map(sc => sc.id) || [],
         price: variantData['Default']?.price || 0,
-        stock: variantData['Default']?.stock || 0,
         options,
         variantData
       });
@@ -194,13 +191,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
       variants: formData.has_variants ? generatedVariants.map(v => ({
         title: v,
         price: formData.variantData[v]?.price || 0,
-        stock: formData.variantData[v]?.stock || 0,
         sku: formData.variantData[v]?.sku || ''
       })) : [
         {
           title: 'Default',
           price: formData.price,
-          stock: formData.stock,
           sku: formData.barcode || ''
         }
       ]
@@ -532,18 +527,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
                         {errors.price && <p className="text-[10px] font-bold text-rose-500 mt-1.5 text-right">{errors.price}</p>}
                       </div>
                     </div>
-                    <div>
-                      <label className={labelClass}>Tồn kho ban đầu (g)</label>
-                      <input
-                        type="text"
-                        value={formatDisplayNumber(formData.stock)}
-                        onChange={e => {
-                          const val = parseDisplayNumber(e.target.value);
-                          setFormData({ ...formData, stock: val });
-                        }}
-                        className={cn(inputClass, "font-black text-xl")}
-                      />
-                    </div>
+
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -553,7 +537,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
                           <tr>
                             <th className="px-6 py-4">Biến thể</th>
                             <th className="px-6 py-4 w-40">Giá bán (đ)</th>
-                            <th className="px-6 py-4 w-32">Tồn kho</th>
                             <th className="px-6 py-4 w-40">SKU</th>
                           </tr>
                         </thead>
@@ -580,23 +563,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
                                   className="w-full h-10 px-3 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl text-right font-black text-primary text-xs outline-none focus:ring-2 focus:ring-primary/20"
                                 />
                               </td>
-                              <td className="px-6 py-4">
-                                <input
-                                  type="text"
-                                  value={formatDisplayNumber(formData.variantData[vKey]?.stock || 0)}
-                                  onChange={e => {
-                                    const val = parseDisplayNumber(e.target.value);
-                                    setFormData({
-                                      ...formData,
-                                      variantData: {
-                                        ...formData.variantData,
-                                        [vKey]: { ...formData.variantData[vKey], stock: val }
-                                      }
-                                    });
-                                  }}
-                                  className="w-full h-10 px-3 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl text-center font-black text-slate-700 dark:text-slate-200 text-xs outline-none focus:ring-2 focus:ring-primary/20"
-                                />
-                              </td>
+
                               <td className="px-6 py-4">
                                 <input
                                   type="text"
