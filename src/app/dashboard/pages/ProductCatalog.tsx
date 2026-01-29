@@ -465,14 +465,15 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {(medusaLoading && processedProducts.length === 0) && (
+                {(medusaLoading && processedProducts.length === 0) ? (
                   <tr>
-                    <td colSpan={7} className="flex justify-center py-20">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                    <td colSpan={8} className="py-20">
+                      <div className="flex justify-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                      </div>
                     </td>
                   </tr>
-                )}
-                {processedProducts.length > 0 ? (
+                ) : (processedProducts.length > 0 ? (
                   processedProducts.map((p) => {
                     const isExpanded = expandedProducts.includes(p.id);
                     const firstVariant = p.variants?.[0];
@@ -623,7 +624,7 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
                   })
                 ) : (
                   <tr>
-                    <td colSpan={7} className="py-32 text-center">
+                    <td colSpan={8} className="py-32 text-center">
                       <div className="flex flex-col items-center justify-center gap-4 opacity-40">
                         <div className="w-20 h-20 rounded-[32px] bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
                           <Package size={40} />
@@ -639,7 +640,7 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
                       </div>
                     </td>
                   </tr>
-                )}
+                ))}
               </tbody>
             </table>
           </div>
