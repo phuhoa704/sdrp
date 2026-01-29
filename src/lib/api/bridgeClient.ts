@@ -5,7 +5,6 @@ const bridgeClient = axios.create({
     baseURL: BRIDGE_API_URL,
     withCredentials: true,
     headers: {
-        "ngrok-skip-browser-warning": true,
         'Content-Type': 'application/json',
     },
 });
@@ -26,7 +25,6 @@ bridgeClient.interceptors.request.use(
     (config) => {
         if (bridgeAuthToken && !config.headers?.Authorization) {
             config.headers.Authorization = `Bearer ${bridgeAuthToken}`;
-            config.headers["Access-Control-Allow-Origin"] = "*";
         }
 
         if (MEDUSA_PUBLISHABLE_KEY && !config.headers?.['x-publishable-api-key']) {
