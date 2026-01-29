@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { loginWithHub } from '@/store/slices/authSlice';
+import { loginWithMedusa } from '@/store/slices/authSlice';
 import { addNotification } from '@/store/slices/uiSlice';
 import { UserRole } from '@/types/enum';
 import { LogIn, Mail, Lock, User, Zap, AlertCircle } from 'lucide-react';
@@ -28,8 +28,8 @@ export default function LoginPage() {
     }
 
     try {
-      // Hub authentication
-      const result = await dispatch(loginWithHub({ email, password })).unwrap();
+      // Real Medusa.js authentication
+      const result = await dispatch(loginWithMedusa({ email, password })).unwrap();
 
       // Add welcome notification
       dispatch(addNotification({

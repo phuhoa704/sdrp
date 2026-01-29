@@ -1,47 +1,50 @@
-// Medusa.js API Configuration
+
 export const MEDUSA_BACKEND_URL = process.env.NEXT_PUBLIC_MEDUSA_URL || 'http://localhost:8888';
 export const MEDUSA_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || '';
 
-// Bridge Backend Configuration
 export const BRIDGE_API_URL = process.env.NEXT_PUBLIC_BRIDGE_API_URL || 'https://sdrp-bridge-stg.teknix.services/';
 
-// API Endpoints
 export const API_ENDPOINTS = {
-    // Auth
-    AUTH_LOGIN: '/auth/customer/emailpass',
-    AUTH_REGISTER: '/auth/customer/emailpass/register',
+    AUTH_LOGIN: '/auth/user/emailpass',
     AUTH_SESSION: '/auth/session',
-    AUTH_LOGOUT: '/auth/session',
 
-    // Customer
-    CUSTOMER_ME: '/store/customers/me',
+    ADMIN_ME: '/admin/users/me',
+    ADMIN_USER_DETAIL: (id: string) => `/admin/users/${id}`,
 
-    // Products
-    PRODUCTS: '/store/products',
-    PRODUCT_DETAIL: (id: string) => `/store/products/${id}`,
+    STORE_CUSTOMERS: '/store/customers', 
+    STORE_CUSTOMER_ME: '/store/customers/me',
 
-    // Cart
+    ADMIN_PRODUCTS: '/admin/products',
+    ADMIN_PRODUCT_DETAIL: (id: string) => `/admin/products/${id}`,
+    ADMIN_PRODUCT_VARIANTS: (productId: string) => `/admin/products/${productId}/variants`,
+    ADMIN_PRODUCT_VARIANT_DETAIL: (productId: string, variantId: string) =>
+        `/admin/products/${productId}/variants/${variantId}`,
+
+    STORE_CATEGORIES: '/store/product-categories',
+    STORE_CATEGORY_DETAIL: (idOrHandle: string) => `/store/product-categories/${idOrHandle}`,
+
+    ADMIN_PRODUCT_TAGS: '/admin/product-tags',
+
+    ADMIN_SALES_CHANNELS: '/admin/sales-channels',
+    ADMIN_SALES_CHANNEL_DETAIL: (id: string) => `/admin/sales-channels/${id}`,
+
+    ADMIN_STOCK_LOCATIONS: '/admin/stock-locations',
+    ADMIN_STOCK_LOCATION_DETAIL: (id: string) => `/admin/stock-locations/${id}`,
+
+    ADMIN_UPLOADS: '/admin/uploads',
+    ADMIN_UPLOAD_DETAIL: (key: string) => `/admin/uploads/${key}`,
+
     CART: '/store/carts',
     CART_DETAIL: (id: string) => `/store/carts/${id}`,
 
-    // Orders
     ORDERS: '/store/orders',
     ORDER_DETAIL: (id: string) => `/store/orders/${id}`,
 } as const;
 
 export const BRIDGE_ENDPOINTS = {
-    // Products
     PRODUCTS: '/admin/products',
-
-    // Auth
-    AUTH_LOGIN: '/auth/login',
-    AUTH_REGISTER: '/auth/register',
-    AUTH_ME: '/auth/me',
-    AUTH_LOGOUT: '/auth/logout',
-    AUTH_PROFILE: '/auth/profile',
 } as const;
 
-// Request headers
 export const getHeaders = (token?: string) => {
     const headers: HeadersInit = {
         'Content-Type': 'application/json',

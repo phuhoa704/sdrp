@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { loginWithHub, registerWithHub, logoutFromHub, clearError } from '@/store/slices/authSlice';
+import { loginWithMedusa, registerWithMedusa, logoutFromMedusa, clearError } from '@/store/slices/authSlice';
 import { selectIsAuthenticated, selectCurrentUser, selectAuthLoading, selectAuthError } from '@/store/selectors';
-import { LoginCredentials, RegisterData } from '@/lib/api/hub/authService';
+import { LoginCredentials, RegisterData } from '@/lib/api/medusa/auth';
 
 export const useAuth = () => {
     const dispatch = useAppDispatch();
@@ -12,15 +12,15 @@ export const useAuth = () => {
     const error = useAppSelector(selectAuthError);
 
     const login = useCallback((credentials: LoginCredentials) => {
-        return dispatch(loginWithHub(credentials));
+        return dispatch(loginWithMedusa(credentials));
     }, [dispatch]);
 
     const register = useCallback((data: RegisterData) => {
-        return dispatch(registerWithHub(data));
+        return dispatch(registerWithMedusa(data));
     }, [dispatch]);
 
     const logout = useCallback(() => {
-        return dispatch(logoutFromHub());
+        return dispatch(logoutFromMedusa());
     }, [dispatch]);
 
     const clearAuthError = useCallback(() => {

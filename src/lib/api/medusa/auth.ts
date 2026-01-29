@@ -1,4 +1,5 @@
-import { medusa } from '../medusa';
+import bridgeClient, { setBridgeAuthToken } from '../bridgeClient';
+import axios from 'axios';
 
 export interface MedusaAuthResponse {
     customer: {
@@ -35,6 +36,31 @@ export interface RegisterData extends LoginCredentials {
     last_name: string;
 }
 
+type AdminMeResponse = {
+    user: {
+        id: string;
+        email: string;
+        first_name?: string;
+        last_name?: string;
+        metadata?: Record<string, unknown>;
+    };
+};
+
+type StoreCustomerCreateResponse = { customer: MedusaCustomer };
+
+type AuthLoginResponse = { token?: string };
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+    if (axios.isAxiosError(error)) {
+        const data = error.response?.data as { message?: string } | undefined;
+        return data?.message || error.message || fallback;
+    }
+    if (error instanceof Error) {
+        return error.message || fallback;
+    }
+    return fallback;
+};
+
 class AuthService {
     /**
      * Login with email and password using Medusa v2 Admin SDK
@@ -42,16 +68,17 @@ class AuthService {
     async login(credentials: LoginCredentials): Promise<MedusaAuthResponse> {
         try {
             // Medusa v2 Auth Login (Admin domain)
-            const response = await medusa.auth.login("user", "emailpass", credentials);
+            const loginRes = await bridgeClient.post<AuthLoginResponse>('/auth/user/emailpass', credentials);
 
             // If explicit token is returned (typical for JWT mode), ensure it's set
-            const token = (response as any).token;
+            const token = loginRes.data?.token;
             if (token) {
-                (medusa as any).client?.setToken?.(token);
+                setBridgeAuthToken(token);
             }
 
             // Retrieve admin user details after successful login
-            const { user } = await medusa.admin.user.me();
+            const meRes = await bridgeClient.get<AdminMeResponse>('/admin/users/me');
+            const user = meRes.data.user;
 
             return {
                 customer: {
@@ -60,12 +87,12 @@ class AuthService {
                     first_name: user.first_name || '',
                     last_name: user.last_name || '',
                     has_account: true,
-                    metadata: (user as any).metadata || {}
-                } as any,
+                    metadata: user.metadata || {}
+                },
                 token: token
             };
-        } catch (error: any) {
-            throw new Error(error.message || 'Invalid credentials');
+        } catch (error: unknown) {
+            throw new Error(getErrorMessage(error, 'Invalid credentials'));
         }
     }
 
@@ -74,10 +101,10 @@ class AuthService {
      */
     async register(data: RegisterData): Promise<MedusaAuthResponse> {
         try {
-            const { customer } = await medusa.store.customer.create(data);
-            return { customer: customer as any };
-        } catch (error: any) {
-            throw new Error(error.message || 'Registration failed');
+            const res = await bridgeClient.post<StoreCustomerCreateResponse>('/store/customers', data);
+            return { customer: res.data.customer };
+        } catch (error: unknown) {
+            throw new Error(getErrorMessage(error, 'Registration failed'));
         }
     }
 
@@ -86,7 +113,8 @@ class AuthService {
      */
     async getSession(): Promise<{ customer: MedusaCustomer }> {
         try {
-            const { user } = await medusa.admin.user.me();
+            const meRes = await bridgeClient.get<AdminMeResponse>('/admin/users/me');
+            const user = meRes.data.user;
             return {
                 customer: {
                     id: user.id,
@@ -94,10 +122,10 @@ class AuthService {
                     first_name: user.first_name || '',
                     last_name: user.last_name || '',
                     has_account: true,
-                    metadata: (user as any).metadata || {}
-                } as any
+                    metadata: user.metadata || {}
+                }
             };
-        } catch (error: any) {
+        } catch {
             throw new Error('Session expired');
         }
     }
@@ -107,7 +135,8 @@ class AuthService {
      */
     async logout(): Promise<void> {
         try {
-            await medusa.auth.logout();
+            await bridgeClient.delete('/auth/session');
+            setBridgeAuthToken(null);
         } catch (error) {
             console.error('Logout failed', error);
         }
@@ -118,7 +147,8 @@ class AuthService {
      */
     async getCustomerProfile(): Promise<{ customer: MedusaCustomer }> {
         try {
-            const { user } = await medusa.admin.user.me();
+            const meRes = await bridgeClient.get<AdminMeResponse>('/admin/users/me');
+            const user = meRes.data.user;
             return {
                 customer: {
                     id: user.id,
@@ -126,8 +156,8 @@ class AuthService {
                     first_name: user.first_name || '',
                     last_name: user.last_name || '',
                     has_account: true,
-                    metadata: (user as any).metadata || {}
-                } as any
+                    metadata: user.metadata || {}
+                }
             };
         } catch (error) {
             throw new Error('Failed to fetch user profile');
@@ -142,8 +172,11 @@ class AuthService {
     ): Promise<{ customer: MedusaCustomer }> {
         try {
             // First get the user to obtain the ID
-            const { user: currentMe } = await medusa.admin.user.me();
-            const { user } = await medusa.admin.user.update(currentMe.id, data as any);
+            const meRes = await bridgeClient.get<AdminMeResponse>('/admin/users/me');
+            const currentMe = meRes.data.user;
+
+            const updateRes = await bridgeClient.post<AdminMeResponse>(`/admin/users/${currentMe.id}`, data);
+            const user = updateRes.data.user;
             return {
                 customer: {
                     id: user.id,
@@ -151,8 +184,8 @@ class AuthService {
                     first_name: user.first_name || '',
                     last_name: user.last_name || '',
                     has_account: true,
-                    metadata: (user as any).metadata || {}
-                } as any
+                    metadata: user.metadata || {}
+                }
             };
         } catch (error) {
             throw new Error('Failed to update profile');

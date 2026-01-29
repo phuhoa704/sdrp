@@ -1,5 +1,6 @@
-import { medusa } from '../medusa';
+import bridgeClient from '../bridgeClient';
 import { Product } from '@/types/product';
+import axios from 'axios';
 
 /**
  * Medusa Product Service
@@ -23,14 +24,20 @@ class ProductService {
         category_id?: string | string[];
         limit?: number;
         offset?: number;
-        [key: string]: any;
+        [key: string]: unknown;
     }): Promise<ProductListResponse> {
         try {
-            const response = await medusa.admin.product.list(query);
-            return response as ProductListResponse;
-        } catch (error: any) {
+            const res = await bridgeClient.get('/admin/products', { params: query });
+            return res.data as ProductListResponse;
+        } catch (error: unknown) {
             console.error('Failed to fetch Medusa products:', error);
-            throw new Error(error.message || 'Failed to fetch products');
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to fetch products'
+            );
         }
     }
 
@@ -38,13 +45,19 @@ class ProductService {
      * Get a single product by handle or ID
      * @param idOrHandle Handle or ID of the product
      */
-    async getProduct(idOrHandle: string, query?: Record<string, any>): Promise<{ product: Product }> {
+    async getProduct(idOrHandle: string, query?: Record<string, unknown>): Promise<{ product: Product }> {
         try {
-            const response = await medusa.admin.product.retrieve(idOrHandle, query);
-            return response as { product: Product };
-        } catch (error: any) {
+            const res = await bridgeClient.get(`/admin/products/${idOrHandle}`, { params: query });
+            return res.data as { product: Product };
+        } catch (error: unknown) {
             console.error(`Failed to fetch Medusa product ${idOrHandle}:`, error);
-            throw new Error(error.message || 'Failed to fetch product');
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to fetch product'
+            );
         }
     }
 
@@ -54,11 +67,17 @@ class ProductService {
      */
     async deleteProduct(id: string): Promise<{ id: string, object: string, deleted: boolean }> {
         try {
-            const response = await medusa.admin.product.delete(id);
-            return response as { id: string, object: string, deleted: boolean };
-        } catch (error: any) {
+            const res = await bridgeClient.delete(`/admin/products/${id}`);
+            return res.data as { id: string, object: string, deleted: boolean };
+        } catch (error: unknown) {
             console.error(`Failed to delete Medusa product ${id}:`, error);
-            throw new Error(error.message || 'Failed to delete product');
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to delete product'
+            );
         }
     }
 
@@ -66,13 +85,19 @@ class ProductService {
      * Create a new product
      * @param payload Product creation data
      */
-    async createProduct(payload: any): Promise<{ product: Product }> {
+    async createProduct(payload: Record<string, unknown>): Promise<{ product: Product }> {
         try {
-            const response = await medusa.admin.product.create(payload);
-            return response as { product: Product };
-        } catch (error: any) {
+            const res = await bridgeClient.post('/admin/products', payload);
+            return res.data as { product: Product };
+        } catch (error: unknown) {
             console.error('Failed to create Medusa product:', error);
-            throw new Error(error.message || 'Failed to create product');
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to create product'
+            );
         }
     }
 
@@ -81,13 +106,19 @@ class ProductService {
      * @param productId ID of the product
      * @param payload Variant creation data
      */
-    async createVariant(productId: string, payload: any): Promise<{ product: Product }> {
+    async createVariant(productId: string, payload: Record<string, unknown>): Promise<{ product: Product }> {
         try {
-            const response = await medusa.admin.product.createVariant(productId, payload);
-            return response as { product: Product };
-        } catch (error: any) {
+            const res = await bridgeClient.post(`/admin/products/${productId}/variants`, payload);
+            return res.data as { product: Product };
+        } catch (error: unknown) {
             console.error(`Failed to create variant for product ${productId}:`, error);
-            throw new Error(error.message || 'Failed to create variant');
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to create variant'
+            );
         }
     }
 
@@ -96,13 +127,19 @@ class ProductService {
      * @param id ID of the product to update
      * @param payload Product update data
      */
-    async updateProduct(id: string, payload: any): Promise<{ product: Product }> {
+    async updateProduct(id: string, payload: Record<string, unknown>): Promise<{ product: Product }> {
         try {
-            const response = await medusa.admin.product.update(id, payload);
-            return response as { product: Product };
-        } catch (error: any) {
+            const res = await bridgeClient.post(`/admin/products/${id}`, payload);
+            return res.data as { product: Product };
+        } catch (error: unknown) {
             console.error(`Failed to update Medusa product ${id}:`, error);
-            throw new Error(error.message || 'Failed to update product');
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to update product'
+            );
         }
     }
 }

@@ -1,5 +1,6 @@
-import { medusa } from '../medusa';
+import bridgeClient from '../bridgeClient';
 import { StockLocation } from '@/types/stock';
+import axios from 'axios';
 
 /**
  * Medusa Stock Location Service
@@ -18,13 +19,19 @@ class StockLocationService {
      * Get list of stock locations from Medusa
      * @param query Query parameters for filtering and pagination
      */
-    async getStockLocations(query?: any): Promise<StockLocationListResponse> {
+    async getStockLocations(query?: Record<string, unknown>): Promise<StockLocationListResponse> {
         try {
-            const response = await medusa.admin.stockLocation.list(query);
-            return response as StockLocationListResponse;
-        } catch (error: any) {
+            const res = await bridgeClient.get('/admin/stock-locations', { params: query });
+            return res.data as StockLocationListResponse;
+        } catch (error: unknown) {
             console.error('Failed to fetch Medusa stock locations:', error);
-            throw new Error(error.message || 'Failed to fetch stock locations');
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to fetch stock locations'
+            );
         }
     }
 
@@ -34,11 +41,17 @@ class StockLocationService {
      */
     async getStockLocation(id: string): Promise<{ stock_location: StockLocation }> {
         try {
-            const response = await medusa.admin.stockLocation.retrieve(id);
-            return response as { stock_location: StockLocation };
-        } catch (error: any) {
+            const res = await bridgeClient.get(`/admin/stock-locations/${id}`);
+            return res.data as { stock_location: StockLocation };
+        } catch (error: unknown) {
             console.error(`Failed to fetch Medusa stock location ${id}:`, error);
-            throw new Error(error.message || 'Failed to fetch stock location');
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to fetch stock location'
+            );
         }
     }
 
@@ -46,13 +59,19 @@ class StockLocationService {
      * Create a new stock location
      * @param data Data for creating the stock location
      */
-    async createStockLocation(data: { name: string; address_id?: string; metadata?: Record<string, any> }): Promise<{ stock_location: StockLocation }> {
+    async createStockLocation(data: { name: string; address_id?: string; metadata?: Record<string, unknown> }): Promise<{ stock_location: StockLocation }> {
         try {
-            const response = await medusa.admin.stockLocation.create(data);
-            return response as { stock_location: StockLocation };
-        } catch (error: any) {
+            const res = await bridgeClient.post('/admin/stock-locations', data);
+            return res.data as { stock_location: StockLocation };
+        } catch (error: unknown) {
             console.error('Failed to create Medusa stock location:', error);
-            throw new Error(error.message || 'Failed to create stock location');
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to create stock location'
+            );
         }
     }
 
@@ -61,13 +80,19 @@ class StockLocationService {
      * @param id ID of the stock location to update
      * @param data Data for updating the stock location
      */
-    async updateStockLocation(id: string, data: { name?: string; address_id?: string; metadata?: Record<string, any> }): Promise<{ stock_location: StockLocation }> {
+    async updateStockLocation(id: string, data: { name?: string; address_id?: string; metadata?: Record<string, unknown> }): Promise<{ stock_location: StockLocation }> {
         try {
-            const response = await medusa.admin.stockLocation.update(id, data);
-            return response as { stock_location: StockLocation };
-        } catch (error: any) {
+            const res = await bridgeClient.post(`/admin/stock-locations/${id}`, data);
+            return res.data as { stock_location: StockLocation };
+        } catch (error: unknown) {
             console.error(`Failed to update Medusa stock location ${id}:`, error);
-            throw new Error(error.message || 'Failed to update stock location');
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to update stock location'
+            );
         }
     }
 
@@ -77,11 +102,17 @@ class StockLocationService {
      */
     async deleteStockLocation(id: string): Promise<{ id: string; object: string; deleted: boolean }> {
         try {
-            const response = await medusa.admin.stockLocation.delete(id);
-            return response as { id: string; object: string; deleted: boolean };
-        } catch (error: any) {
+            const res = await bridgeClient.delete(`/admin/stock-locations/${id}`);
+            return res.data as { id: string; object: string; deleted: boolean };
+        } catch (error: unknown) {
             console.error(`Failed to delete Medusa stock location ${id}:`, error);
-            throw new Error(error.message || 'Failed to delete stock location');
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to delete stock location'
+            );
         }
     }
 }

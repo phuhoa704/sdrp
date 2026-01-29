@@ -1,5 +1,6 @@
-import { medusa } from '../medusa';
+import bridgeClient from '../bridgeClient';
 import { ProductTag } from '@/types/product';
+import axios from 'axios';
 
 /**
  * Medusa Product Tag Service
@@ -22,15 +23,20 @@ class ProductTagService {
         q?: string;
         limit?: number;
         offset?: number;
-        [key: string]: any;
+        [key: string]: unknown;
     }): Promise<ProductTagListResponse> {
         try {
-            // Note: In Medusa Admin JS SDK, product tags are under admin.productTag
-            const response = await medusa.admin.productTag.list(query);
-            return response as ProductTagListResponse;
-        } catch (error: any) {
+            const res = await bridgeClient.get('/admin/product-tags', { params: query });
+            return res.data as ProductTagListResponse;
+        } catch (error: unknown) {
             console.error('Failed to fetch Medusa product tags:', error);
-            throw new Error(error.message || 'Failed to fetch product tags');
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to fetch product tags'
+            );
         }
     }
 

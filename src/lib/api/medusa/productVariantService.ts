@@ -1,5 +1,6 @@
-import { medusa } from '../medusa';
-import { Product, ProductVariant } from '@/types/product';
+import bridgeClient from '../bridgeClient';
+import { Product } from '@/types/product';
+import axios from 'axios';
 
 /**
  * Medusa Product Variant Service
@@ -11,13 +12,19 @@ class ProductVariantService {
      * @param productId ID of the product
      * @param payload Variant creation data
      */
-    async createVariant(productId: string, payload: any): Promise<{ product: Product }> {
+    async createVariant(productId: string, payload: Record<string, unknown>): Promise<{ product: Product }> {
         try {
-            const response = await medusa.admin.product.createVariant(productId, payload);
-            return response as { product: Product };
-        } catch (error: any) {
+            const res = await bridgeClient.post(`/admin/products/${productId}/variants`, payload);
+            return res.data as { product: Product };
+        } catch (error: unknown) {
             console.error(`Failed to create variant for product ${productId}:`, error);
-            throw new Error(error.message || 'Failed to create variant');
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to create variant'
+            );
         }
     }
 
@@ -27,13 +34,19 @@ class ProductVariantService {
      * @param variantId ID of the variant
      * @param payload Variant update data
      */
-    async updateVariant(productId: string, variantId: string, payload: any): Promise<{ product: Product }> {
+    async updateVariant(productId: string, variantId: string, payload: Record<string, unknown>): Promise<{ product: Product }> {
         try {
-            const response = await medusa.admin.product.updateVariant(productId, variantId, payload);
-            return response as { product: Product };
-        } catch (error: any) {
+            const res = await bridgeClient.post(`/admin/products/${productId}/variants/${variantId}`, payload);
+            return res.data as { product: Product };
+        } catch (error: unknown) {
             console.error(`Failed to update variant ${variantId} for product ${productId}:`, error);
-            throw new Error(error.message || 'Failed to update variant');
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to update variant'
+            );
         }
     }
 
@@ -44,11 +57,17 @@ class ProductVariantService {
      */
     async deleteVariant(productId: string, variantId: string): Promise<{ variant_id: string, object: string, deleted: boolean, product: Product }> {
         try {
-            const response = await medusa.admin.product.deleteVariant(productId, variantId);
-            return response as { variant_id: string, object: string, deleted: boolean, product: Product };
-        } catch (error: any) {
+            const res = await bridgeClient.delete(`/admin/products/${productId}/variants/${variantId}`);
+            return res.data as { variant_id: string, object: string, deleted: boolean, product: Product };
+        } catch (error: unknown) {
             console.error(`Failed to delete variant ${variantId} from product ${productId}:`, error);
-            throw new Error(error.message || 'Failed to delete variant');
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to delete variant'
+            );
         }
     }
 }

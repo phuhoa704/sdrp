@@ -2,23 +2,24 @@
 
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchHubSession } from '@/store/slices/authSlice';
-import { hubAuthService } from '@/lib/api/hub/authService';
+import { fetchSession } from '@/store/slices/authSlice';
+import { setBridgeAuthToken } from '@/lib/api/bridgeClient';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const dispatch = useAppDispatch();
+    const token = useAppSelector((state) => state.auth.token);
     const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 
     useEffect(() => {
-        // Initialize auth service (restore token from localStorage)
-        hubAuthService.initializeAuth();
+        // Sync token with bridge client (used for Admin API calls)
+        setBridgeAuthToken(token);
 
-        // If we have a token in localStorage, verify it with the server
-        const token = localStorage.getItem('hub_auth_token');
-        if (token) {
-            dispatch(fetchHubSession());
+        // Session is handled via cookies in the browser.
+        // If Redux says we are authenticated, we verify it with the server.
+        if (isAuthenticated) {
+            dispatch(fetchSession());
         }
-    }, [dispatch]);
+    }, [dispatch, token, isAuthenticated]);
 
     return <>{children}</>;
 }

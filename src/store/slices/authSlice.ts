@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { UserRole } from '@/types/enum';
 import { authService, LoginCredentials, RegisterData, MedusaCustomer } from '@/lib/api/medusa/auth';
-import { hubAuthService, LoginCredentials as HubLoginCredentials, RegisterData as HubRegisterData, HubUser } from '@/lib/api/hub/authService';
 
 interface AuthState {
     isAuthenticated: boolean;
@@ -34,16 +33,7 @@ const mapMedusaCustomerToUser = (customer: MedusaCustomer) => ({
     avatarUrl: customer.metadata?.avatar_url as string | undefined,
 });
 
-// Helper to map Hub user to our user format
-const mapHubUserToUser = (hubUser: HubUser) => ({
-    id: hubUser.id,
-    name: `${hubUser.first_name} ${hubUser.last_name}`.trim() || hubUser.email,
-    email: hubUser.email,
-    role: (hubUser.role as UserRole) || UserRole.RETAILER,
-    avatarUrl: hubUser.avatar_url,
-});
-
-// ============ MEDUSA AUTH THUNKS ============
+// Async thunks
 export const loginWithMedusa = createAsyncThunk(
     'auth/loginWithMedusa',
     async (credentials: LoginCredentials, { rejectWithValue }) => {
@@ -100,63 +90,6 @@ export const logoutFromMedusa = createAsyncThunk(
     }
 );
 
-// ============ HUB AUTH THUNKS ============
-export const loginWithHub = createAsyncThunk(
-    'auth/loginWithHub',
-    async (credentials: HubLoginCredentials, { rejectWithValue }) => {
-        try {
-            const response = await hubAuthService.login(credentials);
-            return {
-                user: mapHubUserToUser(response.user),
-                token: response.token,
-            };
-        } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Login failed');
-        }
-    }
-);
-
-export const registerWithHub = createAsyncThunk(
-    'auth/registerWithHub',
-    async (data: HubRegisterData, { rejectWithValue }) => {
-        try {
-            const response = await hubAuthService.register(data);
-            return {
-                user: mapHubUserToUser(response.user),
-                token: response.token,
-            };
-        } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Registration failed');
-        }
-    }
-);
-
-export const fetchHubSession = createAsyncThunk(
-    'auth/fetchHubSession',
-    async (_, { rejectWithValue }) => {
-        try {
-            const response = await hubAuthService.getSession();
-            return {
-                user: mapHubUserToUser(response.user),
-            };
-        } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Session expired');
-        }
-    }
-);
-
-export const logoutFromHub = createAsyncThunk(
-    'auth/logoutFromHub',
-    async (_, { rejectWithValue }) => {
-        try {
-            await hubAuthService.logout();
-        } catch (error) {
-            // Continue with logout even if API call fails
-            console.error('Logout API error:', error);
-        }
-    }
-);
-
 const authSlice = createSlice({
     name: 'auth',
     initialState,
@@ -184,7 +117,6 @@ const authSlice = createSlice({
         },
     },
     extraReducers: (builder) => {
-        // ============ MEDUSA AUTH REDUCERS ============
         // Login
         builder
             .addCase(loginWithMedusa.pending, (state) => {
@@ -243,71 +175,6 @@ const authSlice = createSlice({
         // Logout
         builder
             .addCase(logoutFromMedusa.fulfilled, (state) => {
-                state.isAuthenticated = false;
-                state.user = null;
-                state.token = null;
-                state.error = null;
-            });
-
-        // ============ HUB AUTH REDUCERS ============
-        // Login
-        builder
-            .addCase(loginWithHub.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(loginWithHub.fulfilled, (state, action) => {
-                state.loading = false;
-                state.isAuthenticated = true;
-                state.user = action.payload.user;
-                state.token = action.payload.token;
-                state.error = null;
-            })
-            .addCase(loginWithHub.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload as string;
-            });
-
-        // Register
-        builder
-            .addCase(registerWithHub.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(registerWithHub.fulfilled, (state, action) => {
-                state.loading = false;
-                state.isAuthenticated = true;
-                state.user = action.payload.user;
-                state.token = action.payload.token;
-                state.error = null;
-            })
-            .addCase(registerWithHub.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload as string;
-            });
-
-        // Fetch session
-        builder
-            .addCase(fetchHubSession.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(fetchHubSession.fulfilled, (state, action) => {
-                state.loading = false;
-                state.user = action.payload.user;
-                state.error = null;
-            })
-            .addCase(fetchHubSession.rejected, (state, action) => {
-                state.loading = false;
-                state.isAuthenticated = false;
-                state.user = null;
-                state.token = null;
-                state.error = action.payload as string;
-            });
-
-        // Logout
-        builder
-            .addCase(logoutFromHub.fulfilled, (state) => {
                 state.isAuthenticated = false;
                 state.user = null;
                 state.token = null;
