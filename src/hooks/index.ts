@@ -6,4 +6,5 @@ export * from "./medusa/useCategories";
 export * from "./medusa/useSalesChannels";
 export * from "./medusa/useProduct";
 export * from "./medusa/useProductTags";
+export * from "./medusa/useCollections";
 

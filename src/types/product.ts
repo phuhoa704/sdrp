@@ -26,6 +26,7 @@ export interface ProductCollection {
     id: string
     title: string
     handle: string
+    products?: Product[]
     metadata: Metadata | null
     created_at: ISODateString
     updated_at: ISODateString

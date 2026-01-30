@@ -1,33 +1,30 @@
 import { Breadcrumb, Button } from '@/components'
-import { useCategories } from '@/hooks';
-import { matchCategoryStatus, matchCategoryStatusColor, matchCategoryType, matchCategoryTypeColor } from '@/lib/helpers';
-import { cn } from '@/lib/utils';
-import { AlertCircle, ChevronLeft, ChevronRight, Edit3, MoreHorizontal, Plus, Trash2, Zap } from 'lucide-react';
-import React, { Fragment, useState } from 'react'
-import { CategoryForm } from '@/components/form/category/CategoryForm';
-import { CategoryDetail } from '@/components/category/CategoryDetail';
-import { ProductCategory } from '@/types/product';
-import { ConfirmModal } from '@/components/ConfirmModal';
-import { categoryService } from '@/lib/api/medusa/categoryService';
 import { InputSearch } from '@/components/Search';
+import { TableLoading } from '@/components/TableLoading';
+import { useCollections } from '@/hooks/medusa/useCollections';
+import { ChevronLeft, ChevronRight, Edit3, MoreHorizontal, Plus, Trash2, Zap } from 'lucide-react'
+import React, { Fragment, useState } from 'react'
 import { Error } from '@/components/Error';
+import { ProductCollection } from '@/types/product';
+import { CollectionForm } from '@/components/form/collection/CollectionForm';
+import { ConfirmModal } from '@/components/ConfirmModal';
+import { collectionService } from '@/lib/api/medusa/collectionService';
+import { CollectionDetail } from '@/components/collection/CollectionDetail';
 
-export default function Category() {
+export default function Collection() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedCategoryData, setSelectedCategoryData] = useState<ProductCategory | null>(null);
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [categoryToDelete, setCategoryToDelete] = useState<ProductCategory | null>(null);
-  const [viewingCategory, setViewingCategory] = useState<ProductCategory | null>(null);
-
+  const [selectedCollectionData, setSelectedCollectionData] = useState<ProductCollection | null>(null)
+  const [collectionToDelete, setCollectionToDelete] = useState<ProductCollection | null>(null)
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [viewingCollection, setViewingCollection] = useState<ProductCollection | null>(null);
   const limit = 10;
   const offset = (currentPage - 1) * limit;
 
-  //hook
-  const { categories, count, loading, error, refresh } = useCategories({
+  const { collections, count, loading, error, refresh } = useCollections({
+    autoFetch: true,
     q: searchTerm,
     limit,
     offset
@@ -35,63 +32,59 @@ export default function Category() {
 
   const totalPages = Math.ceil(count / limit);
 
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
-  };
-
   const handleCreate = () => {
-    setSelectedCategoryData(null);
+    setSelectedCollectionData(null);
     setIsFormOpen(true);
   };
 
-  const handleEdit = (category: ProductCategory) => {
-    setSelectedCategoryData(category);
+  const handleEdit = (collection: ProductCollection) => {
+    setSelectedCollectionData(collection);
     setIsFormOpen(true);
   };
 
   const handleSave = () => {
     setIsFormOpen(false);
-    setSelectedCategoryData(null);
+    setSelectedCollectionData(null);
     refresh();
   };
 
   const handleDelete = async () => {
-    if (!categoryToDelete) return;
-    setIsDeleting(true);
+    if (!collectionToDelete) return;
     try {
-      await categoryService.deleteCategory(categoryToDelete.id);
+      await collectionService.deleteCollection(collectionToDelete.id);
       setIsDeleteModalOpen(false);
-      setCategoryToDelete(null);
+      setCollectionToDelete(null);
       refresh();
-    } catch (error) {
-      console.error('Failed to delete category:', error);
-      alert('Không thể xóa danh mục. Vui lòng thử lại.');
-    } finally {
-      setIsDeleting(false);
+    } catch (err) {
+      console.error('Failed to delete collection:', err);
+      alert('Không thể xóa bộ sưu tập. Vui lòng thử lại.');
     }
   };
 
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
   if (isFormOpen) {
     return (
-      <CategoryForm
-        initialData={selectedCategoryData}
+      <CollectionForm
+        initialData={selectedCollectionData}
         onCancel={() => setIsFormOpen(false)}
         onSave={handleSave}
       />
     );
   }
 
-  if (viewingCategory) {
+  if (viewingCollection) {
     return (
-      <CategoryDetail
-        category={viewingCategory}
-        onBack={() => setViewingCategory(null)}
-        onEdit={(cat) => {
-          setSelectedCategoryData(cat);
-          setViewingCategory(null);
+      <CollectionDetail
+        collection={viewingCollection}
+        onBack={() => setViewingCollection(null)}
+        onEdit={(col) => {
+          setSelectedCollectionData(col);
+          setViewingCollection(null);
           setIsFormOpen(true);
         }}
-        refreshCategories={refresh}
+        refreshCollections={refresh}
       />
     );
   }
@@ -102,19 +95,19 @@ export default function Category() {
         <Breadcrumb
           items={[
             { label: 'QUẢN LÝ HÀNG', href: '#' },
-            { label: 'LOẠI HÀNG', href: '#' }
+            { label: 'BỘ SƯU TẬP', href: '#' }
           ]}
         />
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 px-1">
           <div className="shrink-0">
             <div className="flex items-center gap-2 mb-1">
               <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
-                CATEGORY MANAGEMENT
+                COLLECTION MANAGEMENT
               </span>
               <Zap size={12} className='text-amber-500 animate-pulse' />
             </div>
             <h2 className="text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-none">
-              Phân loại <span className="text-emerald-600 font-black">Hàng hóa</span>
+              Quản lý <span className="text-emerald-600 font-black">Bộ sưu tập</span>
             </h2>
           </div>
 
@@ -129,7 +122,7 @@ export default function Category() {
           </div>
         </div>
         <InputSearch
-          placeholder="Tìm sản phẩm, hoạt chất..."
+          placeholder="Tìm bộ sưu tập..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -141,58 +134,38 @@ export default function Category() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 dark:bg-slate-800/50 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] border-b border-slate-100 dark:border-slate-800">
-                  <th className="py-5 px-8 rounded-tl-[32px]">Tên danh mục</th>
+                  <th className="py-5 px-8 rounded-tl-[32px]">Tiêu đề</th>
                   <th className="py-5 px-4 text-center">Handle</th>
-                  <th className="py-5 px-4 text-center">Trạng thái</th>
-                  <th className="py-5 px-4 text-center">Loại</th>
-                  <th className="py-5 pr-8 text-right rounded-tr-[32px]">Hành động</th>
+                  <th className="py-5 px-4 text-center">Sản phẩm</th>
+                  <th className="py-5 pr-8 text-right rounded-tr-[32px]"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {loading ? (
-                  <tr>
-                    <td colSpan={5} className="py-20">
-                      <div className="flex justify-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (categories.length > 0 ? (
-                  categories.map((category) => (
+                  <TableLoading colSpan={4} />
+                ) : (collections.length > 0 ? (
+                  collections.map((collection) => (
                     <tr
-                      key={category.id}
-                      onClick={() => setViewingCategory(category)}
+                      key={collection.id}
                       className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                      onClick={() => setViewingCollection(collection)}
                     >
-                      <td className="py-5 px-8 font-bold text-slate-700 dark:text-slate-200">{category.name}</td>
-                      <td className="py-5 px-4 text-center">
-                        <span className="text-xs font-medium text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg">/{category.handle}</span>
-                      </td>
-                      <td className="py-5 px-4 text-center">
-                        <div className="flex justify-center items-center gap-2 text-xs xl:text-sm">
-                          <div className={cn("w-2 h-2 rounded-full", matchCategoryStatusColor(category))}></div>
-                          <span className="font-bold">{matchCategoryStatus(category)}</span>
-                        </div>
-                      </td>
-                      <td className="py-5 px-4 text-center">
-                        <div className="flex justify-center items-center gap-2 text-xs xl:text-sm font-bold">
-                          <div className={cn("w-2 h-2 rounded-full", matchCategoryTypeColor(category))}></div>
-                          {matchCategoryType(category)}
-                        </div>
-                      </td>
+                      <td className="py-5 px-8">{collection.title}</td>
+                      <td className="py-5 px-4 text-center">/{collection.handle}</td>
+                      <td className="py-5 px-4 text-center">{collection.products?.length || 0}</td>
                       <td className="py-5 pr-8 text-right">
                         <div className="relative inline-block">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setActiveMenuId(activeMenuId === category.id ? null : category.id);
+                              setActiveMenuId(activeMenuId === collection.id ? null : collection.id);
                             }}
                             className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl transition-all"
                           >
                             <MoreHorizontal size={20} />
                           </button>
 
-                          {activeMenuId === category.id && (
+                          {activeMenuId === collection.id && (
                             <>
                               <div
                                 className="fixed inset-0 z-10"
@@ -201,7 +174,7 @@ export default function Category() {
                               <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xl z-20 overflow-hidden animate-in fade-in zoom-in duration-200">
                                 <button
                                   onClick={() => {
-                                    handleEdit(category);
+                                    handleEdit(collection);
                                     setActiveMenuId(null);
                                   }}
                                   className="w-full px-4 py-3 text-left text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors"
@@ -211,14 +184,14 @@ export default function Category() {
                                 </button>
                                 <button
                                   onClick={() => {
-                                    setCategoryToDelete(category);
+                                    setCollectionToDelete(collection);
                                     setIsDeleteModalOpen(true);
                                     setActiveMenuId(null);
                                   }}
                                   className="w-full px-4 py-3 text-left text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 flex items-center gap-3 transition-colors border-t border-slate-50 dark:border-slate-800/50"
                                 >
                                   <Trash2 size={16} />
-                                  Xóa danh mục
+                                  Xóa
                                 </button>
                               </div>
                             </>
@@ -229,10 +202,8 @@ export default function Category() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="py-20">
-                      <div className="flex justify-center">
-                        <p className="text-sm font-bold opacity-40 uppercase tracking-widest">Không có danh mục nào</p>
-                      </div>
+                    <td colSpan={4} className="py-5 px-8 text-center">
+                      Không có dữ liệu
                     </td>
                   </tr>
                 ))}
@@ -240,7 +211,6 @@ export default function Category() {
             </table>
           </div>
         </div>
-
         {!loading && count > limit && (
           <div className="flex items-center justify-between px-8 py-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 rounded-b-[32px]">
             <div className="flex items-center gap-2">
@@ -283,18 +253,15 @@ export default function Category() {
           </div>
         )}
       </div>
+
       <ConfirmModal
         isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setCategoryToDelete(null);
-        }}
+        onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDelete}
-        isLoading={isDeleting}
-        title="Xác nhận xóa danh mục"
-        message={`Bạn có chắc chắn muốn xóa danh mục "${categoryToDelete?.name}"? Hành động này sẽ không thể hoàn tác và có thể ảnh hưởng đến các sản phẩm thuộc danh mục này.`}
+        title="Xác nhận xóa"
+        message={`Bạn có chắc chắn muốn xóa bộ sưu tập "${collectionToDelete?.title}"? Hành động này không thể hoàn tác.`}
+        confirmText="Xác nhận xóa"
         variant="danger"
-        confirmText="Xóa danh mục"
       />
     </Fragment>
   )

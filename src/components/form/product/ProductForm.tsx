@@ -10,7 +10,7 @@ import {
 import { Product } from '@/types/product';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
-import { useCategories, useSalesChannels, useProductTags } from '@/hooks';
+import { useCategories, useSalesChannels, useProductTags, useCollections } from '@/hooks';
 import { cn, formatDisplayNumber, parseDisplayNumber } from '@/lib/utils';
 
 interface ProductFormProps {
@@ -51,6 +51,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
   const { categories } = useCategories();
   const { salesChannels } = useSalesChannels();
   const { tags: allTags } = useProductTags();
+  const { collections } = useCollections({ limit: 100 });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -427,8 +428,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
                           className={cn(inputClass, "appearance-none pr-10 cursor-pointer")}
                         >
                           <option value="">Không có</option>
-                          <option value="summer">Hè rực rỡ</option>
-                          <option value="winter">Thu đông</option>
+                          {collections.map(col => (
+                            <option key={col.id} value={col.id}>{col.title}</option>
+                          ))}
                         </select>
                         <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                       </div>

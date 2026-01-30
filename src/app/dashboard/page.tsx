@@ -38,6 +38,7 @@ import { addToCart } from '@/store/slices/cartSlice';
 import { useMedusaProducts } from '@/hooks';
 import { B2COrder } from '@/types/order';
 import Category from './pages/Category';
+import Collection from './pages/Collection';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -162,6 +163,8 @@ export default function DashboardPage() {
         );
       case 'CATEGORY':
         return <Category />;
+      case 'COLLECTION':
+        return <Collection />;
       case 'NEWS':
         return (
           <NewsView

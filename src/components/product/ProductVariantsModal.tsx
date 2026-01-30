@@ -186,7 +186,7 @@ export const ProductVariantsModal: React.FC<ProductVariantsModalProps> = ({
             {/* Inventory Items */}
             <Card className="bg-slate-900 border-slate-800 p-0">
               <div className="p-4 border-b border-slate-800 flex justify-between items-center">
-                <h3 className="font-bold text-slate-200 text-sm">Kho</h3>
+                <h3 className="font-bold text-slate-200 text-sm">Hàng tồn kho</h3>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">

@@ -41,10 +41,11 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   if (!currentProduct) return null;
 
   const isWholesale = mode === 'WHOLESALE';
-  const basePrice = isWholesale ? (currentProduct.variants?.[0]?.prices?.[0]?.amount || 0) * 0.85 : (currentProduct.variants?.[0]?.prices?.[0]?.amount || 0);
+  const basePrice = currentProduct.variants?.[0]?.prices?.[0]?.amount || 0;
   const currentPrice = selectedVariant
-    ? basePrice * (selectedVariant.prices.find(price => price.currency_code === 'vnd')?.amount || 0)
+    ? (selectedVariant.prices.find(price => price.currency_code === 'vnd')?.amount || 0)
     : basePrice;
+  console.log(basePrice, currentPrice, currentProduct);
 
   const handleAddToCart = () => {
     if (onAddToCart) {
@@ -76,7 +77,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             <div>
               <h2 className="text-xl md:text-2xl font-black text-[#1F2937] dark:text-slate-100 leading-tight">{currentProduct.title}</h2>
               <p className="text-[10px] md:text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
-                Hoạt chất: {currentProduct.variants?.[0]?.metadata?.active_ingredient} • {currentProduct?.categories?.join(', ')}
+                Hoạt chất: {"--"}
               </p>
             </div>
           </div>
