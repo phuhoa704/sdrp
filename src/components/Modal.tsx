@@ -80,12 +80,12 @@ export function Modal({
   const modalContent = (
     <>
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 animate-fade-in"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] animate-fade-in"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 pointer-events-none">
+      <div className="fixed inset-0 z-[100] flex items-start justify-center pt-20 px-4 pointer-events-none">
         <div
           className={`w-full ${maxWidthClasses[maxWidth]} bg-slate-900 dark:bg-slate-950 rounded-3xl shadow-2xl border border-slate-800 animate-slide-down pointer-events-auto overflow-hidden`}
           onClick={(e) => e.stopPropagation()}
