@@ -128,7 +128,7 @@ export default function RetailerDashboard({ onSelectNewsArticle, onSelectDisease
         </div>
         <div className="flex gap-3">
           <Button
-            className="h-14 rounded-2xl px-10 font-extrabold text-xs shadow-xl shadow-emerald-500/20 w-full md:w-auto tracking-widest"
+            className="h-12 rounded-2xl px-10 font-extrabold !text-xs shadow-xl shadow-emerald-500/20 w-full md:w-auto tracking-widest"
             icon={<Plus size={20} />}
             onClick={onGoToPOS}
           >
@@ -139,7 +139,7 @@ export default function RetailerDashboard({ onSelectNewsArticle, onSelectDisease
 
       <div className="relative group">
         <div className="relative z-[60] overflow-hidden rounded-[24px] shadow-glass border border-white/40 dark:border-slate-800/40">
-          <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none transition-colors group-focus-within:text-emerald-500">
+          <div className="absolute z-[1] inset-y-0 left-5 flex items-center pointer-events-none transition-colors group-focus-within:text-emerald-500">
             <Search className="!text-slate-400" size={22} />
           </div>
           <input
@@ -194,12 +194,18 @@ export default function RetailerDashboard({ onSelectNewsArticle, onSelectDisease
 
       <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 lg:gap-10">
         <div className="lg:col-span-6 relative group overflow-hidden rounded-[40px] shadow-2xl">
-          <Card noPadding className="relative h-full bg-gradient-to-br from-emerald-600 via-emerald-700 to-green-900 border-none min-h-[320px] md:min-h-[400px] flex items-center">
-            <div className="absolute inset-0 opacity-10 mix-blend-overlay" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />
-            <div className="p-10 md:p-14 text-white z-10 space-y-5 md:space-y-8 relative">
+          <Card noPadding className="relative h-full border-none min-h-[320px] md:min-h-[400px] flex items-center overflow-hidden">
+            <img
+              src="/banner.jpg"
+              alt="Banner"
+              className="absolute inset-0 w-full h-full object-cover transform scale-105 group-hover:scale-110 transition-all duration-[3s]"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/95 via-emerald-900/70 to-emerald-900/10 z-[1]" />
+            <div className="absolute inset-0 opacity-10 mix-blend-overlay z-[2]" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+            <div className="p-8 md:p-10 text-white z-10 space-y-5 md:space-y-6 relative">
               <span className="bg-white/15 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border border-white/20 shadow-inner-glow inline-block">SD-AI Vision v3</span>
-              <h2 className="text-4xl md:text-6xl font-black leading-[1.05] tracking-tight">Chẩn đoán AI<br /><span className="text-emerald-300 opacity-90 italic">Bảo vệ mùa màng</span></h2>
-              <p className="text-emerald-50/70 text-base md:text-lg font-medium leading-relaxed max-w-md">Phân tích triệu chứng qua hình ảnh vệ tinh và macro, đưa ra phác đồ tối ưu chỉ trong 3 giây.</p>
+              <h2 className="text-4xl md:text-5xl font-black leading-[1.05] tracking-tight">Chẩn đoán AI<br /><span className="text-emerald-300 opacity-90 italic">Bảo vệ mùa màng</span></h2>
+              <p className="text-emerald-50/70 text-sm md:text-base font-medium leading-relaxed max-w-md">Phân tích triệu chứng qua hình ảnh vệ tinh và macro, đưa ra phác đồ tối ưu chỉ trong 3 giây.</p>
               <div className="flex gap-4 pt-3">
                 <Button
                   onClick={onDiagnose}
@@ -207,16 +213,7 @@ export default function RetailerDashboard({ onSelectNewsArticle, onSelectDisease
                 >
                   PHÂN TÍCH NGAY
                 </Button>
-                <button className="flex items-center gap-3 px-6 text-white group/btn">
-                  <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center group-hover/btn:bg-white/20 transition-all">
-                    <History size={20} />
-                  </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest">Lịch sử</span>
-                </button>
               </div>
-            </div>
-            <div className="hidden lg:block absolute right-[-50px] bottom-[-50px] text-white opacity-10 group-hover:scale-110 group-hover:rotate-6 transition-all duration-700">
-              <BrainCircuit size={450} strokeWidth={0.5} />
             </div>
           </Card>
         </div>

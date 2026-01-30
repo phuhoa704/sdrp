@@ -4,6 +4,13 @@ import { SalesChannel } from "./sales-channel";
 // Medusa Product
 export type ISODateString = string
 
+export enum ProductStatus {
+    DRAFT = 'draft',
+    PROPOSED = 'proposed',
+    PUBLISHED = 'published',
+    REJECTED = 'rejected'
+}
+
 export interface ProductImage {
     id: string
     url: string
@@ -190,4 +197,6 @@ export interface Product {
 
     images: ProductImage[]
     variants: ProductVariant[]
+
+    status: ProductStatus
 }

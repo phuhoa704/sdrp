@@ -27,7 +27,7 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, role, onLogout,
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   return (
-    <header className="flex items-center justify-between py-6 px-8 sticky top-0 bg-[#F8FAFC]/80 dark:bg-slate-950/80 z-40 backdrop-blur-md border-b border-green-50/50 dark:border-slate-800/50 transition-colors duration-300">
+    <header className="flex items-center justify-between py-4 px-4 lg:px-8 sticky top-0 bg-[#F8FAFC]/80 dark:bg-slate-950/80 z-40 backdrop-blur-2xl border-b border-white/40 dark:border-slate-800/40 transition-all duration-500 h-16 lg:h-20 overflow-hidden inner-border-glow">
       <div className="flex items-center gap-2 lg:gap-4 min-w-0 shrink">
         <div className="overflow-hidden">
           <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">{title}</h1>

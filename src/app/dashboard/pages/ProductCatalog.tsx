@@ -32,8 +32,9 @@ import { useCategories, useMedusaProducts, useProductTags } from '@/hooks';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setPagination } from '@/store/slices/productsSlice';
 import { addToCart } from '@/store/slices/cartSlice';
-import { formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { selectSelectedSalesChannelId } from '@/store/selectors';
+import { matchProductStatus, matchProductStatusColor } from '@/lib/helpers';
 
 interface Props {
   onRestockProduct?: (p: Product) => void;
@@ -425,7 +426,7 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
           {medusaError && (
             <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 p-6 rounded-3xl flex items-center gap-4 text-rose-600">
               <AlertCircle className="shrink-0" />
-              <p className="text-sm font-bold">Lỗi kết nối Medusa: {medusaError}</p>
+              <p className="text-sm font-bold">Lỗi kết nối: {medusaError}</p>
             </div>
           )}
 
@@ -456,11 +457,9 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
                 <tr className="bg-slate-50/50 dark:bg-slate-800/50 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] border-b border-slate-100 dark:border-slate-800">
                   <th className="w-12 py-5 pl-8"></th>
                   <th className="py-5 px-4">Sản phẩm / Hoạt chất</th>
-                  <th className="py-5 px-4 text-center">Kênh bán</th>
                   <th className="py-5 px-4 text-center">Phân loại</th>
-                  <th className="py-5 px-4 text-center">Tồn kho</th>
-                  <th className="py-5 px-4 text-center">Nhãn</th>
                   <th className="py-5 px-4 text-right">Giá bán</th>
+                  <th className="py-5 px-4 text-center">Trạng thái</th>
                   <th className="py-5 pr-8 text-right">Quản lý</th>
                 </tr>
               </thead>
@@ -477,10 +476,8 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
                   processedProducts.map((p) => {
                     const isExpanded = expandedProducts.includes(p.id);
                     const firstVariant = p.variants?.[0];
-                    const stock = (firstVariant?.metadata?.stock as number) || 0;
                     const price = getVariantPrice(firstVariant);
                     const activeIngredient = (p as any).metadata?.active_ingredient || firstVariant?.metadata?.active_ingredient || "N/A";
-                    const isLowStock = stock < 20;
 
                     return (
                       <Fragment key={p.id}>
@@ -496,22 +493,17 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
                             </div>
                           </td>
                           <td className="px-6 py-5 text-center">
-                            <span className="text-[9px] xl:text-xs font-black text-slate-500 uppercase tracking-tighter">
-                              {p.sales_channels?.map(sc => sc.name).join(', ') || 'Global'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-5 text-center">
                             <span className="text-[9px] xl:text-xs font-black bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full text-slate-500 uppercase tracking-tighter">
                               {p.categories?.map(c => c.name).join(', ') || "Khác"}
                             </span>
                           </td>
-                          <td className="px-6 py-5 text-center font-black"><span className={isLowStock ? 'text-rose-600' : ''}>{stock} g</span></td>
-                          <td className="px-6 py-5 text-center font-black">
-                            <span className="text-[9px] xl:text-xs font-black bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full text-slate-500 uppercase tracking-tighter">
-                              {p.tags?.map(t => t.value).join(', ') || "Khác"}
-                            </span>
-                          </td>
                           <td className="px-6 py-5 text-right font-black text-primary">{formatCurrency(price, currencyCode)}</td>
+                          <td className="px-6 py-5 text-center font-black">
+                            <div className="flex justify-center items-center gap-2 text-xs xl:text-sm">
+                              <div className={cn("w-2 h-2 rounded-full", matchProductStatusColor(p.status))}></div>
+                              {matchProductStatus(p.status)}
+                            </div>
+                          </td>
                           <td className="px-6 py-5 text-right pr-8">
                             <div className="flex justify-end gap-2">
                               <button
@@ -575,9 +567,11 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
                                       <table className="w-full text-left">
                                         <thead className="bg-slate-50 dark:bg-slate-800 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b dark:border-slate-700">
                                           <tr>
+                                            <th className="px-6 py-4">SKU</th>
                                             <th className="px-6 py-4">Biến thể / Quy cách</th>
-                                            <th className="px-6 py-4 text-center">Thuộc tính</th>
-                                            <th className="px-6 py-4 text-center">Tồn kho lẻ</th>
+                                            {p.variants[0].options.map(o => (
+                                              <th key={o.id} className="px-6 py-4 text-center">{o.option.title}</th>
+                                            ))}
                                             <th className="px-6 py-4 text-right pr-10">Đơn giá bán</th>
                                           </tr>
                                         </thead>
@@ -585,21 +579,18 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
                                           {p.variants.map(v => (
                                             <tr key={v.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                                               <td className="px-6 py-4">
+                                                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{v.sku || v.id}</p>
+                                              </td>
+                                              <td className="px-6 py-4">
                                                 <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{v.title}</p>
-                                                <p className="text-[10px] text-slate-400 font-medium">{v.sku || v.id}</p>
                                               </td>
-                                              <td className="px-6 py-4 text-center">
-                                                <div className="flex flex-col">
-                                                  {v.options.map((opt, index) => (
-                                                    <span key={index} className="text-[10px] font-black text-slate-800 dark:text-slate-100">{opt.option.title}: {opt.value}</span>
-                                                  ))}
-                                                </div>
-                                              </td>
-                                              <td className="px-6 py-4 text-center">
-                                                <span className={`text-sm font-black ${((v.metadata?.stock as number) || 0) < 10 ? 'text-rose-500' : 'text-slate-700 dark:text-slate-300'}`}>
-                                                  {(v.metadata?.stock as number) || 0} g
-                                                </span>
-                                              </td>
+                                              {v.options.map((opt, index) => (
+                                                <td key={index} className="px-6 py-4 text-center">
+                                                  <div className="flex flex-col">
+                                                    <span className="text-[10px] font-black text-slate-800 dark:text-slate-100">{opt.option.title}: {opt.value}</span>
+                                                  </div>
+                                                </td>
+                                              ))}
                                               <td className="px-6 py-4 text-right pr-10">
                                                 <p className="text-sm font-black text-primary">{formatCurrency(getVariantPrice(v), currencyCode)}</p>
                                               </td>

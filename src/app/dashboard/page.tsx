@@ -37,6 +37,7 @@ import { DiseaseDetailScreen } from './pages/DiseaseDetailScreen';
 import { addToCart } from '@/store/slices/cartSlice';
 import { useMedusaProducts } from '@/hooks';
 import { B2COrder } from '@/types/order';
+import Category from './pages/Category';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -159,6 +160,8 @@ export default function DashboardPage() {
             onGoToWholesale={() => handleSetView('WHOLESALE_MARKETPLACE')}
           />
         );
+      case 'CATEGORY':
+        return <Category />;
       case 'NEWS':
         return (
           <NewsView
@@ -282,7 +285,7 @@ export default function DashboardPage() {
             onShowNotifications={handleShowNotifications}
           />
 
-          <main className="p-8">
+          <main className="flex-1 overflow-y-auto px-3 lg:px-8 py-4">
             {renderContent()}
           </main>
         </div>

@@ -1,7 +1,4 @@
 
-export const MEDUSA_BACKEND_URL = process.env.NEXT_PUBLIC_MEDUSA_URL || 'http://localhost:8888';
-export const MEDUSA_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || '';
-
 export const BRIDGE_API_URL = process.env.NEXT_PUBLIC_BRIDGE_API_URL || 'https://sdrp-bridge-stg.teknix.services/';
 
 export const API_ENDPOINTS = {
@@ -11,7 +8,7 @@ export const API_ENDPOINTS = {
     ADMIN_ME: '/admin/users/me',
     ADMIN_USER_DETAIL: (id: string) => `/admin/users/${id}`,
 
-    STORE_CUSTOMERS: '/store/customers', 
+    STORE_CUSTOMERS: '/store/customers',
     STORE_CUSTOMER_ME: '/store/customers/me',
 
     ADMIN_PRODUCTS: '/admin/products',
@@ -45,18 +42,3 @@ export const BRIDGE_ENDPOINTS = {
     PRODUCTS: '/admin/products',
 } as const;
 
-export const getHeaders = (token?: string) => {
-    const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-    };
-
-    if (MEDUSA_PUBLISHABLE_KEY) {
-        headers['x-publishable-api-key'] = MEDUSA_PUBLISHABLE_KEY;
-    }
-
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    return headers;
-};

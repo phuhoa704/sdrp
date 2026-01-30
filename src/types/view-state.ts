@@ -17,4 +17,5 @@ export type ViewState =
     | 'CASHBOOK'
     | 'CUSTOMERS'
     | 'PRICING'
-    | 'PROMOTIONS';
+    | 'PROMOTIONS'
+    | 'CATEGORY';

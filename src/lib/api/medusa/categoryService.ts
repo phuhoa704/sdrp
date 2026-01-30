@@ -19,9 +19,14 @@ class CategoryService {
      * Get list of product categories from Medusa Store
      * @param query Query parameters for filtering and pagination
      */
-    async getCategories(query?: Record<string, unknown>): Promise<CategoryListResponse> {
+    async getCategories(query?: {
+        q?: string;
+        limit?: number;
+        offset?: number;
+        [key: string]: unknown;
+    }): Promise<CategoryListResponse> {
         try {
-            const res = await bridgeClient.get('/store/product-categories', { params: query });
+            const res = await bridgeClient.get('/admin/product-categories', { params: query });
             return res.data as CategoryListResponse;
         } catch (error: unknown) {
             console.error('Failed to fetch Medusa categories:', error);
@@ -41,7 +46,7 @@ class CategoryService {
      */
     async getCategory(idOrHandle: string, query?: Record<string, unknown>): Promise<{ product_category: ProductCategory }> {
         try {
-            const res = await bridgeClient.get(`/store/product-categories/${idOrHandle}`, { params: query });
+            const res = await bridgeClient.get(`/admin/product-categories/${idOrHandle}`, { params: query });
             return res.data as { product_category: ProductCategory };
         } catch (error: unknown) {
             console.error(`Failed to fetch Medusa category ${idOrHandle}:`, error);
@@ -51,6 +56,99 @@ class CategoryService {
                     : error instanceof Error
                         ? error.message
                         : 'Failed to fetch category'
+            );
+        }
+    }
+    async createCategory(payload: any): Promise<{ product_category: ProductCategory }> {
+        try {
+            const res = await bridgeClient.post('/admin/product-categories', payload);
+            return res.data;
+        } catch (error: unknown) {
+            console.error('Failed to create Medusa category:', error);
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to create category'
+            );
+        }
+    }
+
+    async updateCategory(id: string, payload: any): Promise<{ product_category: ProductCategory }> {
+        try {
+            const res = await bridgeClient.post(`/admin/product-categories/${id}`, payload);
+            return res.data;
+        } catch (error: unknown) {
+            console.error(`Failed to update Medusa category ${id}:`, error);
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to update category'
+            );
+        }
+    }
+
+    async deleteCategory(id: string): Promise<{ id: string; object: string; deleted: boolean }> {
+        try {
+            const res = await bridgeClient.delete(`/admin/product-categories/${id}`);
+            return res.data;
+        } catch (error: unknown) {
+            console.error(`Failed to delete Medusa category ${id}:`, error);
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to delete category'
+            );
+        }
+    }
+
+    /**
+     * Add products to a category
+     * @param id Category ID
+     * @param productIds Array of product IDs to add
+     */
+    async addProductsToCategory(id: string, productIds: string[]): Promise<{ product_category: ProductCategory }> {
+        try {
+            const res = await bridgeClient.post(`/admin/product-categories/${id}/products`, {
+                product_ids: productIds
+            });
+            return res.data;
+        } catch (error: unknown) {
+            console.error(`Failed to add products to category ${id}:`, error);
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to add products to category'
+            );
+        }
+    }
+
+    /**
+     * Remove products from a category
+     * @param id Category ID
+     * @param productIds Array of product IDs to remove
+     */
+    async removeProductsFromCategory(id: string, productIds: string[]): Promise<{ product_category: ProductCategory }> {
+        try {
+            const res = await bridgeClient.delete(`/admin/product-categories/${id}/products`, {
+                data: { product_ids: productIds }
+            });
+            return res.data;
+        } catch (error: unknown) {
+            console.error(`Failed to remove products from category ${id}:`, error);
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to remove products from category'
             );
         }
     }

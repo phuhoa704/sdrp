@@ -111,6 +111,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           icon: Package,
           children: [
             { id: 'product-list', label: 'DANH MỤC HÀNG', view: 'INVENTORY' },
+            { id: 'category', label: 'PHÂN LOẠI HÀNG', view: 'CATEGORY' },
             { id: 'orders', label: 'ĐƠN HÀNG', view: 'CATALOG' },
             { id: 'stock-check', label: 'KIỂM KHO', view: 'STOCK_CHECK' },
             { id: 'export', label: 'XUẤT HỦY', view: 'STOCK_DISPOSAL' },
