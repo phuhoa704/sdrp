@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useState } from 'react';
+import { Fragment, useState, useMemo } from 'react';
 import {
   Zap,
   Search,
@@ -19,15 +19,54 @@ import {
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { Card } from '@/components/Card';
 import { Modal } from '@/components/Modal';
-import { B2COrder } from '@/types/order';
-import { MOCK_B2C_HISTORY } from '../../../../mocks/order';
+import { B2COrder, OrderStatus } from '@/types/order';
 import { Button } from '@/components/Button';
+import { useOrders } from '@/hooks';
+import { Loader2 } from 'lucide-react';
+import { orderService } from '@/lib/api/medusa/orderService';
+import { mapMedusaToB2C } from '@/lib/utils';
 
 export default function RetailOrders() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<B2COrder | null>(null);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
 
-  const [b2cHistory, setB2cHistory] = useState<B2COrder[]>(MOCK_B2C_HISTORY);
+  const handleSelectOrder = async (orderSummary: B2COrder & { rawId?: string }) => {
+    // 1. Instant response: Open modal with data we already have
+    setSelectedOrder(orderSummary);
+
+    // 2. Background fetch: Get full detail if possible
+    if (orderSummary.rawId) {
+      setIsDetailLoading(true);
+      try {
+        const { order } = await orderService.getOrder(orderSummary.rawId);
+        // Only update if the user is still looking at the same order
+        setSelectedOrder(prev => {
+          if (prev && prev.id === orderSummary.id) {
+            return mapMedusaToB2C(order);
+          }
+          return prev;
+        });
+      } catch (err) {
+        console.error("Failed to fetch order detail:", err);
+      } finally {
+        setIsDetailLoading(false);
+      }
+    }
+  };
+
+  const orderQuery = useMemo(() => ({
+    q: searchTerm || undefined,
+  }), [searchTerm]);
+
+  const { orders: medusaOrders, loading } = useOrders(orderQuery);
+
+  const b2cHistory: (B2COrder & { rawId?: string })[] = useMemo(() => {
+    return medusaOrders.length > 0 ? medusaOrders.map((order: any) => ({
+      ...mapMedusaToB2C(order),
+      rawId: order.id
+    })) : [];
+  }, [medusaOrders]);
 
   const renderDetails = () => {
     if (!selectedOrder) return null;
@@ -40,14 +79,17 @@ export default function RetailOrders() {
         maxWidth='5xl'
         maxHeight='85vh'
       >
-        <div className="relative w-full max-w-5xl h-[90vh] bg-white dark:bg-slate-900 rounded-[40px] overflow-hidden shadow-2xl animate-slide-up flex flex-col border dark:border-slate-800">
+        <div className="relative w-full max-w-5xl h-[90vh] bg-white dark:bg-slate-900 overflow-hidden shadow-2xl animate-slide-up flex flex-col border dark:border-slate-800">
           <div className="p-8 bg-slate-900 text-white flex justify-between items-center shrink-0">
             <div className="flex items-center gap-6">
               <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center border border-white/10">
                 <Receipt size={28} className="text-emerald-400" />
               </div>
               <div>
-                <p className="text-[10px] font-black opacity-60 uppercase tracking-widest">Chi tiết đơn hàng POS</p>
+                <p className="text-[10px] font-black opacity-60 uppercase tracking-widest flex items-center gap-2">
+                  Chi tiết đơn hàng POS
+                  {isDetailLoading && <Loader2 size={10} className="animate-spin text-emerald-400" />}
+                </p>
                 <h3 className="text-xl font-black">{order.id}</h3>
               </div>
             </div>
@@ -59,14 +101,32 @@ export default function RetailOrders() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
               <Card className="p-6">
                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"><User size={14} /> Khách hàng</h4>
-                <p className="font-bold text-slate-800 dark:text-white">{order.customer.name}</p>
-                <p className="text-sm text-slate-500 mt-1">{order.customer.phone}</p>
-                <p className="text-xs text-slate-400 mt-2 italic">{order.customer.address}</p>
+                {isDetailLoading && !order.customer.name ? (
+                  <div className="space-y-2">
+                    <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded-md animate-pulse w-3/4" />
+                    <div className="h-4 bg-slate-100 dark:bg-slate-800/60 rounded-md animate-pulse w-1/2" />
+                  </div>
+                ) : (
+                  <>
+                    <p className="font-bold text-slate-800 dark:text-white">{order.customer.name}</p>
+                    <p className="text-sm text-slate-500 mt-1">{order.customer.phone}</p>
+                    <p className="text-xs text-slate-400 mt-2 italic">{order.customer.address}</p>
+                  </>
+                )}
               </Card>
               <Card className="p-6">
                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Calendar size={14} /> Giao dịch</h4>
                 <p className="font-bold text-slate-800 dark:text-white">{order.date}</p>
-                <p className="text-sm text-emerald-600 font-bold mt-1 uppercase tracking-tighter">Hoàn tất • Tiền mặt</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${order.status === OrderStatus.COMPLETED ? 'bg-emerald-100 text-emerald-600' :
+                    order.status === OrderStatus.CANCELLED ? 'bg-rose-100 text-rose-600' :
+                      'bg-amber-100 text-amber-600'
+                    }`}>
+                    {order.status === OrderStatus.COMPLETED ? 'Hoàn tất' :
+                      order.status === OrderStatus.CANCELLED ? 'Đã hủy' :
+                        order.status === OrderStatus.PENDING ? 'Chờ xử lý' : order.status}
+                  </span>
+                </div>
               </Card>
             </div>
             <div className="bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-[32px] overflow-hidden shadow-sm">
@@ -80,20 +140,34 @@ export default function RetailOrders() {
                   </tr>
                 </thead>
                 <tbody className="divide-y dark:divide-slate-800">
-                  {order.items.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                      <td className="px-6 py-4">
-                        <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{item.name}</p>
-                        <div className="flex gap-1.5 mt-1">
-                          <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded border border-emerald-100 dark:border-emerald-800/50">{item.variant}</span>
-                          {item.tech_specs && <span className="text-[9px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border dark:border-slate-700">{item.tech_specs}</span>}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-center text-xs font-black">x{item.qty}</td>
-                      <td className="px-6 py-4 text-right text-xs text-slate-500">{item.price.toLocaleString()}đ</td>
-                      <td className="px-6 py-4 text-right text-sm font-black text-emerald-600">{(item.price * item.qty).toLocaleString()}đ</td>
-                    </tr>
-                  ))}
+                  {isDetailLoading ? (
+                    [...Array(3)].map((_, idx) => (
+                      <tr key={idx} className="animate-pulse">
+                        <td className="px-6 py-6">
+                          <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-2/3 mb-2" />
+                          <div className="h-3 bg-slate-50 dark:bg-slate-800/40 rounded w-1/4" />
+                        </td>
+                        <td className="px-6 py-6"><div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-8 mx-auto" /></td>
+                        <td className="px-6 py-6"><div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-20 ml-auto" /></td>
+                        <td className="px-6 py-6"><div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-24 ml-auto" /></td>
+                      </tr>
+                    ))
+                  ) : (
+                    order.items.map((item, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                        <td className="px-6 py-4">
+                          <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{item.name}</p>
+                          <div className="flex gap-1.5 mt-1">
+                            <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded border border-emerald-100 dark:border-emerald-800/50">{item.variant}</span>
+                            {item.tech_specs && <span className="text-[9px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border dark:border-slate-700">{item.tech_specs}</span>}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-center text-xs font-black">x{item.qty}</td>
+                        <td className="px-6 py-4 text-right text-xs font-semibold text-slate-500">{item.price.toLocaleString()}đ</td>
+                        <td className="px-6 py-4 text-right text-sm font-black text-emerald-600">{(item.price * item.qty).toLocaleString()}đ</td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -129,7 +203,7 @@ export default function RetailOrders() {
               <Zap size={12} className='text-amber-500 animate-pulse' />
             </div>
             <h2 className="text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-none">
-              Đơn hàng <span className="text-emerald-600 font-black">Đơn hàng</span>
+              Quản lý <span className="text-emerald-600 font-black">Đơn hàng</span>
             </h2>
           </div>
         </div>
@@ -155,38 +229,45 @@ export default function RetailOrders() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {b2cHistory.map((order) => (
-            <Card
-              key={order.id}
-              className="group cursor-pointer hover:border-primary transition-all p-6 bg-white dark:bg-slate-900 rounded-[32px]"
-              onClick={() => setSelectedOrder(order)}
-            >
-              <div className="flex justify-between items-start mb-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 shadow-inner">
-                    <Receipt size={24} />
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 opacity-40">
+            <Loader2 size={48} className="animate-spin text-emerald-500 mb-4" />
+            <p className="font-bold italic">Đang tải danh sách đơn hàng...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {b2cHistory.map((order) => (
+              <Card
+                key={order.id}
+                className={`group cursor-pointer hover:border-primary transition-all p-6 bg-white dark:bg-slate-900 rounded-[32px] relative`}
+                onClick={() => handleSelectOrder(order)}
+              >
+                <div className="flex justify-between items-start mb-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 shadow-inner">
+                      <Receipt size={24} />
+                    </div>
+                    <div>
+                      <h4 className="font-black text-slate-800 dark:text-slate-100 text-lg tracking-tight">{order.id}</h4>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{order.date}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-black text-slate-800 dark:text-slate-100 text-lg tracking-tight">{order.id}</h4>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{order.date}</p>
+                  <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg group-hover:bg-primary group-hover:text-white transition-colors">
+                    <ArrowUpRight size={18} />
                   </div>
                 </div>
-                <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg group-hover:bg-primary group-hover:text-white transition-colors">
-                  <ArrowUpRight size={18} />
+                <div className="space-y-3 mb-6 text-sm font-bold text-slate-600 dark:text-slate-400">
+                  <div className="flex items-center gap-3"><User size={14} className="text-slate-400" /> {order.customer.name}</div>
+                  <div className="flex items-center gap-3"><Box size={14} className="text-slate-400" /> {order.items.length} mặt hàng</div>
                 </div>
-              </div>
-              <div className="space-y-3 mb-6 text-sm font-bold text-slate-600 dark:text-slate-400">
-                <div className="flex items-center gap-3"><User size={14} className="text-slate-400" /> {order.customer.name}</div>
-                <div className="flex items-center gap-3"><Box size={14} className="text-slate-400" /> {order.items.length} mặt hàng</div>
-              </div>
-              <div className="pt-4 border-t dark:border-slate-800 flex justify-between items-center">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tổng cộng</span>
-                <span className="text-xl font-black text-primary">{order.total.toLocaleString()}đ</span>
-              </div>
-            </Card>
-          ))}
-        </div>
+                <div className="pt-4 border-t dark:border-slate-800 flex justify-between items-center">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tổng cộng</span>
+                  <span className="text-xl font-black text-primary">{order.total.toLocaleString()}đ</span>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
       {renderDetails()}
     </Fragment>

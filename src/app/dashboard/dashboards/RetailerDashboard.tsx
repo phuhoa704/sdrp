@@ -1,16 +1,15 @@
 'use client';
 
-import { AlertTriangle, ArrowRight, Beaker, BookOpen, BrainCircuit, ChevronRight, History, Hourglass, Info, Newspaper, PackageCheck, Plus, Search, ShoppingBag, ShoppingCart, Stars, TrendingUp, Zap } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { AlertTriangle, Beaker, BookOpen, ChevronRight, History, Hourglass, Info, PackageCheck, Plus, Search, ShoppingBag, Stars, TrendingUp, Zap } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { MOCK_DISEASE_DATA } from '../../../../mocks/disease';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
-import { MOCK_NEWS } from '../../../../mocks/news';
-import { B2COrder } from '@/types/order';
-import { MOCK_B2C_HISTORY } from '../../../../mocks/order';
+import { B2COrder, OrderStatus } from '@/types/order';
 import { Product } from '@/types/product';
-import { useMedusaProducts } from '@/hooks';
+import { useMedusaProducts, useOrders } from '@/hooks';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { mapMedusaToB2C } from '@/lib/utils';
 
 const salesData = [
   { name: 'T1', sales: 12.5 }, { name: 'T2', sales: 14.8 }, { name: 'T3', sales: 13.2 },
@@ -65,7 +64,13 @@ export default function RetailerDashboard({ onSelectNewsArticle, onSelectDisease
 
   const { products: medusaProducts } = useMedusaProducts({ autoFetch: true, limit: 100 });
 
-  const [b2cHistory, setB2cHistory] = useState<B2COrder[]>(MOCK_B2C_HISTORY);
+  const { orders: medusaOrders, loading } = useOrders({ limit: 5 });
+  const b2cHistory: (B2COrder & { rawId?: string })[] = useMemo(() => {
+    return medusaOrders.length > 0 ? medusaOrders.map((order: any) => ({
+      ...mapMedusaToB2C(order),
+      rawId: order.id
+    })) : [];
+  }, [medusaOrders]);
   useEffect(() => {
     const timer = setInterval(() => {
       setPromoIndex((prev) => (prev + 1) % MARKETPLACE_PROMOS.length);
@@ -283,10 +288,13 @@ export default function RetailerDashboard({ onSelectNewsArticle, onSelectDisease
                     <td className="py-6 px-4 text-xs font-bold text-slate-500">{order.date}</td>
                     <td className="py-6 px-4 font-black text-slate-800 dark:text-white">{order.total.toLocaleString()}đ</td>
                     <td className="py-6 pr-8 text-right">
-                      <span className={`text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-tighter ${order.status === 'completed' ? 'bg-emerald-100/50 text-emerald-600' :
-                        'bg-amber-100/50 text-amber-600'
+                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${order.status === OrderStatus.COMPLETED ? 'bg-emerald-100 text-emerald-600' :
+                        order.status === OrderStatus.CANCELLED ? 'bg-rose-100 text-rose-600' :
+                          'bg-amber-100 text-amber-600'
                         }`}>
-                        {order.status}
+                        {order.status === OrderStatus.COMPLETED ? 'Hoàn tất' :
+                          order.status === OrderStatus.CANCELLED ? 'Đã hủy' :
+                            order.status === OrderStatus.PENDING ? 'Chờ xử lý' : order.status}
                       </span>
                     </td>
                   </tr>

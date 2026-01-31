@@ -1,3 +1,4 @@
+import { B2COrder } from "@/types/order";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -65,3 +66,27 @@ export function parseDisplayNumber(val: string): number {
     const cleanValue = val.replace(/[^0-9]/g, '');
     return cleanValue === '' ? 0 : Number(cleanValue);
 }
+
+
+/* 
+* Map order to b2c order
+*/
+export const mapMedusaToB2C = (order: any): B2COrder => ({
+    id: order.display_id ? `ORD-${order.display_id}` : (order.id.startsWith('ord_') ? order.id.replace('ord_', 'ORD-') : order.id),
+    customer: {
+        name: order.customer?.first_name ? `${order.customer.first_name} ${order.customer.last_name || ''}` : (order.email || 'Khách lẻ'),
+        phone: order.customer?.phone || order.shipping_address?.phone || '--',
+        address: order.shipping_address ? `${order.shipping_address.address_1 || ''}, ${order.shipping_address.city || ''}` : 'Tại quầy'
+    },
+    date: new Date(order.created_at).toLocaleDateString('vi-VN'),
+    timestamp: new Date(order.created_at).getTime(),
+    total: order.summary?.accounting_total || order.total || 0,
+    status: order.status || 'completed',
+    items: order.items?.map((item: any) => ({
+        name: item.title || item.product_title || 'Sản phẩm',
+        qty: item.quantity,
+        price: item.unit_price,
+        variant: item.variant_title || 'Default',
+        tech_specs: item.variant_sku
+    })) || []
+});

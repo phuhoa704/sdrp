@@ -58,10 +58,10 @@ bridgeClient.interceptors.request.use(
 
         // Search for Cookie presence in browser
         if (!isServer()) {
-            console.log(`[Bridge Request] ${config.method?.toUpperCase()} ${config.url}`, {
-                withCredentials: config.withCredentials,
-                hasAuth: !!config.headers?.Authorization
-            });
+            // console.log(`[Bridge Request] ${config.method?.toUpperCase()} ${config.url}`, {
+            //     withCredentials: config.withCredentials,
+            //     hasAuth: !!config.headers?.Authorization
+            // });
         }
 
         if (isServer() && bridgeCookieHeader && !config.headers?.Cookie) {

@@ -16,11 +16,13 @@ interface POSCatalogProps {
   onProductClick: (p: Product) => void;
   onOpenAI: () => void;
   onOpenDisease: (id: string) => void;
+  loading?: boolean;
 }
 
 export const POSCatalog: React.FC<POSCatalogProps> = ({
   searchQuery, setSearchQuery, selectedCategory, setSelectedCategory,
-  categories, filteredProducts, allProducts, onProductClick, onOpenAI, onOpenDisease
+  categories, filteredProducts, allProducts, onProductClick, onOpenAI, onOpenDisease,
+  loading
 }) => {
   const [showResults, setShowResults] = useState(false);
 
@@ -174,7 +176,21 @@ export const POSCatalog: React.FC<POSCatalogProps> = ({
 
       <div className="flex-1 overflow-y-auto pr-2 no-scrollbar">
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-          {enhancedProducts.map((p: any) => {
+          {loading ? (
+            Array.from({ length: 8 }).map((_, i) => (
+              <Card key={i} noPadding className="flex flex-col bg-white dark:bg-slate-900 h-[400px] overflow-hidden animate-pulse">
+                <div className="aspect-square bg-slate-100 dark:bg-slate-800" />
+                <div className="p-4 space-y-2">
+                  <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-3/4" />
+                  <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-1/2" />
+                  <div className="flex justify-between items-center mt-4">
+                    <div className="h-6 bg-slate-100 dark:bg-slate-800 rounded w-1/3" />
+                    <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-14" />
+                  </div>
+                </div>
+              </Card>
+            ))
+          ) : enhancedProducts.map((p: any) => {
             const stockLevel = p.variants?.reduce((sum: number, v: any) => sum + (v.inventory_quantity || 0), 0) || 0;
             const price = p.variants?.[0]?.prices?.[0]?.amount || 0;
 
@@ -192,9 +208,9 @@ export const POSCatalog: React.FC<POSCatalogProps> = ({
                       <ShieldCheck size={10} /> ĐỀ XUẤT WIKI
                     </div>
                   )}
-                  {stockLevel < 20 && (
+                  {/* {stockLevel < 20 && (
                     <div className="absolute top-2 left-2 bg-rose-500 text-white text-[8px] font-black px-2 py-1 rounded uppercase tracking-widest shadow-lg">Sắp hết hàng</div>
-                  )}
+                  )} */}
                 </div>
                 <div className="p-4 space-y-1">
                   <h4 className="font-bold text-[13px] text-slate-800 dark:text-slate-100 line-clamp-1 leading-tight">{p.title}</h4>

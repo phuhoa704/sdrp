@@ -13,30 +13,20 @@ import { createPortal } from 'react-dom';
 interface POSHistoryDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  history: B2COrder[];
   onViewDetail: (order: B2COrder) => void;
 }
 
 export const POSHistoryDrawer: React.FC<POSHistoryDrawerProps> = ({
-  isOpen, onClose, history, onViewDetail
+  isOpen, onClose, onViewDetail
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [fulfillmentFilter, setFulfillmentFilter] = useState<'all' | 'pickup' | 'delivery'>('all');
   const [timeFilter, setTimeFilter] = useState<'today' | 'week' | 'month'>('today');
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
 
-  const filteredHistory = useMemo(() => {
-    return history.filter(order => {
-      const matchesSearch =
-        order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order.customer.name.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const orderFulfillment = parseInt(order.id.split('-')[1]) % 2 === 0 ? 'pickup' : 'delivery';
-      const matchesFulfillment = fulfillmentFilter === 'all' || orderFulfillment === fulfillmentFilter;
-
-      return matchesSearch && matchesFulfillment;
-    });
-  }, [history, searchQuery, fulfillmentFilter]);
+  const filteredHistory: any[] = useMemo(() => {
+    return [];
+  }, []);
 
   const renderOrderDetailModal = () => {
     if (!selectedOrder) return null;

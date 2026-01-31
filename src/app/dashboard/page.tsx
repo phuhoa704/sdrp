@@ -56,8 +56,6 @@ export default function DashboardPage() {
 
   const [localProducts, setLocalProducts] = useState<Product[]>([]);
 
-  const [b2cHistory, setB2cHistory] = useState<B2COrder[]>([]);
-
   useEffect(() => {
     if (medusaProducts.length > 0) {
       const saved = localStorage.getItem('retail_inventory');
@@ -141,16 +139,12 @@ export default function DashboardPage() {
     setSelectedProduct(product);
   };
 
-  const handlePOSOrder = (order: B2COrder) => {
-    setB2cHistory([order, ...b2cHistory]);
-  };
-
   // Render content based on current view
   const renderContent = () => {
     // View-based pages
     switch (currentView) {
       case 'POS':
-        return <POS onBack={() => handleSetView('HOME')} onCompleteOrder={handlePOSOrder} b2cHistory={b2cHistory} />;
+        return <POS onBack={() => handleSetView('HOME')} />;
       case 'WHOLESALE_MARKETPLACE':
         return <WholesaleMarketplace role={user.role} />;
       case 'MARKETPLACE':

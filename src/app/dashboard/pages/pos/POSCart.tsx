@@ -26,12 +26,15 @@ interface POSCartProps {
   onOpenCustomerModal: () => void;
   onCheckout: () => void;
   onSetShippingPartner: (partner: string) => void;
+  loadingTabId?: string | null;
+  isSyncing?: boolean;
 }
 
 export const POSCart: React.FC<POSCartProps> = ({
   width, activeTab, subtotal, totalAmount, isCreatingShipping,
   onUpdateQty, onRemoveItem, onSetFulfillment,
-  onUpdateShippingFee, onUpdateDiscount, onOpenCustomerModal, onCheckout
+  onUpdateShippingFee, onUpdateDiscount, onOpenCustomerModal, onCheckout,
+  loadingTabId, isSyncing = false
 }) => {
   const [showPromoModal, setShowPromoModal] = useState(false);
   const [discountType, setDiscountType] = useState<'amount' | 'percent'>('amount');
@@ -97,6 +100,8 @@ export const POSCart: React.FC<POSCartProps> = ({
     setShowQRModal(false);
     onCheckout();
   };
+
+  console.log(activeTab)
 
   const renderPromoModal = () => {
     if (!showPromoModal) return null;
@@ -235,6 +240,18 @@ export const POSCart: React.FC<POSCartProps> = ({
     >
       {/* 1. TOP SECTION (NON-SCROLLABLE) */}
       <div className="shrink-0 p-4 pb-0 space-y-3">
+        <div className="flex justify-between items-center px-1">
+          <div className="flex items-center gap-2">
+            <ShoppingCart size={16} className="text-slate-400" />
+            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Giỏ hàng</span>
+          </div>
+          {isSyncing && (
+            <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 dark:bg-emerald-950/40 rounded-full border border-emerald-100 dark:border-emerald-900/30 animate-pulse">
+              <Loader2 size={10} className="animate-spin text-emerald-500" />
+              <span className="text-[8px] font-black text-emerald-600 uppercase">Đang lưu...</span>
+            </div>
+          )}
+        </div>
         <div className="flex gap-2">
           <button
             onClick={() => onSetFulfillment('pickup')}
@@ -271,7 +288,13 @@ export const POSCart: React.FC<POSCartProps> = ({
 
       {/* 2. CENTER SECTION (SCROLLABLE LIST) */}
       <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4">
-        {activeTab.items.length === 0 ? (
+        {loadingTabId === activeTab.id ? (
+          <div className="space-y-3 animate-pulse">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 h-24" />
+            ))}
+          </div>
+        ) : activeTab.items.length === 0 ? (
           <div className="py-20 flex flex-col items-center justify-center opacity-20">
             <ShoppingCart size={48} className="mb-4" />
             <p className="text-xs font-black uppercase tracking-widest text-center">Giỏ hàng trống<br />Vui lòng chọn sản phẩm</p>
@@ -287,7 +310,12 @@ export const POSCart: React.FC<POSCartProps> = ({
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start gap-2">
                       <h5 className="font-black text-xs text-slate-800 dark:text-slate-100 truncate leading-tight">{item.name}</h5>
-                      <button onClick={() => onRemoveItem(item.id, item.variant, item.tech_specs)} className="text-slate-300 hover:text-rose-500 transition-colors shrink-0"><X size={14} /></button>
+                      <button
+                        onClick={() => onRemoveItem(item.id, item.variant, item.tech_specs)}
+                        className="text-slate-300 hover:text-rose-500 transition-colors shrink-0"
+                      >
+                        <X size={14} />
+                      </button>
                     </div>
                     <div className="flex flex-wrap gap-1 mt-1">
                       <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded uppercase">{item.variant}</span>
@@ -295,9 +323,19 @@ export const POSCart: React.FC<POSCartProps> = ({
                     </div>
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center bg-slate-50 dark:bg-slate-900 rounded-lg p-0.5 border dark:border-slate-700">
-                        <button onClick={() => onUpdateQty(item.id, item.variant, item.tech_specs, -1)} className="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-emerald-500"><Minus size={12} /></button>
+                        <button
+                          onClick={() => onUpdateQty(item.id, item.variant, item.tech_specs, -1)}
+                          className="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-emerald-500"
+                        >
+                          <Minus size={12} />
+                        </button>
                         <span className="text-[11px] font-black w-6 text-center dark:text-slate-200">{item.quantity}</span>
-                        <button onClick={() => onUpdateQty(item.id, item.variant, item.tech_specs, 1)} className="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-emerald-500"><Plus size={12} /></button>
+                        <button
+                          onClick={() => onUpdateQty(item.id, item.variant, item.tech_specs, 1)}
+                          className="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-emerald-500"
+                        >
+                          <Plus size={12} />
+                        </button>
                       </div>
                       <p className="text-sm font-black text-slate-900 dark:text-white">{(item.price * item.quantity).toLocaleString()}đ</p>
                     </div>

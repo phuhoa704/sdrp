@@ -16,7 +16,7 @@ interface PromotionWizardProps {
 
 export const PromotionWizard: React.FC<PromotionWizardProps> = ({ onCancel, onSave }) => {
   const [step, setStep] = useState(1);
-  const [selectedType, setSelectedType] = useState<PromotionType | null>('amount_off_products');
+  const [selectedType, setSelectedType] = useState<PromotionType | null>(null);
 
   const [method, setMethod] = useState<'code' | 'automatic'>('code');
   const [status, setStatus] = useState<'draft' | 'active'>('draft');

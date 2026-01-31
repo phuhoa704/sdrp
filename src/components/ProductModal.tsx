@@ -45,18 +45,26 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   const currentPrice = selectedVariant
     ? (selectedVariant.prices.find(price => price.currency_code === 'vnd')?.amount || 0)
     : basePrice;
-  console.log(basePrice, currentPrice, currentProduct);
 
-  const handleAddToCart = () => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleAddToCart = async () => {
     if (onAddToCart) {
-      onAddToCart(currentProduct, {
-        unit: selectedUnit,
-        quantity: quantity,
-        variant: selectedVariant,
-        tech_specs: selectedVariant ? `${selectedVariant.title} - ${selectedVariant.origin_country}` : '',
-        price: currentPrice
-      });
-      onClose();
+      setIsLoading(true);
+      try {
+        await onAddToCart(currentProduct, {
+          unit: selectedUnit,
+          quantity: quantity,
+          variant: selectedVariant,
+          tech_specs: selectedVariant ? `${selectedVariant.title} - ${selectedVariant.origin_country}` : '',
+          price: currentPrice
+        });
+        onClose();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -185,6 +193,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             {!disableAddToCart && (
               <Button
                 size="lg"
+                loading={isLoading}
                 onClick={handleAddToCart}
                 className={`h-14 rounded-2xl flex-1 md:flex-none px-12 font-black text-base shadow-xl text-white`}
                 style={{ backgroundColor: primaryColor }}
