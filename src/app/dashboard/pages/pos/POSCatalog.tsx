@@ -191,7 +191,6 @@ export const POSCatalog: React.FC<POSCatalogProps> = ({
               </Card>
             ))
           ) : enhancedProducts.map((p: any) => {
-            const stockLevel = p.variants?.reduce((sum: number, v: any) => sum + (v.inventory_quantity || 0), 0) || 0;
             const price = p.variants?.[0]?.prices?.[0]?.amount || 0;
 
             return (
@@ -208,9 +207,6 @@ export const POSCatalog: React.FC<POSCatalogProps> = ({
                       <ShieldCheck size={10} /> ĐỀ XUẤT WIKI
                     </div>
                   )}
-                  {/* {stockLevel < 20 && (
-                    <div className="absolute top-2 left-2 bg-rose-500 text-white text-[8px] font-black px-2 py-1 rounded uppercase tracking-widest shadow-lg">Sắp hết hàng</div>
-                  )} */}
                 </div>
                 <div className="p-4 space-y-1">
                   <h4 className="font-bold text-[13px] text-slate-800 dark:text-slate-100 line-clamp-1 leading-tight">{p.title}</h4>

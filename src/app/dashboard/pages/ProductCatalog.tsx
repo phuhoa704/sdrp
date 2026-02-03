@@ -98,6 +98,38 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
     return priceObj ? priceObj.amount : (variant?.metadata?.price as number) || 0;
   };
 
+  const getAttributeColor = (index: number) => {
+    const colors = [
+      'text-blue-500 border-blue-500',
+      'text-green-500 border-green-500',
+      'text-yellow-500 border-yellow-500',
+      'text-orange-500 border-orange-500',
+      'text-red-500 border-red-500',
+      'text-purple-500 border-purple-500',
+      'text-pink-500 border-pink-500',
+      'text-teal-500 border-teal-500',
+      'text-indigo-500 border-indigo-500',
+      'text-cyan-500 border-cyan-500',
+    ];
+    return colors[index % colors.length];
+  }
+
+  const getAttributeBgColor = (index: number) => {
+    const colors = [
+      'bg-blue-500/20',
+      'bg-green-500/20',
+      'bg-yellow-500/20',
+      'bg-orange-500/20',
+      'bg-red-500/20',
+      'bg-purple-500/20',
+      'bg-pink-500/20',
+      'bg-teal-500/20',
+      'bg-indigo-500/20',
+      'bg-cyan-500/20',
+    ];
+    return colors[index % colors.length];
+  }
+
   const handleEdit = async (p: Product) => {
     setIsFetchingDetail(true);
     try {
@@ -569,9 +601,7 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
                                           <tr>
                                             <th className="px-6 py-4">SKU</th>
                                             <th className="px-6 py-4">Biến thể / Quy cách</th>
-                                            {p.variants[0].options.map(o => (
-                                              <th key={o.id} className="px-6 py-4 text-center">{o.option.title}</th>
-                                            ))}
+                                            <th className="px-6 py-4">Thông tin chi tiết (Dynamic Specs)</th>
                                             <th className="px-6 py-4 text-right pr-10">Đơn giá bán</th>
                                           </tr>
                                         </thead>
@@ -579,18 +609,18 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
                                           {p.variants.map(v => (
                                             <tr key={v.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                                               <td className="px-6 py-4">
-                                                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{v.sku || v.id}</p>
+                                                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{v.sku || "--"}</p>
                                               </td>
                                               <td className="px-6 py-4">
                                                 <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{v.title}</p>
                                               </td>
-                                              {v.options.map((opt, index) => (
-                                                <td key={index} className="px-6 py-4 text-center">
-                                                  <div className="flex flex-col">
-                                                    <span className="text-[10px] font-black text-slate-800 dark:text-slate-100">{opt.option.title}: {opt.value}</span>
-                                                  </div>
-                                                </td>
-                                              ))}
+                                              <td className="px-6 py-4 text-center">
+                                                <div className="flex gap-1.5 items-center">
+                                                  {v.options.map((opt, index) => (
+                                                    <span key={index} className={cn("text-[10px] font-black px-2 py-1 rounded-xl border", getAttributeBgColor(index), getAttributeColor(index))}>{opt.value}</span>
+                                                  ))}
+                                                </div>
+                                              </td>
                                               <td className="px-6 py-4 text-right pr-10">
                                                 <p className="text-sm font-black text-primary">{formatCurrency(getVariantPrice(v), currencyCode)}</p>
                                               </td>

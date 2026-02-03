@@ -56,7 +56,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
           unit: selectedUnit,
           quantity: quantity,
           variant: selectedVariant,
-          tech_specs: selectedVariant ? `${selectedVariant.title} - ${selectedVariant.origin_country}` : '',
+          tech_specs: selectedVariant ? `${selectedVariant.title} - ${selectedVariant.sku}` : '',
           price: currentPrice
         });
         onClose();
@@ -143,7 +143,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                         {v.title}
                       </span>
                       <div className="flex items-center gap-2 text-[10px] font-bold opacity-70">
-                        <Globe size={12} /> {v.origin_country}
+                        <Globe size={12} /> {v.sku}
                       </div>
                     </button>
                   ))}

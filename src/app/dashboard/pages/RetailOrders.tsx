@@ -25,6 +25,7 @@ import { useOrders } from '@/hooks';
 import { Loader2 } from 'lucide-react';
 import { orderService } from '@/lib/api/medusa/orderService';
 import { mapMedusaToB2C } from '@/lib/utils';
+import { TableLoading } from '@/components/TableLoading';
 
 export default function RetailOrders() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -32,15 +33,12 @@ export default function RetailOrders() {
   const [isDetailLoading, setIsDetailLoading] = useState(false);
 
   const handleSelectOrder = async (orderSummary: B2COrder & { rawId?: string }) => {
-    // 1. Instant response: Open modal with data we already have
     setSelectedOrder(orderSummary);
 
-    // 2. Background fetch: Get full detail if possible
     if (orderSummary.rawId) {
       setIsDetailLoading(true);
       try {
         const { order } = await orderService.getOrder(orderSummary.rawId);
-        // Only update if the user is still looking at the same order
         setSelectedOrder(prev => {
           if (prev && prev.id === orderSummary.id) {
             return mapMedusaToB2C(order);
@@ -230,9 +228,8 @@ export default function RetailOrders() {
         </div>
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 opacity-40">
-            <Loader2 size={48} className="animate-spin text-emerald-500 mb-4" />
-            <p className="font-bold italic">Đang tải danh sách đơn hàng...</p>
+          <div className="w-full flex justify-center">
+            <TableLoading colSpan={3} />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

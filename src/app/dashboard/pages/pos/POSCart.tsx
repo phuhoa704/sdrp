@@ -1,14 +1,18 @@
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ShoppingCart, Trash2, User, Store, Truck,
   Ticket, Percent, Minus, Plus, X,
   ChevronRight, Search,
   ChevronDown, Banknote, QrCode, CheckCircle2, Loader2,
-  AlertCircle, CreditCard, Clock, Gift, Tag
+  AlertCircle, CreditCard, Clock
 } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { createPortal } from 'react-dom';
+import { usePromotions } from '@/hooks';
+import { getPromotionUIData } from '@/lib/helpers';
+import { TableLoading } from '@/components/TableLoading';
+import { draftOrderService } from '@/lib/api/medusa/draftOrderService';
 
 interface POSCartProps {
   width: number;
@@ -40,39 +44,39 @@ export const POSCart: React.FC<POSCartProps> = ({
   const [discountType, setDiscountType] = useState<'amount' | 'percent'>('amount');
   const [discountValue, setDiscountValue] = useState(0);
   const [promoSearch, setPromoSearch] = useState("");
-  const [activePromoTab, setActivePromoTab] = useState('Tất cả');
   const [selectedPromoId, setSelectedPromoId] = useState<string | null>(null);
 
   const [isPromoExpanded, setIsPromoExpanded] = useState(false);
   const [isManualDiscountExpanded, setIsManualDiscountExpanded] = useState(false);
 
+  const [promotionLoading, setPromotionLoading] = useState<boolean>(false)
+
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'qr'>('cash');
   const [showQRModal, setShowQRModal] = useState(false);
   const [qrStatus, setQrStatus] = useState<'waiting' | 'received'>('waiting');
+  const { promotions: apiPromotions, loading, error } = usePromotions({
+    q: promoSearch || undefined
+  });
 
-  const promos = [
-    { id: 'FREESHIP', name: 'Miễn phí vận chuyển', desc: 'Giảm tối đa 50k phí ship', type: 'Vận chuyển', code: 'FS2024' },
-    { id: 'GIAM20', name: 'Ưu đãi Giảm 20%', desc: 'Giảm 20% cho đơn từ 1tr', type: 'Hóa đơn', code: 'SD20' },
-    { id: 'B1G1', name: 'Mua 1 Tặng 1', desc: 'Tặng kèm 1 gói phân bón vi lượng', type: 'Quà tặng', code: 'GIFTAGRI' },
-    { id: 'SUMMER', name: 'Hè rực rỡ -50k', desc: 'Giảm trực tiếp 50,000đ', type: 'Hóa đơn', code: 'SUMMER50' },
-  ];
+  const filteredPromos = useMemo(() => {
+    return apiPromotions.filter(p => p.status === "active");
+  }, [apiPromotions]);
 
-  const filteredPromos = promos.filter(p =>
-    (activePromoTab === 'Tất cả' || p.type === activePromoTab) &&
-    (p.name.toLowerCase().includes(promoSearch.toLowerCase()) || p.code.toLowerCase().includes(promoSearch.toLowerCase()))
-  );
+  const handleApplyPromo = async (promo: any) => {
+    if (!activeTab?.id || !promo.code) return;
 
-  const handleApplyPromo = (promo: any) => {
-    if (promo.id === 'FREESHIP') {
-      onUpdateShippingFee(0);
-    } else if (promo.id === 'GIAM20') {
-      onUpdateDiscount(Math.round(subtotal * 0.2));
-    } else if (promo.id === 'SUMMER') {
-      onUpdateDiscount(50000);
+    try {
+      setPromotionLoading(true)
+      await draftOrderService.addPromotionToDraftOrder(activeTab.id, promo.code);
+
+      setSelectedPromoId(promo.id);
+      setShowPromoModal(false);
+      setIsPromoExpanded(false);
+    } catch (err) {
+      console.error('Failed to apply promotion:', err);
+    } finally {
+      setPromotionLoading(false)
     }
-    setSelectedPromoId(promo.id);
-    setShowPromoModal(false);
-    setIsPromoExpanded(false);
   };
 
   const handleManualDiscountChange = (val: number) => {
@@ -101,8 +105,6 @@ export const POSCart: React.FC<POSCartProps> = ({
     onCheckout();
   };
 
-  console.log(activeTab)
-
   const renderPromoModal = () => {
     if (!showPromoModal) return null;
     const content = (
@@ -126,38 +128,60 @@ export const POSCart: React.FC<POSCartProps> = ({
                 className="w-full h-12 pl-12 pr-4 bg-white dark:bg-slate-800 border-none rounded-2xl shadow-sm outline-none focus:ring-2 focus:ring-amber-500/20 dark:text-white text-sm"
               />
             </div>
-            <div className="flex gap-2 overflow-x-auto no-scrollbar">
-              {['Tất cả', 'Hóa đơn', 'Vận chuyển', 'Quà tặng'].map(t => (
-                <button
-                  key={t}
-                  onClick={() => setActivePromoTab(t)}
-                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all whitespace-nowrap ${activePromoTab === t ? 'bg-amber-500 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-400'}`}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
           </div>
-          <div className="flex-1 overflow-y-auto p-6 space-y-3 no-scrollbar">
-            {filteredPromos.map(promo => (
-              <div
-                key={promo.id}
-                onClick={() => handleApplyPromo(promo)}
-                className="group relative flex items-center p-4 bg-white dark:bg-slate-900 border-2 border-transparent hover:border-amber-400 rounded-2xl cursor-pointer transition-all shadow-sm active:scale-[0.98]"
-              >
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-inner-soft ${promo.id === selectedPromoId ? 'bg-amber-500 text-white' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-500'}`}>
-                  {promo.type === 'Vận chuyển' ? <Truck size={24} /> : promo.type === 'Quà tặng' ? <Gift size={24} /> : <Tag size={24} />}
-                </div>
-                <div className="flex-1 px-4 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-[9px] font-black text-amber-600 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded uppercase">{promo.code}</span>
-                  </div>
-                  <h4 className="font-black text-sm text-slate-800 dark:text-slate-100 truncate">{promo.name}</h4>
-                  <p className="text-[10px] text-slate-500 italic">{promo.desc}</p>
-                </div>
-                <ChevronRight size={18} className="text-slate-200 group-hover:text-amber-500" />
+          <div className="flex-1 overflow-y-auto p-6 space-y-3 no-scrollbar relative min-h-[300px]">
+            {loading ? (
+              <div className='flex justify-center items-center h-full'>
+                <TableLoading colSpan={3} />
               </div>
-            ))}
+            ) : (
+              <>
+                {promotionLoading && (
+                  <div className="absolute inset-0 z-50 bg-white/60 dark:bg-slate-900/60 flex flex-col items-center justify-center backdrop-blur-[2px] transition-all duration-300">
+                    <Loader2 className="animate-spin text-amber-500 mb-2" size={40} />
+                    <span className="text-sm font-bold text-amber-600 animate-pulse">Đang áp dụng...</span>
+                  </div>
+                )}
+                {filteredPromos.map(promo => {
+                  const ui = getPromotionUIData(promo);
+                  const Icon = ui.icon;
+                  const isSelected = promo.id === selectedPromoId;
+
+                  return (
+                    <div
+                      key={promo.id}
+                      onClick={() => !promotionLoading && handleApplyPromo(promo)}
+                      className={`group relative flex items-center p-4 border-2 rounded-2xl cursor-pointer transition-all shadow-sm active:scale-[0.98]
+                        ${isSelected
+                          ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-500'
+                          : 'bg-white dark:bg-slate-900 border-transparent hover:border-amber-400'
+                        }
+                        ${promotionLoading ? 'opacity-50 grayscale cursor-not-allowed pointer-events-none' : ''}
+                      `}
+                    >
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-inner-soft transition-colors 
+                        ${isSelected ? 'bg-amber-500 text-white' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-500'}
+                      `}>
+                        <Icon size={24} />
+                      </div>
+                      <div className="flex-1 px-4 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase transition-colors
+                            ${isSelected ? 'bg-amber-500 text-white' : 'text-amber-600 bg-amber-50 dark:bg-amber-900/30'}
+                          `}>
+                            {promo.code}
+                          </span>
+                        </div>
+                        <h4 className="font-black text-sm text-slate-800 dark:text-slate-100 truncate">{ui.label}</h4>
+                        <p className="text-[10px] text-slate-500 italic truncate">{ui.description}</p>
+                      </div>
+                      {isSelected && <CheckCircle2 size={18} className="text-amber-500" />}
+                      {!isSelected && <ChevronRight size={18} className="text-slate-200 group-hover:text-amber-500" />}
+                    </div>
+                  )
+                })}
+              </>
+            )}
           </div>
           <div className="p-4 bg-slate-50 dark:bg-slate-950 border-t dark:border-slate-800">
             <Button fullWidth onClick={() => setShowPromoModal(false)}>Đóng</Button>
@@ -238,7 +262,6 @@ export const POSCart: React.FC<POSCartProps> = ({
       className="bg-white dark:bg-slate-900 border-l dark:border-slate-800 flex flex-col shrink-0 shadow-[-10px_0_30px_rgba(0,0,0,0.03)] h-full"
       style={{ width: `${width}px` }}
     >
-      {/* 1. TOP SECTION (NON-SCROLLABLE) */}
       <div className="shrink-0 p-4 pb-0 space-y-3">
         <div className="flex justify-between items-center px-1">
           <div className="flex items-center gap-2">
@@ -286,7 +309,6 @@ export const POSCart: React.FC<POSCartProps> = ({
         </button>
       </div>
 
-      {/* 2. CENTER SECTION (SCROLLABLE LIST) */}
       <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4">
         {loadingTabId === activeTab.id ? (
           <div className="space-y-3 animate-pulse">
@@ -347,9 +369,7 @@ export const POSCart: React.FC<POSCartProps> = ({
         )}
       </div>
 
-      {/* 3. BOTTOM SECTION (FIXED / NON-SCROLLABLE SUMMARY) */}
       <div className="shrink-0 p-5 bg-[#0F172A] dark:bg-slate-950 border-t dark:border-slate-800 space-y-4 shadow-2xl">
-        {/* Voucher & Discount Row */}
         <div className="grid grid-cols-2 gap-2">
           <div className={`rounded-xl border transition-all overflow-hidden ${isPromoApplied ? 'bg-amber-50/10 border-amber-500/50' : 'bg-slate-900 border-slate-800'}`}>
             <button onClick={() => setIsPromoExpanded(!isPromoExpanded)} className="w-full px-3 h-10 flex items-center justify-between">
@@ -363,8 +383,27 @@ export const POSCart: React.FC<POSCartProps> = ({
               <div className="px-3 pb-3 space-y-2 animate-fade-in">
                 {isPromoApplied ? (
                   <div className="p-2 bg-slate-800 border border-amber-500/30 rounded-lg flex items-center justify-between">
-                    <span className="text-[9px] font-black text-amber-500 uppercase">{promos.find(p => p.id === selectedPromoId)?.code}</span>
-                    <button onClick={() => { setSelectedPromoId(null); onUpdateDiscount(0); }} className="text-rose-500"><Trash2 size={12} /></button>
+                    <span className="text-[9px] font-black text-amber-500 uppercase">{apiPromotions.find(p => p.id === selectedPromoId)?.code}</span>
+                    <button
+                      onClick={async () => {
+                        const promoCode = apiPromotions.find(p => p.id === selectedPromoId)?.code;
+                        if (!activeTab?.id || !promoCode) return;
+
+                        try {
+                          setPromotionLoading(true)
+                          await draftOrderService.removePromotionFromDraftOrder(activeTab.id, promoCode);
+                          setSelectedPromoId(null);
+                          onUpdateDiscount(0);
+                        } catch (err) {
+                          console.error('Failed to remove promotion:', err);
+                        } finally {
+                          setPromotionLoading(false)
+                        }
+                      }}
+                      className="text-rose-500"
+                    >
+                      {promotionLoading ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                    </button>
                   </div>
                 ) : (
                   <button onClick={() => setShowPromoModal(true)} className="w-full py-2 bg-amber-500 text-white rounded-lg text-[9px] font-black uppercase shadow-lg">CHỌN MÃ</button>
@@ -399,7 +438,6 @@ export const POSCart: React.FC<POSCartProps> = ({
           </div>
         </div>
 
-        {/* Method Toggle */}
         <div className="flex gap-2">
           <button
             onClick={() => setPaymentMethod('cash')}
@@ -415,7 +453,6 @@ export const POSCart: React.FC<POSCartProps> = ({
           </button>
         </div>
 
-        {/* Pricing Summary */}
         <div className="space-y-2">
           {activeTab.fulfillment === 'delivery' && (
             <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase">
@@ -441,7 +478,6 @@ export const POSCart: React.FC<POSCartProps> = ({
           </div>
         </div>
 
-        {/* Action Button */}
         <Button
           size="lg" fullWidth className={`rounded-xl h-14 font-black text-sm uppercase tracking-tight transition-all active:scale-[0.98] ${isCreatingShipping ? 'opacity-70' : ''} ${activeTab.fulfillment === 'delivery' ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20' : 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20'}`}
           icon={isCreatingShipping ? <Clock size={20} className="animate-spin" /> : (paymentMethod === 'qr' ? <QrCode size={20} /> : <CreditCard size={20} />)}

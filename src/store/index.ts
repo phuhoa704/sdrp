@@ -7,6 +7,7 @@ import cartReducer from './slices/cartSlice';
 import uiReducer from './slices/uiSlice';
 import productsReducer from './slices/productsSlice';
 import stockReducer from './slices/stockSlice';
+import posReducer from './slices/posSlice';
 
 const rootReducer = combineReducers({
     auth: authReducer,
@@ -14,13 +15,14 @@ const rootReducer = combineReducers({
     ui: uiReducer,
     products: productsReducer,
     stock: stockReducer,
+    pos: posReducer,
 });
 
 const persistConfig = {
     key: 'root',
     version: 1,
     storage,
-    whitelist: ['auth', 'cart', 'ui', 'stock'], // Only persist these reducers
+    whitelist: ['auth', 'cart', 'ui', 'stock', 'pos'], // Only persist these reducers
     blacklist: ['products'], // Don't persist products (fetch from API)
 };
 

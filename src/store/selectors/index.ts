@@ -38,3 +38,9 @@ export const selectSelectedCategory = (state: RootState) => state.products.selec
 export const selectProductById = (state: RootState, productId: string) =>
     state.products.items.find((p) => p.id === productId);
 export const selectCurrencyCode = (state: RootState) => state.products.currencyCode;
+
+// POS selectors
+export const selectPOS = (state: RootState) => state.pos;
+export const selectActiveTabId = (state: RootState) => state.pos.activeTabId;
+export const selectActiveTab = (state: RootState) => state.pos.activeTab;
+export const selectTabs = (state: RootState) => state.pos.tabs;

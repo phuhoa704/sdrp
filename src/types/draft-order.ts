@@ -81,3 +81,14 @@ export interface DraftOrderListResponse {
     offset: number;
     limit: number;
 }
+
+export interface DraftOrderCheckAvailabilityResponse {
+    status: string;
+    message: string;
+    data: {
+        [variantId: string]: {
+            availability: number;
+            sales_channel_id: string;
+        }
+    }
+}

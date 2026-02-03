@@ -28,29 +28,8 @@ import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { RootState } from '@/store';
 import { selectCurrencyCode } from '@/store/selectors';
 import { setSelectedSalesChannelId } from '@/store/slices/uiSlice';
-
-interface POSItem {
-  id: string; // Product ID
-  lineItemId?: string; // Medusa Line Item ID
-  name: string;
-  price: number;
-  quantity: number;
-  variant: string;
-  image: string;
-  tech_specs?: string; // Lưu thông tin nồng độ/xuất xứ
-}
-
-interface OrderTab {
-  id: string;
-  label: string;
-  items: POSItem[];
-  customer: { name: string; phone: string; address?: string } | null;
-  discount: number;
-  fulfillment: 'pickup' | 'delivery';
-  shippingFee: number;
-  shippingPartner?: string;
-  branch?: string;
-}
+import { DraftOrder } from '@/types/draft-order';
+import { OrderTab } from '@/store/slices/posSlice';
 
 interface POSScreenProps {
   onBack: () => void;
@@ -81,12 +60,9 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
   const [showHistoryDrawer, setShowHistoryDrawer] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // Resizable Cart State
   const [cartWidth, setCartWidth] = useState(500);
   const [isResizingActive, setIsResizingActive] = useState(false);
   const isResizing = useRef(false);
-
-  // Modals state
   const [productToConfigure, setProductToConfigure] = useState<Product | null>(null);
   const [diseaseToShow, setDiseaseToShow] = useState<string | null>(null);
   const [showAIModal, setShowAIModal] = useState(false);
@@ -94,19 +70,22 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
   const [isCreatingShipping, setIsCreatingShipping] = useState(false);
   const [selectedOrderForDetail, setSelectedOrderForDetail] = useState<B2COrder | null>(null);
 
+  const [activeTab, setActiveTab] = useState<OrderTab | null>(null);
+
   const { products: allProducts, loading: productsLoading } = useMedusaProducts({
     limit: 100,
     sales_channel_id: selectedSalesChannelId || undefined
   });
   const { categories: medusaCategories } = useCategories();
 
-  // Handlers declared early for stability and use in effects
   const refreshActiveTabDetails = useCallback(async (id: string) => {
     try {
       const res = await draftOrderService.getDraftOrder(id);
       if (res.draft_order) {
-        setTabs(prev => prev.map(t => t.id === id ? {
-          ...t,
+        setActiveTab(prev => ({
+          id: res.draft_order.id,
+          label: res.draft_order.id,
+          fulfillment: "pickup",
           items: res.draft_order.items.map((item: any) => ({
             id: item.product_id,
             lineItemId: item.id,
@@ -120,12 +99,40 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
           customer: res.draft_order.email ? { name: res.draft_order.email.split('@')[0], phone: '', address: '' } : null,
           discount: res.draft_order.discount_total || 0,
           shippingFee: res.draft_order.shipping_total || 0,
-        } : t));
+          subtotal: res.draft_order.subtotal || 0,
+        }));
       }
     } catch (err) {
       console.error("Failed to refresh active tab details:", err);
     }
   }, []);
+
+  const updateActiveTab = useCallback((draftOrderPreview: DraftOrder) => {
+    try {
+      setActiveTab(prev => ({
+        id: prev?.id || "",
+        label: prev?.label || "",
+        items: draftOrderPreview.items.map((item: any) => ({
+          id: item.product_id,
+          lineItemId: item.id,
+          name: item.title,
+          price: item.unit_price,
+          quantity: item.quantity,
+          variant: item.variant_title || 'Default',
+          image: item.thumbnail || '',
+          tech_specs: item.variant_sku
+        })),
+        customer: prev?.customer || null,
+        discount: draftOrderPreview.discount_total || 0,
+        fulfillment: 'pickup',
+        shippingFee: draftOrderPreview.shipping_total || 0,
+        branch: currentBranch,
+        subtotal: draftOrderPreview.subtotal || 0,
+      }))
+    } catch (error) {
+      console.error("Failed to update active tab:", error);
+    }
+  }, [])
 
   const debouncedConfirm = useCallback((tabId: string) => {
     // Clear existing timeout for this tab
@@ -155,23 +162,22 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
     setActiveTabId(id);
     setLoadingTabId(id);
     try {
-      // Cancel previous edit if exists
       if (previousId && previousId !== id) {
         await draftOrderService.cancelDraftOrderEdit(previousId).catch(err => {
           console.warn("Failed to cancel previous edit:", err);
         });
       }
 
-      // Initiate edit mode for the draft order
-      await draftOrderService.createDraftOrderEdit(id);
-
-      await refreshActiveTabDetails(id);
+      const res = await draftOrderService.createDraftOrderEdit(id);
+      if (res.draft_order_preview) {
+        updateActiveTab(res.draft_order_preview);
+      }
     } catch (err) {
       console.error("Failed to initiate draft order edit:", err);
     } finally {
       setLoadingTabId(null);
     }
-  }, [activeTabId, refreshActiveTabDetails]);
+  }, [activeTabId, updateActiveTab]);
 
   const handleAddTab = useCallback(async () => {
     if (!currentRegion || isAddingTab) return;
@@ -215,7 +221,6 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
     }
   }, [salesChannels, dispatch]);
 
-  // Sync draft orders to tabs
   useEffect(() => {
     if (draftOrders.length > 0) {
       const mappedTabs: OrderTab[] = draftOrders.map((draft, idx) => ({
@@ -235,9 +240,9 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
         discount: draft.discount_total || 0,
         fulfillment: 'pickup',
         shippingFee: draft.shipping_total || 0,
-        branch: currentBranch
+        branch: currentBranch,
+        subtotal: draft.subtotal || 0,
       }));
-
       setTabs(mappedTabs);
       if (!activeTabId || !mappedTabs.find(t => t.id === activeTabId)) {
         handleSelectTab(mappedTabs[0].id);
@@ -263,7 +268,6 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
     }
   }, [selectedSalesChannelId, salesChannels]);
 
-  const activeTab = useMemo(() => tabs.find(t => t.id === activeTabId) || tabs[0], [tabs, activeTabId]);
   const categories = useMemo(() => ["Tất cả", ...medusaCategories.map(c => c.name)], [medusaCategories]);
 
   // Calculations
@@ -321,59 +325,62 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
 
   const updateItemQty = useCallback(async (id: string, variant: string, tech_specs: string | undefined, delta: number) => {
     if (!activeTabId) return;
+    if (!activeTab) return;
 
-    // 1. OPTIMISTIC UPDATE: Update UI immediately
-    setTabs(prev => prev.map(t => t.id === activeTabId ? {
-      ...t,
-      items: t.items.map(i => (i.id === id && i.variant === variant && i.tech_specs === tech_specs) ? { ...i, quantity: Math.max(1, i.quantity + delta) } : i)
-    } : t));
-
-    const item = tabs.find(t => t.id === activeTabId)?.items.find(i => i.id === id && i.variant === variant && i.tech_specs === tech_specs);
+    const item = activeTab.items.find(i => i.id === id && i.variant === variant && i.tech_specs === tech_specs);
     if (!item || !item.lineItemId) return;
 
+    setActiveTab(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        items: prev.items.map(i => (i.id === id && i.variant === variant && i.tech_specs === tech_specs) ? { ...i, quantity: Math.max(1, i.quantity + delta) } : i)
+      }
+    });
     try {
       setIsSyncing(true);
-      // 2. BACKGROUND SYNC: Update on server
-      await draftOrderService.updateLineItem(activeTabId, item.lineItemId, {
+      const res = await draftOrderService.updateLineItem(activeTabId, item.lineItemId, {
         quantity: Math.max(1, item.quantity + delta)
       });
-
-      // 3. PERSISTENCE: Schedule a confirmation after 3s of inactivity
-      debouncedConfirm(activeTabId);
+      if (res.draft_order_preview) {
+        updateActiveTab(res.draft_order_preview);
+      }
     } catch (err) {
       console.error("Failed to sync quantity to server:", err);
-      // Optional: Rollback state if absolute accuracy is needed on failure
     } finally {
       setIsSyncing(false);
+      debouncedConfirm(activeTabId)
     }
-  }, [activeTabId, tabs, refreshActiveTabDetails]);
+  }, [activeTabId, activeTab]);
 
   const removeItem = useCallback(async (id: string, variant: string, tech_specs: string | undefined) => {
     if (!activeTabId) return;
+    if (!activeTab) return;
 
-    const item = tabs.find(t => t.id === activeTabId)?.items.find(i => i.id === id && i.variant === variant && i.tech_specs === tech_specs);
+    const item = activeTab.items.find(i => i.id === id && i.variant === variant && i.tech_specs === tech_specs);
     if (!item) return;
 
-    // 1. OPTIMISTIC UPDATE: Remove locally
-    setTabs(prev => prev.map(t => t.id === activeTabId ? {
-      ...t, items: t.items.filter(i => !(i.id === id && i.variant === variant && i.tech_specs === tech_specs))
-    } : t));
+    setActiveTab(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        items: prev.items.filter(i => !(i.id === id && i.variant === variant && i.tech_specs === tech_specs))
+      };
+    });
 
     if (item.lineItemId) {
       try {
         setIsSyncing(true);
-        // 2. BACKGROUND SYNC
-        await draftOrderService.removeLineItemFromOrder(activeTabId, item.lineItemId);
-
-        // 3. PERSISTENCE: Schedule a confirmation
-        debouncedConfirm(activeTabId);
+        // Set quantity to 0 instead of calling delete endpoint
+        await draftOrderService.updateLineItem(activeTabId, item.lineItemId, { quantity: 0 });
       } catch (err) {
         console.error("Failed to sync removal to server:", err);
       } finally {
         setIsSyncing(false);
+        debouncedConfirm(activeTabId)
       }
     }
-  }, [activeTabId, tabs]);
+  }, [activeTabId, activeTab]);
 
   const handleCheckout = useCallback(async () => {
     if (!activeTabId) return;
@@ -464,14 +471,6 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
     return createPortal(modalContent, document.getElementById('modal-root')!);
   };
 
-  if (!activeTab && draftsLoading) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-[#F1F5F9] dark:bg-slate-950">
-        <Loader2 className="animate-spin text-primary" size={48} />
-      </div>
-    );
-  }
-
   return (
     <div className="fixed inset-0 z-[100] bg-[#F1F5F9] dark:bg-slate-950 flex flex-col overflow-hidden animate-fade-in">
       <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-6 h-16 flex items-center justify-between shrink-0 relative z-[200]">
@@ -540,7 +539,7 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
       {showAlertDrawer && (
         <div className="fixed inset-0 z-[10600] flex justify-end animate-fade-in">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowAlertDrawer(false)} />
-          <div className="relative w-full max-md bg-white dark:bg-slate-900 h-full shadow-2xl animate-slide-left flex flex-col">
+          <div className="relative w-full max-w-md bg-white dark:bg-slate-900 h-full shadow-2xl animate-slide-left flex flex-col">
             <div className="p-6 border-b dark:border-slate-800 flex items-center justify-between bg-rose-500 text-white">
               <div className="flex items-center gap-3"><AlertTriangle size={24} /><h3 className="text-lg font-bold">Cảnh báo tồn kho ({criticalProducts.length})</h3></div>
               <button onClick={() => setShowAlertDrawer(false)} className="p-2 hover:bg-white/10 rounded-full"><X size={24} /></button>
@@ -594,23 +593,15 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
             if (!variantId || !activeTabId) return;
 
             try {
-              // 1. Sync to Medusa
-              await draftOrderService.addLineItem(activeTabId, {
+              const res = await draftOrderService.addLineItem(activeTabId, {
                 variant_id: variantId,
                 quantity: config.quantity,
                 unit_price: config.price
               });
 
-
-              // 2. Confirm this edit session to apply changes
-              await draftOrderService.confirmDraftOrderEdit(activeTabId);
-
-              // 3. Re-initiate edit mode for next changes
-              await draftOrderService.createDraftOrderEdit(activeTabId);
-
-              // 4. Load latest details
-              await refreshActiveTabDetails(activeTabId);
-
+              if (res.draft_order_preview) {
+                updateActiveTab(res.draft_order_preview);
+              }
               setProductToConfigure(null);
             } catch (err) {
               console.error("Failed to add item to draft order:", err);
@@ -626,6 +617,9 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
                 return { ...t, items: [...t.items, { id: product.id, name: product.title, price: config.price, quantity: config.quantity, variant: config.unit, image: product.thumbnail || '', tech_specs: config.tech_specs }] };
               }));
               setProductToConfigure(null);
+            } finally {
+              await draftOrderService.confirmDraftOrderEdit(activeTabId);
+              await draftOrderService.createDraftOrderEdit(activeTabId);
             }
           }}
         />

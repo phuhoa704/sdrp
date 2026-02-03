@@ -367,7 +367,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               )}
             </button>
             {isBrandMenuOpen && !isCollapsed && (
-              <div className="absolute bottom-full left-0 right-0 mb-3 glass-panel rounded-2xl shadow-2xl border border-white/20 overflow-hidden animate-slide-up z-[60]">
+              <div className="absolute bottom-full left-0 right-0 mb-3 glass-panel rounded-2xl shadow-2xl border border-white/20 overflow-hidden animate-slide-up z-[60] backdrop-blur-sm">
                 <div className="p-1.5 max-h-48 overflow-y-auto no-scrollbar">
                   {salesChannels.map(channel => (
                     <button

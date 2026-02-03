@@ -1,5 +1,5 @@
 import bridgeClient from '../bridgeClient';
-import { DraftOrder, DraftOrderListResponse, CreateDraftOrderPayload } from '@/types/draft-order';
+import { DraftOrder, DraftOrderListResponse, CreateDraftOrderPayload, DraftOrderCheckAvailabilityResponse } from '@/types/draft-order';
 import axios from 'axios';
 
 /**
@@ -144,7 +144,7 @@ class DraftOrderService {
         quantity: number;
         metadata?: Record<string, unknown>;
         unit_price?: number;
-    }): Promise<{ draft_order: DraftOrder }> {
+    }): Promise<{ draft_order_preview: DraftOrder }> {
         try {
             // Medusa expects the items in an array even for a single addition
             const res = await bridgeClient.post(`/admin/draft-orders/${id}/edit/items`, {
@@ -167,7 +167,7 @@ class DraftOrderService {
      * Create an edit on a draft order
      * @param id ID of the draft order
      */
-    async createDraftOrderEdit(id: string): Promise<{ draft_order: DraftOrder }> {
+    async createDraftOrderEdit(id: string): Promise<{ draft_order_preview: DraftOrder }> {
         try {
             const res = await bridgeClient.post(`/admin/draft-orders/${id}/edit`);
             return res.data;
@@ -228,7 +228,7 @@ class DraftOrderService {
      * @param id ID of the draft order
      * @param actionId ID of the action (item) to remove
      */
-    async removeLineItem(id: string, actionId: string): Promise<{ draft_order: DraftOrder }> {
+    async removeLineItem(id: string, actionId: string): Promise<{ draft_order_preview: DraftOrder }> {
         try {
             const res = await bridgeClient.delete(`/admin/draft-orders/${id}/edit/items/${actionId}`);
             return res.data;
@@ -254,7 +254,7 @@ class DraftOrderService {
         quantity?: number;
         metadata?: Record<string, unknown>;
         unit_price?: number;
-    }): Promise<{ draft_order: DraftOrder }> {
+    }): Promise<{ draft_order_preview: DraftOrder }> {
         try {
             const res = await bridgeClient.post(`/admin/draft-orders/${id}/edit/items/item/${itemId}`, payload);
             return res.data;
@@ -275,7 +275,7 @@ class DraftOrderService {
      * @param id ID of the draft order
      * @param lineItemId ID of the line item to remove
      */
-    async removeLineItemFromOrder(id: string, lineItemId: string): Promise<{ draft_order: DraftOrder }> {
+    async removeLineItemFromOrder(id: string, lineItemId: string): Promise<{ draft_order_preview: DraftOrder }> {
         try {
             const res = await bridgeClient.post(`/admin/draft-orders/${id}/edit/items/remove`, {
                 line_item_id: lineItemId
@@ -309,6 +309,74 @@ class DraftOrderService {
                     : error instanceof Error
                         ? error.message
                         : 'Failed to convert draft order'
+            );
+        }
+    }
+
+    /**
+     * Check availability of products in a draft order
+     * @param id ID of the draft order
+     */
+    async checkAvailability({ variant_id, sales_channel_id }: { variant_id: string, sales_channel_id: string }): Promise<DraftOrderCheckAvailabilityResponse> {
+        try {
+            const res = await bridgeClient.post(`/custom/admin/products/variant/quantity`, { variant_id, sales_channel_id });
+            return res.data;
+        } catch (error: unknown) {
+            console.error(`Failed to check availability of Medusa draft order ${variant_id}:`, error);
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to check availability'
+            );
+        }
+    }
+
+    /**
+     * Add promotion to draft order
+     * @param id ID of the draft order
+     * @param promotionCode Promotion code to apply
+     */
+    async addPromotionToDraftOrder(id: string, promotionCode: string): Promise<{ draft_order_preview: DraftOrder }> {
+        try {
+            const res = await bridgeClient.post(`/admin/draft-orders/${id}/edit/promotions`, {
+                promo_codes: [promotionCode]
+            });
+            return res.data;
+        } catch (error: unknown) {
+            console.error(`Failed to add promotion to Medusa draft order ${id}:`, error);
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to add promotion to draft order'
+            );
+        }
+    }
+
+    /**
+     * Remove promotion from draft order
+     * @param id ID of the draft order
+     * @param promotionCode Promotion code to remove
+     */
+    async removePromotionFromDraftOrder(id: string, promotionCode: string): Promise<{ draft_order_preview: DraftOrder }> {
+        try {
+            const res = await bridgeClient.delete(`/admin/draft-orders/${id}/edit/promotions`, {
+                data: {
+                    promo_codes: [promotionCode]
+                }
+            });
+            return res.data;
+        } catch (error: unknown) {
+            console.error(`Failed to remove promotion from Medusa draft order ${id}:`, error);
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to remove promotion from draft order'
             );
         }
     }

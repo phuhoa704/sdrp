@@ -86,7 +86,14 @@ bridgeClient.interceptors.response.use(
         }
         return response;
     },
-    (error) => Promise.reject(error)
+    (error) => {
+        if (error.response?.status === 401 && !isServer()) {
+            if (window.location.pathname !== '/login') {
+                window.location.href = '/login';
+            }
+        }
+        return Promise.reject(error);
+    }
 );
 
 export default bridgeClient;

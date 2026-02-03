@@ -1,7 +1,7 @@
 
 import React, { Fragment, useState } from 'react';
 import { ConfirmModal } from '@/components';
-import { LogOut, Bell, MonitorPlay, BrainCircuit, Sparkles, BookOpen, Zap } from 'lucide-react';
+import { LogOut, Bell, MonitorPlay, BrainCircuit, Sparkles, BookOpen, Zap, User } from 'lucide-react';
 import { UserRole } from '@/types/enum';
 
 interface HeaderProps {
@@ -97,8 +97,8 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, role, onLogout,
         <button onClick={() => setIsLogoutModalOpen(true)} className="p-2.5 bg-white dark:bg-slate-900 rounded-2xl shadow-smooth text-slate-400 dark:text-slate-500 hover:text-rose-400 transition-all border border-transparent dark:border-slate-800">
           <LogOut size={18} />
         </button>
-        <div className="w-11 h-11 rounded-2xl border-4 border-white dark:border-slate-800 shadow-smooth overflow-hidden">
-          <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+        <div className="w-11 h-11 bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 rounded-2xl shadow-smooth overflow-hidden flex justify-center items-center">
+          <User size={20} />
         </div>
       </div>
       <ConfirmModal
