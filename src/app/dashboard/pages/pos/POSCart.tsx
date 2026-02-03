@@ -14,6 +14,74 @@ import { getPromotionUIData } from '@/lib/helpers';
 import { TableLoading } from '@/components/TableLoading';
 import { draftOrderService } from '@/lib/api/medusa/draftOrderService';
 
+const CartItem = ({ item, onRemoveItem, onUpdateQty }: any) => {
+  const [qty, setQty] = useState(item.quantity);
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const deltaRef = React.useRef(0);
+
+  React.useEffect(() => {
+    if (deltaRef.current === 0) setQty(item.quantity);
+  }, [item.quantity]);
+
+  const handleUpdate = (delta: number) => {
+    const newQty = Math.max(1, qty + delta);
+    setQty(newQty);
+    deltaRef.current += delta;
+
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+    timeoutRef.current = setTimeout(() => {
+      if (deltaRef.current !== 0) {
+        onUpdateQty(item.id, item.variant, item.tech_specs, deltaRef.current);
+        deltaRef.current = 0;
+      }
+    }, 500);
+  };
+
+  return (
+    <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border dark:border-slate-700 shadow-sm group">
+      <div className="flex gap-3">
+        <div className="relative shrink-0">
+          <img src={item.image} className="w-12 h-12 rounded-lg object-cover border dark:border-slate-700" alt={item.name} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex justify-between items-start gap-2">
+            <h5 className="font-black text-xs text-slate-800 dark:text-slate-100 truncate leading-tight">{item.name}</h5>
+            <button
+              onClick={() => onRemoveItem(item.id, item.variant, item.tech_specs)}
+              className="text-slate-300 hover:text-rose-500 transition-colors shrink-0"
+            >
+              <X size={14} />
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-1 mt-1">
+            <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded uppercase">{item.variant}</span>
+            {item.tech_specs && <span className="text-[8px] font-bold text-slate-400 bg-slate-50 px-1 py-0.5 rounded truncate max-w-[120px]">{item.tech_specs}</span>}
+          </div>
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex items-center bg-slate-50 dark:bg-slate-900 rounded-lg p-0.5 border dark:border-slate-700">
+              <button
+                onClick={() => handleUpdate(-1)}
+                className="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-emerald-500"
+              >
+                <Minus size={12} />
+              </button>
+              <span className="text-[11px] font-black w-6 text-center dark:text-slate-200">{qty}</span>
+              <button
+                onClick={() => handleUpdate(1)}
+                className="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-emerald-500"
+              >
+                <Plus size={12} />
+              </button>
+            </div>
+            <p className="text-sm font-black text-slate-900 dark:text-white">{(item.price * qty).toLocaleString()}đ</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 interface POSCartProps {
   width: number;
   activeTab: any;
@@ -32,13 +100,14 @@ interface POSCartProps {
   onSetShippingPartner: (partner: string) => void;
   loadingTabId?: string | null;
   isSyncing?: boolean;
+  debouncedConfirm: (activeTabId: string) => void;
 }
 
 export const POSCart: React.FC<POSCartProps> = ({
   width, activeTab, subtotal, totalAmount, isCreatingShipping,
   onUpdateQty, onRemoveItem, onSetFulfillment,
   onUpdateShippingFee, onUpdateDiscount, onOpenCustomerModal, onCheckout,
-  loadingTabId, isSyncing = false
+  loadingTabId, isSyncing = false, debouncedConfirm
 }) => {
   const [showPromoModal, setShowPromoModal] = useState(false);
   const [discountType, setDiscountType] = useState<'amount' | 'percent'>('amount');
@@ -67,14 +136,16 @@ export const POSCart: React.FC<POSCartProps> = ({
 
     try {
       setPromotionLoading(true)
-      await draftOrderService.addPromotionToDraftOrder(activeTab.id, promo.code);
+      const res = await draftOrderService.addPromotionToDraftOrder(activeTab.id, promo.code);
 
       setSelectedPromoId(promo.id);
       setShowPromoModal(false);
       setIsPromoExpanded(false);
+      onUpdateDiscount(res.draft_order_preview.discount_total);
     } catch (err) {
       console.error('Failed to apply promotion:', err);
     } finally {
+      debouncedConfirm(activeTab.id);
       setPromotionLoading(false)
     }
   };
@@ -132,7 +203,7 @@ export const POSCart: React.FC<POSCartProps> = ({
           <div className="flex-1 overflow-y-auto p-6 space-y-3 no-scrollbar relative min-h-[300px]">
             {loading ? (
               <div className='flex justify-center items-center h-full'>
-                <TableLoading colSpan={3} />
+                <TableLoading />
               </div>
             ) : (
               <>
@@ -324,46 +395,12 @@ export const POSCart: React.FC<POSCartProps> = ({
         ) : (
           <div className="space-y-2">
             {activeTab.items.map((item: any, idx: number) => (
-              <div key={`${item.id}-${item.variant}-${idx}`} className="p-3 bg-white dark:bg-slate-800 rounded-xl border dark:border-slate-700 shadow-sm group">
-                <div className="flex gap-3">
-                  <div className="relative shrink-0">
-                    <img src={item.image} className="w-12 h-12 rounded-lg object-cover border dark:border-slate-700" alt={item.name} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start gap-2">
-                      <h5 className="font-black text-xs text-slate-800 dark:text-slate-100 truncate leading-tight">{item.name}</h5>
-                      <button
-                        onClick={() => onRemoveItem(item.id, item.variant, item.tech_specs)}
-                        className="text-slate-300 hover:text-rose-500 transition-colors shrink-0"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded uppercase">{item.variant}</span>
-                      {item.tech_specs && <span className="text-[8px] font-bold text-slate-400 bg-slate-50 px-1 py-0.5 rounded truncate max-w-[120px]">{item.tech_specs}</span>}
-                    </div>
-                    <div className="flex items-center justify-between mt-2">
-                      <div className="flex items-center bg-slate-50 dark:bg-slate-900 rounded-lg p-0.5 border dark:border-slate-700">
-                        <button
-                          onClick={() => onUpdateQty(item.id, item.variant, item.tech_specs, -1)}
-                          className="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-emerald-500"
-                        >
-                          <Minus size={12} />
-                        </button>
-                        <span className="text-[11px] font-black w-6 text-center dark:text-slate-200">{item.quantity}</span>
-                        <button
-                          onClick={() => onUpdateQty(item.id, item.variant, item.tech_specs, 1)}
-                          className="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-emerald-500"
-                        >
-                          <Plus size={12} />
-                        </button>
-                      </div>
-                      <p className="text-sm font-black text-slate-900 dark:text-white">{(item.price * item.quantity).toLocaleString()}đ</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <CartItem
+                key={`${item.id}-${item.variant}-${idx}`}
+                item={item}
+                onRemoveItem={onRemoveItem}
+                onUpdateQty={onUpdateQty}
+              />
             ))}
           </div>
         )}
@@ -397,6 +434,7 @@ export const POSCart: React.FC<POSCartProps> = ({
                         } catch (err) {
                           console.error('Failed to remove promotion:', err);
                         } finally {
+                          debouncedConfirm(activeTab.id);
                           setPromotionLoading(false)
                         }
                       }}

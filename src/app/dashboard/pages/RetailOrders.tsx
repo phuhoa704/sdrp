@@ -229,7 +229,7 @@ export default function RetailOrders() {
 
         {loading ? (
           <div className="w-full flex justify-center">
-            <TableLoading colSpan={3} />
+            <TableLoading />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

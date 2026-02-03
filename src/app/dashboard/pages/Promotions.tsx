@@ -113,7 +113,7 @@ export default function Promotions() {
 
       {activeTab === 'promotions' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {loading ? <div className='col-span-full flex justify-center'><TableLoading colSpan={3} /></div> : filtered.length === 0 ? (
+          {loading ? <div className='col-span-full flex justify-center'><TableLoading /></div> : filtered.length === 0 ? (
             <div className="col-span-full py-20 text-center opacity-30">
               <SearchX size={48} className="mx-auto mb-4" />
               <p className="font-bold italic">Không tìm thấy khuyến mãi nào...</p>

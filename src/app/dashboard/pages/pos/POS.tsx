@@ -30,6 +30,7 @@ import { selectCurrencyCode } from '@/store/selectors';
 import { setSelectedSalesChannelId } from '@/store/slices/uiSlice';
 import { DraftOrder } from '@/types/draft-order';
 import { OrderTab } from '@/store/slices/posSlice';
+import { CustomerModal } from '@/components/pos/customerModal';
 
 interface POSScreenProps {
   onBack: () => void;
@@ -99,7 +100,7 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
           customer: res.draft_order.email ? { name: res.draft_order.email.split('@')[0], phone: '', address: '' } : null,
           discount: res.draft_order.discount_total || 0,
           shippingFee: res.draft_order.shipping_total || 0,
-          subtotal: res.draft_order.subtotal || 0,
+          subtotal: res.draft_order.total || 0,
         }));
       }
     } catch (err) {
@@ -225,7 +226,7 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
     if (draftOrders.length > 0) {
       const mappedTabs: OrderTab[] = draftOrders.map((draft, idx) => ({
         id: draft.id,
-        label: `Đơn ${idx + 1}`,
+        label: `Đơn ${draft.display_id}`,
         items: draft.items.map(item => ({
           id: item.product_id,
           lineItemId: item.id,
@@ -273,7 +274,9 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
   // Calculations
   const subtotal = useMemo(() => activeTab?.items.reduce((sum, i) => sum + (i.price * i.quantity), 0) || 0, [activeTab]);
   const vatAmount = subtotal * 0;
-  const totalAmount = subtotal + vatAmount - (activeTab?.discount || 0) + (activeTab?.shippingFee || 0);
+  const totalAmount = useMemo(() => {
+    return subtotal + vatAmount - (activeTab?.discount || 0) + (activeTab?.shippingFee || 0)
+  }, [subtotal, vatAmount, activeTab?.discount, activeTab?.shippingFee]);
 
   const criticalProducts = useMemo(() => allProducts.filter((p: any) => {
     const metadata = (p as any).metadata || {};
@@ -529,11 +532,15 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
           onSetFulfillment={(f) => setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, fulfillment: f, shippingFee: f === 'pickup' ? 0 : 30000, shippingPartner: f === 'delivery' ? 'GHTK' : undefined } : t))}
           onUpdateShippingFee={(fee) => setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, shippingFee: fee } : t))}
           onSetShippingPartner={(partner) => setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, shippingPartner: partner } : t))}
-          onUpdateDiscount={(amount) => setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, discount: amount } : t))}
+          onUpdateDiscount={(amount) => setActiveTab(prev => {
+            if (!prev) return prev;
+            return { ...prev, discount: amount };
+          })}
           onOpenCustomerModal={() => setShowCustomerModal(true)}
           onCheckout={handleCheckout}
           loadingTabId={loadingTabId}
           isSyncing={isSyncing}
+          debouncedConfirm={debouncedConfirm}
         />
       </div>
       {showAlertDrawer && (
@@ -560,29 +567,13 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
       )}
       <POSHistoryDrawer isOpen={showHistoryDrawer} onClose={() => setShowHistoryDrawer(false)} onViewDetail={setSelectedOrderForDetail} />
       {showCustomerModal && (
-        <div className="fixed inset-0 z-[10500] flex items-center justify-center p-4 animate-fade-in">
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCustomerModal(false)} />
-          <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-[32px] p-8 shadow-2xl border dark:border-slate-800">
-            <h3 className="text-xl font-bold mb-6 dark:text-white">Thông tin khách hàng</h3>
-            <div className="space-y-5">
-              <input id="cust-name" placeholder="Họ và tên..." defaultValue={activeTab?.customer?.name || ''} className="w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 dark:text-white outline-none" />
-              <input id="cust-phone" placeholder="Số điện thoại..." defaultValue={activeTab?.customer?.phone || ''} className="w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 dark:text-white outline-none" />
-              <textarea id="cust-address" placeholder="Địa chỉ..." defaultValue={activeTab?.customer?.address || ''} className="w-full h-24 p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 dark:text-white outline-none resize-none" />
-              <div className="flex gap-3 pt-4">
-                <Button variant="secondary" fullWidth onClick={() => setShowCustomerModal(false)}>Hủy</Button>
-                <Button fullWidth onClick={() => {
-                  const nameInput = document.getElementById('cust-name') as HTMLInputElement;
-                  const phoneInput = document.getElementById('cust-phone') as HTMLInputElement;
-                  const addressInput = document.getElementById('cust-address') as HTMLTextAreaElement;
-                  if (nameInput.value && phoneInput.value) {
-                    setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, customer: { name: nameInput.value, phone: phoneInput.value, address: addressInput.value } } : t));
-                    setShowCustomerModal(false);
-                  }
-                }}>Lưu</Button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <CustomerModal
+          setShowCustomerModal={setShowCustomerModal}
+          activeTab={activeTab}
+          setTabs={setTabs}
+          setActiveTab={setActiveTab}
+          activeTabId={activeTabId}
+        />
       )}
       {productToConfigure && (
         <ProductModal

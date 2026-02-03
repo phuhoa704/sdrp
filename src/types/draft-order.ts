@@ -54,6 +54,31 @@ export interface DraftOrderItem {
     metadata?: Record<string, any>;
 }
 
+export interface RawAmount {
+    value: string;
+    precision: number;
+}
+
+export type PaymentSummary = {
+    paid_total: number;
+    refunded_total: number;
+    accounting_total: number;
+    credit_line_total: number;
+    transaction_total: number;
+    pending_difference: number;
+    current_order_total: number;
+    original_order_total: number;
+
+    raw_paid_total: RawAmount;
+    raw_refunded_total: RawAmount;
+    raw_accounting_total: RawAmount;
+    raw_credit_line_total: RawAmount;
+    raw_transaction_total: RawAmount;
+    raw_pending_difference: RawAmount;
+    raw_current_order_total: RawAmount;
+    raw_original_order_total: RawAmount;
+};
+
 export interface DraftOrder {
     id: string;
     status: DraftOrderStatus;
@@ -73,6 +98,7 @@ export interface DraftOrder {
     created_at: string;
     updated_at: string;
     display_id?: number;
+    summary: PaymentSummary;
 }
 
 export interface DraftOrderListResponse {

@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { Search, BrainCircuit, BookOpen, Info, ChevronRight, ShieldCheck, LayoutGrid } from 'lucide-react';
+import { Search, BrainCircuit, BookOpen, Info, ChevronRight, ShieldCheck, LayoutGrid, Zap } from 'lucide-react';
 import { Card } from '@/components/Card';
 import { Product } from '@/types/product';
 import { MOCK_DISEASE_DATA } from '../../../../../mocks/disease';
@@ -26,7 +26,6 @@ export const POSCatalog: React.FC<POSCatalogProps> = ({
 }) => {
   const [showResults, setShowResults] = useState(false);
 
-  // 1. Tìm các bệnh hại từ Wiki
   const matchedDiseases = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
     if (!query) return [];
@@ -36,7 +35,6 @@ export const POSCatalog: React.FC<POSCatalogProps> = ({
     );
   }, [searchQuery]);
 
-  // 2. Tinh lọc danh sách sản phẩm hiển thị
   const enhancedProducts = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
     if (!query) return filteredProducts.map(p => ({ ...p, relevantDiseases: [] as string[], isWikiMatch: false }));
@@ -201,7 +199,15 @@ export const POSCatalog: React.FC<POSCatalogProps> = ({
                 className={`flex flex-col group active:scale-95 transition-all bg-white dark:bg-slate-900 h-full overflow-hidden border-2 ${p.isWikiMatch ? 'border-green-400 dark:border-green-600 shadow-lg shadow-green-500/5' : 'border-transparent'}`}
               >
                 <div className="relative aspect-square overflow-hidden bg-slate-50 dark:bg-slate-800">
-                  <img src={p.thumbnail} alt={p.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  {p.thumbnail ? (
+                    <img src={p.thumbnail} alt={p.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  ) : (
+                    <div className='h-full w-full transition-transform duration-500 flex justify-center items-center bg-white dark:bg-slate-800'>
+                      <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                        <Zap size={20} className='text-white fill-white' />
+                      </div>
+                    </div>
+                  )}
                   {p.isWikiMatch && (
                     <div className="absolute top-2 right-2 bg-green-500 text-white text-[8px] font-black px-2 py-1 rounded shadow-lg flex items-center gap-1">
                       <ShieldCheck size={10} /> ĐỀ XUẤT WIKI

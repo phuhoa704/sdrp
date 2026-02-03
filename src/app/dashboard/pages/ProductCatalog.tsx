@@ -517,7 +517,13 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
                           <td className="px-6 py-5 text-center"><div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ${isExpanded ? 'bg-primary text-white rotate-180' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}><ChevronDown size={18} /></div></td>
                           <td className="px-6 py-5">
                             <div className="flex items-center gap-4">
-                              <img src={p.thumbnail || "https://via.placeholder.com/150"} className="w-12 h-12 rounded-2xl object-cover border-2 border-white dark:border-slate-700 shadow-sm" alt={p.title} />
+                              {p.thumbnail ? (
+                                <img src={p.thumbnail} className="w-12 h-12 rounded-2xl object-cover border-2 border-white dark:border-slate-700 shadow-sm" alt={p.title} />
+                              ) : (
+                                <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                                  <Zap size={20} className='text-white fill-white' />
+                                </div>
+                              )}
                               <div>
                                 <p className="text-sm font-black text-slate-800 dark:text-slate-100 group-hover:text-primary transition-colors">{p.title}</p>
                                 <p className="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-tighter">{firstVariant?.barcode || activeIngredient}</p>

@@ -142,7 +142,11 @@ export default function Collection() {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {loading ? (
-                  <TableLoading colSpan={4} />
+                  <tr>
+                    <td colSpan={4} className='py-5 px-4'>
+                      <TableLoading />
+                    </td>
+                  </tr>
                 ) : (collections.length > 0 ? (
                   collections.map((collection) => (
                     <tr
