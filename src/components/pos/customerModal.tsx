@@ -19,11 +19,11 @@ export const CustomerModal = ({ setShowCustomerModal, activeTab, setTabs, setAct
     <div className="fixed inset-0 z-[10500] flex items-center justify-center p-4 animate-fade-in">
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCustomerModal(false)} />
       <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-[32px] p-8 shadow-2xl border dark:border-slate-800">
-        <h3 className="text-xl font-bold mb-6 dark:text-white">Thông tin khách hàng</h3>
+        <h3 className="text-xl font-bold mb-6 text-slate-800 dark:text-white">Thông tin khách hàng</h3>
         <div className="space-y-5">
-          <input id="cust-name" placeholder="Email..." value={email} onChange={(e) => setEmail(e.target.value)} className="w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 dark:text-white outline-none" />
-          <input id="cust-phone" placeholder="Số điện thoại..." value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 dark:text-white outline-none" />
-          <textarea id="cust-address" placeholder="Địa chỉ..." value={address} onChange={(e) => setAddress(e.target.value)} className="w-full h-24 p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 dark:text-white outline-none resize-none" />
+          <input id="cust-name" placeholder="Email..." value={email} onChange={(e) => setEmail(e.target.value)} className="w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 dark:text-white text-slate-800 outline-none" />
+          <input id="cust-phone" placeholder="Số điện thoại..." value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 dark:text-white text-slate-800 outline-none" />
+          <textarea id="cust-address" placeholder="Địa chỉ..." value={address} onChange={(e) => setAddress(e.target.value)} className="w-full h-24 p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 dark:text-white text-slate-800 outline-none resize-none" />
           <div className="flex gap-3 pt-4">
             <Button variant="secondary" fullWidth onClick={() => setShowCustomerModal(false)}>Hủy</Button>
             <Button fullWidth onClick={() => {

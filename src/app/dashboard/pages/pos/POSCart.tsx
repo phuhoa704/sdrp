@@ -66,7 +66,7 @@ const CartItem = ({ item, onRemoveItem, onUpdateQty }: any) => {
               >
                 <Minus size={12} />
               </button>
-              <span className="text-[11px] font-black w-6 text-center dark:text-slate-200">{qty}</span>
+              <span className="text-[11px] font-black w-6 text-center text-slate-800 dark:text-slate-200">{qty}</span>
               <button
                 onClick={() => handleUpdate(1)}
                 className="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-emerald-500"
@@ -406,9 +406,9 @@ export const POSCart: React.FC<POSCartProps> = ({
         )}
       </div>
 
-      <div className="shrink-0 p-5 bg-[#0F172A] dark:bg-slate-950 border-t dark:border-slate-800 space-y-4 shadow-2xl">
+      <div className="shrink-0 p-5 border-t dark:border-slate-800 space-y-4 shadow-2xl">
         <div className="grid grid-cols-2 gap-2">
-          <div className={`rounded-xl border transition-all overflow-hidden ${isPromoApplied ? 'bg-amber-50/10 border-amber-500/50' : 'bg-slate-900 border-slate-800'}`}>
+          <div className={`rounded-xl border transition-all overflow-hidden ${isPromoApplied ? 'bg-amber-50/10 border-amber-500/50' : 'dark:bg-slate-900 bg-slate-50 dark:border-slate-800'}`}>
             <button onClick={() => setIsPromoExpanded(!isPromoExpanded)} className="w-full px-3 h-10 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Ticket size={14} className={isPromoApplied ? 'text-amber-500' : 'text-slate-500'} />
@@ -450,7 +450,7 @@ export const POSCart: React.FC<POSCartProps> = ({
             )}
           </div>
 
-          <div className={`rounded-xl border transition-all overflow-hidden ${isDiscountApplied ? 'bg-emerald-50/10 border-emerald-500/50' : 'bg-slate-900 border-slate-800'}`}>
+          <div className={`rounded-xl border transition-all overflow-hidden ${isDiscountApplied ? 'bg-emerald-50/10 border-emerald-500/50' : 'dark:bg-slate-900 bg-slate-50 dark:border-slate-800'}`}>
             <button onClick={() => setIsManualDiscountExpanded(!isManualDiscountExpanded)} className="w-full px-3 h-10 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Percent size={14} className={isDiscountApplied ? 'text-emerald-500' : 'text-slate-500'} />
@@ -479,13 +479,13 @@ export const POSCart: React.FC<POSCartProps> = ({
         <div className="flex gap-2">
           <button
             onClick={() => setPaymentMethod('cash')}
-            className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-xl border-2 transition-all font-black text-[10px] uppercase tracking-tighter ${paymentMethod === 'cash' ? 'bg-emerald-500/10 border-emerald-500 text-emerald-500' : 'bg-slate-900 border-slate-800 text-slate-500'}`}
+            className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-xl border-2 transition-all font-black text-[10px] uppercase tracking-tighter ${paymentMethod === 'cash' ? 'bg-emerald-500/10 border-emerald-500 text-emerald-500' : 'dark:bg-slate-900 bg-slate-50 dark:border-slate-800 text-slate-500'}`}
           >
             <Banknote size={14} /> TIỀN MẶT
           </button>
           <button
             onClick={() => setPaymentMethod('qr')}
-            className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-xl border-2 transition-all font-black text-[10px] uppercase tracking-tighter ${paymentMethod === 'qr' ? 'bg-indigo-500/10 border-indigo-500 text-indigo-500' : 'bg-slate-900 border-slate-800 text-slate-500'}`}
+            className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-xl border-2 transition-all font-black text-[10px] uppercase tracking-tighter ${paymentMethod === 'qr' ? 'bg-indigo-500/10 border-indigo-500 text-indigo-500' : 'dark:bg-slate-900 bg-slate-50 dark:border-slate-800 text-slate-500'}`}
           >
             <QrCode size={14} /> QR BANKING
           </button>

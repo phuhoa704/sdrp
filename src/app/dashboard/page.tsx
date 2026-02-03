@@ -258,7 +258,7 @@ export default function DashboardPage() {
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'dark' : ''}`}>
-      <div className="flex bg-surface-light dark:bg-surface-dark transition-colors duration-300">
+      <div className="flex bg-surface-light dark:bg-surface-dark transition-colors duration-300 min-h-screen">
         <Sidebar
           currentView={currentView}
           setView={handleSetView}

@@ -4,7 +4,7 @@ import {
   ArrowLeft, AlertTriangle, X, CheckCircle2,
   BookOpen, Sparkles,
   History, Receipt, User, Calendar, MapPin, ChevronDown,
-  GripVertical, Loader2
+  GripVertical
 } from 'lucide-react';
 import { Product } from '@/types/product';
 import { B2COrder } from '@/types/b2corder';
@@ -12,13 +12,11 @@ import { ProductModal } from '@/components/ProductModal';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 
-// Refactored Components
 import { POSTabs } from './POSTabs';
 import { POSCatalog } from './POSCatalog';
 import { POSCart } from './POSCart';
 import { POSHistoryDrawer } from './POSHistoryDrawer';
 
-// Reuse logic from InventoryScreen for the Detail Modal
 import { createPortal } from 'react-dom';
 import { DiseaseDetailScreen } from '../DiseaseDetailScreen';
 import { DiagnosisScreen } from '../DiagnosisScreen';

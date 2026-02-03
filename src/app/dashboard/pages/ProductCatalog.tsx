@@ -571,17 +571,23 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
                                   <Card className="p-5 bg-white dark:bg-slate-900 border-none shadow-sm flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center"><Info size={20} /></div>
                                     <div>
-                                      <p className="text-[10px] font-bold text-slate-400 uppercase mb-0.5">Giá vốn (Tham khảo)</p>
-                                      <p className="text-base font-black">{formatCurrency(Math.round(price * 0.7), currencyCode)}</p>
+                                      <p className="text-[10px] font-bold dark:text-slate-400 text-slate-800 uppercase mb-0.5">Giá vốn (Tham khảo)</p>
+                                      <p className="text-base font-black dark:text-white text-slate-800">{formatCurrency(Math.round(price * 0.7), currencyCode)}</p>
                                     </div>
                                   </Card>
                                   <Card className="p-5 bg-white dark:bg-slate-900 border-none shadow-sm flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 flex items-center justify-center"><MapPin size={20} /></div>
-                                    <div><p className="text-[10px] font-bold text-slate-400 uppercase mb-0.5">Vị trí lưu kho</p><p className="text-base font-black">{(p as any).location || 'Chưa thiết lập'}</p></div>
+                                    <div>
+                                      <p className="text-[10px] font-bold dark:text-slate-400 text-slate-800 uppercase mb-0.5">Vị trí lưu kho</p>
+                                      <p className="text-base font-black dark:text-white text-slate-800">{(p as any).location || 'Chưa thiết lập'}</p>
+                                    </div>
                                   </Card>
                                   <Card className="p-5 bg-white dark:bg-slate-900 border-none shadow-sm flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center"><Globe size={20} /></div>
-                                    <div><p className="text-[10px] font-bold text-slate-400 uppercase mb-0.5">Kênh phân phối</p><p className="text-base font-black">{p.sales_channels?.map(sc => sc.name).join(', ') || 'Global'}</p></div>
+                                    <div>
+                                      <p className="text-[10px] font-bold dark:text-slate-400 text-slate-800 uppercase mb-0.5">Kênh phân phối</p>
+                                      <p className="text-base font-black dark:text-white text-slate-800">{p.sales_channels?.map(sc => sc.name).join(', ') || 'Global'}</p>
+                                    </div>
                                   </Card>
                                   <div className="ml-auto">
                                     <Button

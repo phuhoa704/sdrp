@@ -213,7 +213,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <div className={cn(
-      "fixed left-0 top-0 h-screen bg-white dark:bg-slate-900 border-r border-slate-800 flex flex-col z-50 transition-all duration-300",
+      "fixed left-0 top-0 h-screen bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-50 transition-all duration-300",
       isCollapsed ? 'w-20 px-2' : 'w-64 px-4'
     )}>
       <div className={cn(
@@ -231,7 +231,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+      <nav className="flex-1 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-hide scrollbar-track-transparent">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = isMenuActive(item);
@@ -351,7 +351,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         })}
       </nav>
 
-      <div className="pt-4 border-t border-slate-800 space-y-2">
+      <div className="pt-4 border-t dark:border-slate-800 border-slate-200 space-y-2">
         {role === UserRole.RETAILER && (
           <div className={`relative ${isCollapsed ? 'flex justify-center' : 'px-1'}`} ref={brandMenuRef}>
             <button

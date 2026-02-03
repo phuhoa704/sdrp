@@ -277,7 +277,15 @@ export const MarketplaceShop: React.FC<MarketplaceShopProps> = ({ onProductClick
               </div>
 
               <div className="relative aspect-square overflow-hidden bg-slate-50 dark:bg-slate-800 transition-colors">
-                <img src={p.thumbnail || ""} alt={p.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                {p.thumbnail ? (
+                  <img src={p.thumbnail || ""} alt={p.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                ) : (
+                  <div className="w-full h-full bg-white dark:bg-slate-800 flex items-center justify-center">
+                    <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                      <Zap size={20} className='text-white fill-white' />
+                    </div>
+                  </div>
+                )}
                 <div className="absolute bottom-4 right-4 translate-y-12 group-hover:translate-y-0 transition-transform duration-300">
                   <button onClick={(e) => { e.stopPropagation(); onProductClick(p); }} className="w-12 h-12 bg-blue-600 text-white rounded-2xl shadow-xl flex items-center justify-center hover:bg-slate-900 transition-colors">
                     <ShoppingCart size={20} />

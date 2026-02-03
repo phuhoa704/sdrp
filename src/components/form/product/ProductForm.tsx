@@ -704,7 +704,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
 
             <div className="pt-6 border-t border-white/10 relative z-10">
               <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
-                <p className="text-[10px] font-bold text-emerald-100/70 italic leading-relaxed text-center">
+                <p className="text-[10px] font-bold dark:text-emerald-100/70 text-emerald-800 italic leading-relaxed text-center">
                   Hệ thống sẽ tự động tạo {formData.has_variants ? generatedVariants.length : 1} biến thể khi bạn nhấn "Hoàn tất".
                 </p>
               </div>
