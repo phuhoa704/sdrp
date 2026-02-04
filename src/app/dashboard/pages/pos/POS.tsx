@@ -4,7 +4,9 @@ import {
   ArrowLeft, AlertTriangle, X, CheckCircle2,
   BookOpen, Sparkles,
   History, Receipt, User, Calendar, MapPin, ChevronDown,
-  GripVertical
+  GripVertical,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { Product } from '@/types/product';
 import { B2COrder } from '@/types/b2corder';
@@ -24,8 +26,8 @@ import { useMedusaProducts, useCategories, useSalesChannels, useDraftOrders, use
 import { draftOrderService } from '@/lib/api/medusa/draftOrderService';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { RootState } from '@/store';
-import { selectCurrencyCode } from '@/store/selectors';
-import { setSelectedSalesChannelId } from '@/store/slices/uiSlice';
+import { selectCurrencyCode, selectIsDarkMode } from '@/store/selectors';
+import { setSelectedSalesChannelId, toggleTheme } from '@/store/slices/uiSlice';
 import { DraftOrder } from '@/types/draft-order';
 import { OrderTab } from '@/store/slices/posSlice';
 import { CustomerModal } from '@/components/pos/customerModal';
@@ -36,8 +38,9 @@ interface POSScreenProps {
 
 const POS: React.FC<POSScreenProps> = ({ onBack }) => {
   const dispatch = useAppDispatch();
-  const { salesChannels } = useSalesChannels();
+  const { salesChannels } = useSalesChannels({ isDisabled: false });
   const { selectedSalesChannelId } = useAppSelector((state: RootState) => state.ui);
+  const isDarkMode = useAppSelector(selectIsDarkMode);
   const brands = useMemo(() => salesChannels.map(sc => sc.name), [salesChannels]);
   const [currentBranch, setCurrentBranch] = useState("");
 
@@ -70,6 +73,10 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
   const [selectedOrderForDetail, setSelectedOrderForDetail] = useState<B2COrder | null>(null);
 
   const [activeTab, setActiveTab] = useState<OrderTab | null>(null);
+
+  const handleToggleTheme = useCallback(() => {
+    dispatch(toggleTheme());
+  }, [dispatch])
 
   const { products: allProducts, loading: productsLoading } = useMedusaProducts({
     limit: 100,
@@ -502,6 +509,13 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
           />
         </div>
         <div className="flex items-center gap-3">
+          <button onClick={handleToggleTheme} className="p-2.5 bg-blue-500/20 rounded-xl hover:bg-slate-200/50 hover:text-white transition-all shadow-sm">
+            {isDarkMode ? (
+              <Sun size={20} className="text-amber-400" />
+            ) : (
+              <Moon size={20} className="text-slate-400" />
+            )}
+          </button>
           <button onClick={() => setShowHistoryDrawer(true)} className="p-2.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm"><History size={20} /></button>
           <button onClick={() => setShowAlertDrawer(true)} className="relative p-2.5 bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all shadow-sm">
             <AlertTriangle size={20} />

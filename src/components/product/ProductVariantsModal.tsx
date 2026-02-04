@@ -135,25 +135,25 @@ export const ProductVariantsModal: React.FC<ProductVariantsModalProps> = ({
             <ChevronLeft size={20} />
           </button>
           <div>
-            <h2 className="text-xl font-bold text-white">{selectedVariant.title}</h2>
-            <p className="text-xs text-slate-500 font-bold">Biến thể</p>
+            <h2 className="text-xl font-bold dark:text-white text-slate-800">{selectedVariant.title}</h2>
+            <p className="text-xs dark:text-slate-500 text-slate-700 font-bold">Biến thể</p>
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-6">
           <div className="col-span-2 space-y-6">
             {/* Variant Info */}
-            <Card className="bg-slate-900 border-slate-800 p-0 overflow-hidden">
-              <div className="p-4 border-b border-slate-800">
+            <Card className="bg-slate-900 dark:bg-slate-800 border-slate-200 p-0 overflow-hidden">
+              <div className="p-4 border-b dark:border-slate-800 border-slate-200">
                 <div className="grid grid-cols-2 gap-y-4">
                   <div>
                     <label className="text-[10px] uppercase font-bold text-slate-500 block mb-1">SKU</label>
-                    <span className="text-sm font-medium text-slate-300">{selectedVariant.sku || '-'}</span>
+                    <span className="text-sm font-medium dark:text-slate-300 text-slate-800">{selectedVariant.sku || '-'}</span>
                   </div>
                   {selectedVariant.options.map(opt => (
                     <div key={opt.id}>
                       <label className="text-[10px] uppercase font-bold text-slate-500 block mb-1">{opt.option?.title || 'Option'}</label>
-                      <span className="text-xs font-bold bg-slate-800 px-2 py-1 rounded text-slate-300">{opt.value}</span>
+                      <span className="text-xs font-bold dark:bg-slate-800 bg-slate-200 px-2 py-1 rounded dark:text-slate-300 text-slate-800">{opt.value}</span>
                     </div>
                   ))}
                 </div>
@@ -161,16 +161,16 @@ export const ProductVariantsModal: React.FC<ProductVariantsModalProps> = ({
             </Card>
 
             {/* Media */}
-            <Card className="bg-slate-900 border-slate-800 p-0">
-              <div className="p-4 border-b border-slate-800 flex justify-between items-center">
-                <h3 className="font-bold text-slate-200 text-sm">Media</h3>
+            <Card className="bg-slate-900 dark:bg-slate-800 border-slate-200 p-0">
+              <div className="p-4 border-b dark:border-slate-800 border-slate-200 flex justify-between items-center">
+                <h3 className="font-bold dark:text-slate-200 text-slate-800 text-sm">Media</h3>
                 <PenLine size={14} className="text-slate-500" />
               </div>
               <div className="p-8 flex flex-col items-center justify-center text-center">
                 {(selectedVariant as any).images?.length > 0 ? (
                   <div className="grid grid-cols-4 gap-4 w-full">
                     {(selectedVariant as any).images.map((img: any) => (
-                      <img key={img.id} src={img.url.replace('http://localhost:9000', BRIDGE_API_URL)} className="w-full aspect-square object-cover rounded-lg border border-slate-700" />
+                      <img key={img.id} src={img.url.replace('http://localhost:9000', BRIDGE_API_URL)} className="w-full aspect-square object-cover rounded-lg border dark:border-slate-700 border-slate-200" />
                     ))}
                   </div>
                 ) : (
@@ -184,13 +184,13 @@ export const ProductVariantsModal: React.FC<ProductVariantsModalProps> = ({
             </Card>
 
             {/* Inventory Items */}
-            <Card className="bg-slate-900 border-slate-800 p-0">
-              <div className="p-4 border-b border-slate-800 flex justify-between items-center">
-                <h3 className="font-bold text-slate-200 text-sm">Hàng tồn kho</h3>
+            <Card className="bg-slate-900 dark:bg-slate-800 border-slate-200 p-0">
+              <div className="p-4 border-b dark:border-slate-800 border-slate-200 flex justify-between items-center">
+                <h3 className="font-bold dark:text-slate-200 text-slate-800 text-sm">Hàng tồn kho</h3>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="text-slate-500 bg-slate-900/50 border-b border-slate-800">
+                  <thead className="dark:text-slate-500 text-slate-800 bg-slate-200/50 dark:bg-slate-800/50 border-b dark:border-slate-800 border-slate-200">
                     <tr>
                       <th className="px-4 py-3 font-bold uppercase">Tên</th>
                       <th className="px-4 py-3 font-bold uppercase">SKU</th>
@@ -199,7 +199,7 @@ export const ProductVariantsModal: React.FC<ProductVariantsModalProps> = ({
                       <th className="px-4 py-3"></th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800">
+                  <tbody className="divide-y dark:divide-slate-800 divide-slate-200">
                     {selectedVariant.inventory_items?.map((item: any) => {
                       // Inv item logic
                       let available = 0;
@@ -214,21 +214,21 @@ export const ProductVariantsModal: React.FC<ProductVariantsModalProps> = ({
                       return (
                         <tr
                           key={item.id}
-                          className="hover:bg-slate-800/50 transition-colors cursor-pointer group"
+                          className="dark:hover:bg-slate-800/50 hover:bg-slate-200/50 transition-colors cursor-pointer group"
                           onClick={() => {
                             if (item.inventory?.id) {
                               setSelectedInventoryItemId(item.inventory.id);
                             }
                           }}
                         >
-                          <td className="px-4 py-3 font-medium text-slate-300 group-hover:text-indigo-400 transition-colors">{item.inventory?.title || selectedVariant.title}</td>
-                          <td className="px-4 py-3 text-slate-400">{item.inventory?.sku || '-'}</td>
-                          <td className="px-4 py-3 text-slate-400">{item.required_quantity || 1}</td>
-                          <td className="px-4 py-3 text-slate-400">
+                          <td className="px-4 py-3 font-medium dark:text-slate-300 text-slate-800 group-hover:text-indigo-400 transition-colors">{item.inventory?.title || selectedVariant.title}</td>
+                          <td className="px-4 py-3 dark:text-slate-400 text-slate-800">{item.inventory?.sku || '-'}</td>
+                          <td className="px-4 py-3 dark:text-slate-400 text-slate-800">{item.required_quantity || 1}</td>
+                          <td className="px-4 py-3 dark:text-slate-400 text-slate-800">
                             {available > 0 ? (
-                              <span className="text-slate-300">{available} tại {locs} kho</span>
+                              <span className="dark:text-slate-300 text-slate-800">{available} tại {locs} kho</span>
                             ) : (
-                              <span className="text-rose-500">0 tại 0 kho</span>
+                              <span className="dark:text-rose-500 text-rose-500">0 tại 0 kho</span>
                             )}
                           </td>
                           <td className="px-4 py-3 text-right">
@@ -245,17 +245,17 @@ export const ProductVariantsModal: React.FC<ProductVariantsModalProps> = ({
             </Card>
 
             {/* Debug / Extra */}
-            <Card className="bg-slate-900 border-slate-800 p-4 flex justify-between items-center cursor-pointer hover:bg-slate-800/80 transition-colors">
+            <Card className="bg-slate-900 dark:bg-slate-800 border-slate-200 p-4 flex justify-between items-center cursor-pointer dark:hover:bg-slate-800/80 hover:bg-slate-200/80 transition-colors">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-200">Metadata</span>
-                <span className="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">0 keys</span>
+                <span className="text-xs font-bold dark:text-slate-200 text-slate-800">Metadata</span>
+                <span className="text-[10px] bg-slate-800 dark:bg-slate-700 text-slate-400 px-1.5 py-0.5 rounded">0 keys</span>
               </div>
               <ExternalLink size={14} className="text-slate-500" />
             </Card>
-            <Card className="bg-slate-900 border-slate-800 p-4 flex justify-between items-center cursor-pointer hover:bg-slate-800/80 transition-colors">
+            <Card className="bg-slate-900 dark:bg-slate-800 border-slate-200 p-4 flex justify-between items-center cursor-pointer dark:hover:bg-slate-800/80 hover:bg-slate-200/80 transition-colors">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-200">JSON</span>
-                <span className="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">27 keys</span>
+                <span className="text-xs font-bold dark:text-slate-200 text-slate-800">JSON</span>
+                <span className="text-[10px] bg-slate-800 dark:bg-slate-700 text-slate-400 px-1.5 py-0.5 rounded">27 keys</span>
               </div>
               <ExternalLink size={14} className="text-slate-500" />
             </Card>
@@ -263,9 +263,9 @@ export const ProductVariantsModal: React.FC<ProductVariantsModalProps> = ({
 
           <div className="col-span-1 space-y-6">
             {/* Prices */}
-            <Card className="bg-slate-900 border-slate-800 p-0">
-              <div className="p-4 border-b border-slate-800 flex justify-between items-center">
-                <h3 className="font-bold text-slate-200 text-sm">Giá</h3>
+            <Card className="bg-slate-900 dark:bg-slate-800 border-slate-200 p-0">
+              <div className="p-4 border-b dark:border-slate-800 border-slate-200 flex justify-between items-center">
+                <h3 className="font-bold dark:text-slate-200 text-slate-800 text-sm">Giá</h3>
                 <button
                   onClick={() => setIsPriceDrawerOpen(true)}
                   className="p-1 hover:bg-slate-800 rounded transition-colors group"
@@ -277,8 +277,8 @@ export const ProductVariantsModal: React.FC<ProductVariantsModalProps> = ({
               <div className="divide-y divide-slate-800">
                 {selectedVariant.prices?.map(price => (
                   <div key={price.id} className="p-4 flex justify-between items-center">
-                    <span className="text-xs font-bold text-slate-400 uppercase">{price.currency_code}</span>
-                    <span className="text-sm font-bold text-slate-200">{formatCurrency(price.amount, price.currency_code)}</span>
+                    <span className="text-xs font-bold dark:text-slate-400 text-slate-800 uppercase">{price.currency_code}</span>
+                    <span className="text-sm font-bold dark:text-slate-200 text-slate-800">{formatCurrency(price.amount, price.currency_code)}</span>
                   </div>
                 ))}
                 {(!selectedVariant.prices || selectedVariant.prices.length === 0) && (
@@ -311,9 +311,9 @@ export const ProductVariantsModal: React.FC<ProductVariantsModalProps> = ({
         ) : selectedVariant ? renderVariantDetail() : (
           <>
             {product?.options && product.options.length > 0 && (
-              <Card className="bg-slate-900 border-slate-800 p-0 overflow-visible mb-8">
-                <div className="px-4 py-3 flex justify-between items-center border-b border-slate-800 bg-slate-900/50 rounded-t-[24px]">
-                  <h3 className="text-sm font-bold text-slate-200">Options</h3>
+              <Card className="bg-slate-900 dark:bg-slate-800 border-slate-200 p-0 overflow-visible mb-8">
+                <div className="px-4 py-3 flex justify-between items-center border-b dark:border-slate-800 border-slate-200 bg-transparent dark:bg-slate-900/50 rounded-t-[24px]">
+                  <h3 className="text-sm font-bold dark:text-slate-200 text-slate-500">Options</h3>
                   <button
                     onClick={() => setIsCreateOptionDrawerOpen(true)}
                     className="p-1 hover:bg-slate-800 rounded transition-colors group"
@@ -322,7 +322,7 @@ export const ProductVariantsModal: React.FC<ProductVariantsModalProps> = ({
                     <Plus size={14} className="text-slate-500 group-hover:text-white" />
                   </button>
                 </div>
-                <div className="divide-y divide-slate-800">
+                <div className="divide-y dark:divide-slate-800 divide-slate-200">
                   {product.options.map((option, index) => (
                     <div
                       key={option.id}
@@ -333,7 +333,7 @@ export const ProductVariantsModal: React.FC<ProductVariantsModalProps> = ({
                         <span className="text-xs font-bold text-slate-400 min-w-[100px]">{option.title}</span>
                         <div className="flex flex-wrap gap-2">
                           {option.values?.map((val) => (
-                            <span key={val.id} className="px-2 py-0.5 rounded-md bg-slate-800 text-[10px] font-bold text-slate-300 border border-slate-700">
+                            <span key={val.id} className="px-2 py-0.5 rounded-md dark:bg-slate-800 bg-slate-100 text-[10px] font-bold dark:text-slate-300 text-slate-500 border border-slate-700">
                               {val.value}
                             </span>
                           ))}
@@ -393,7 +393,7 @@ export const ProductVariantsModal: React.FC<ProductVariantsModalProps> = ({
                   <input
                     type="text"
                     placeholder="Tìm kiếm"
-                    className="h-9 pl-9 pr-4 rounded-xl bg-slate-900 border border-slate-700 text-xs font-bold text-slate-300 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 transition-colors w-64"
+                    className="h-9 pl-9 pr-4 rounded-xl dark:bg-slate-900 bg-slate-50 border dark:border-slate-700 border-slate-200 text-xs font-bold text-slate-300 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 transition-colors w-64"
                   />
                 </div>
                 <Button className="h-9 px-4 text-xs font-bold gap-2 bg-white text-black hover:bg-slate-200">
@@ -402,28 +402,28 @@ export const ProductVariantsModal: React.FC<ProductVariantsModalProps> = ({
               </div>
             </div>
 
-            <div className="overflow-hidden border border-slate-800 rounded-xl bg-slate-900/50">
+            <div className="overflow-hidden border dark:border-slate-800 border-slate-200 rounded-xl dark:bg-slate-900/50 bg-slate-50">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-800 text-[10px] font-bold text-slate-500 uppercase tracking-wider bg-slate-900">
-                    <th className="px-6 py-4">Tiêu đề</th>
-                    <th className="px-6 py-4">SKU</th>
+                  <tr className="border-b dark:border-slate-800 border-slate-200 text-[10px] font-bold dark:text-slate-300 text-slate-800 uppercase tracking-wider dark:bg-slate-900 bg-slate-200">
+                    <th className="px-6 py-4 dark:text-slate-500">Tiêu đề</th>
+                    <th className="px-6 py-4 dark:text-slate-500">SKU</th>
                     {optionTitles.map(title => (
-                      <th key={title} className="px-6 py-4">{title}</th>
+                      <th key={title} className="px-6 py-4 dark:text-slate-500">{title}</th>
                     ))}
-                    <th className="px-6 py-4">Tồn kho</th>
+                    <th className="px-6 py-4 dark:text-slate-500">Tồn kho</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800">
                   {loading ? (
                     <tr>
-                      <td colSpan={5 + optionTitles.length} className="px-6 py-12 text-center text-slate-500 text-xs font-bold">
+                      <td colSpan={5 + optionTitles.length} className="px-6 py-12 text-center dark:text-slate-500 text-slate-800 text-xs font-bold">
                         Loading variants...
                       </td>
                     </tr>
                   ) : variants.length === 0 ? (
                     <tr>
-                      <td colSpan={5 + optionTitles.length} className="px-6 py-12 text-center text-slate-500 text-xs font-bold">
+                      <td colSpan={5 + optionTitles.length} className="px-6 py-12 text-center dark:text-slate-500 text-slate-800 text-xs font-bold">
                         Không tìm thấy biến thể.
                       </td>
                     </tr>
@@ -451,12 +451,12 @@ export const ProductVariantsModal: React.FC<ProductVariantsModalProps> = ({
                       const inventoryText = availableCount > 0
                         ? `${availableCount} available at ${locationCount} location${locationCount !== 1 ? 's' : ''}`
                         : `0 available at ${locationCount} location${locationCount !== 1 ? 's' : ''}`;
-                      const inventoryColor = availableCount > 0 ? 'text-slate-300' : 'text-rose-500';
+                      const inventoryColor = availableCount > 0 ? 'dark:text-slate-300 text-slate-800' : 'dark:text-rose-500 text-rose-500';
 
                       const thumbnail = v.thumbnail || product?.thumbnail;
 
                       return (
-                        <tr key={v.id} onClick={() => handleVariantClick(v.id)} className="group hover:bg-slate-800/50 transition-colors cursor-pointer">
+                        <tr key={v.id} onClick={() => handleVariantClick(v.id)} className="group dark:hover:bg-slate-800/50 hover:bg-slate-200/50 transition-colors cursor-pointer">
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
                               {thumbnail && (
@@ -466,11 +466,11 @@ export const ProductVariantsModal: React.FC<ProductVariantsModalProps> = ({
                                   className="w-8 h-8 rounded-lg object-cover bg-slate-800"
                                 />
                               )}
-                              <span className="text-xs font-bold text-slate-200">{v.title}</span>
+                              <span className="text-xs font-bold dark:text-slate-200 text-slate-800">{v.title}</span>
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <span className="text-xs font-medium text-slate-400">{v.sku || '-'}</span>
+                            <span className="text-xs font-medium dark:text-slate-400 text-slate-800">{v.sku || '-'}</span>
                           </td>
                           {optionTitles.map(title => (
                             <td key={title} className="px-6 py-4">

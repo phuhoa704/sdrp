@@ -54,7 +54,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['marketplace', 'warehouse']);
   const [hoveredMenu, setHoveredMenu] = useState<{ id: string, top: number } | null>(null);
 
-  const { salesChannels, loading: channelsLoading } = useSalesChannels();
+  const { salesChannels, loading: channelsLoading } = useSalesChannels({ isDisabled: false });
   const { selectedSalesChannelId } = useAppSelector((state: RootState) => state.ui);
 
   const selectedChannel = useMemo(() =>
@@ -111,7 +111,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           icon: Package,
           children: [
             { id: 'product-list', label: 'DANH MỤC HÀNG', view: 'INVENTORY' },
-            { id: 'category', label: 'PHÂN LOẠI HÀNG', view: 'CATEGORY' },
+            { id: 'data-groups', label: 'PHÂN LOẠI', view: 'DATA_GROUPS' },
+            { id: 'category', label: 'LOẠI HÀNG', view: 'CATEGORY' },
             { id: 'collection', label: 'BỘ SƯU TẬP', view: 'COLLECTION' },
             { id: 'orders', label: 'ĐƠN HÀNG', view: 'CATALOG' },
             { id: 'stock-check', label: 'KIỂM KHO', view: 'STOCK_CHECK' },
@@ -225,7 +226,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
         {!isCollapsed && (
           <div className="flex flex-col">
-            <span className="text-xl font-extrabold text-white tracking-tight">SDRP</span>
+            <span className="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight">SDRP</span>
             <span className="text-xs font-bold text-emerald-400 tracking-widest -mt-1 uppercase">Platform</span>
           </div>
         )}
@@ -290,15 +291,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       key={child.id}
                       onClick={() => setView(child.view)}
                       className={cn(
-                        "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-bold transition-all duration-200",
+                        "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[11px] font-bold transition-all duration-200",
                         isSubMenuActive(child.view)
                           ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/10"
                           : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
                       )}
                     >
                       <div className={cn(
-                        "w-1 h-1 rounded-full",
-                        isSubMenuActive(child.view) ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-slate-600"
+                        "w-1.5 h-1.5 rounded-full",
+                        isSubMenuActive(child.view) ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-slate-300"
                       )} />
                       {child.label}
                     </button>

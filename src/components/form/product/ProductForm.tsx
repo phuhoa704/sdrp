@@ -214,7 +214,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
   );
 
   return (
-    <div className="max-w-5xl mx-auto py-10 px-4 animate-fade-in pb-32">
+    <div className="w-9/12 mx-auto py-10 px-4 animate-fade-in pb-32">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
         <div className="flex items-center gap-6">
@@ -480,7 +480,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
                             }}
                             className={cn(
                               "p-4 rounded-2xl flex items-center justify-between transition-all border-2 text-left",
-                              isSelected ? "bg-emerald-500/5 border-emerald-500 text-emerald-600" : "bg-white dark:bg-slate-800 border-transparent text-slate-400"
+                              isSelected ? "bg-emerald-500/5 border-emerald-500 text-emerald-600" : "bg-slate-50 dark:bg-slate-800 border-transparent text-slate-400"
                             )}
                           >
                             <div className="flex items-center gap-3">
@@ -680,9 +680,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-primary/20 transition-all" />
 
             <div className="flex items-center gap-4 relative z-10">
-              <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-emerald-400 border border-white/5"><Settings size={24} /></div>
+              <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-emerald-400 border border-white/5"><Settings size={24} /></div>
               <div>
-                <h4 className="font-black uppercase tracking-tight">Tóm tắt thiết lập</h4>
+                <h4 className="font-black uppercase tracking-tight text-slate-800 dark:text-white">Tóm tắt thiết lập</h4>
                 <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mt-1">SDRP Integrated System</p>
               </div>
             </div>

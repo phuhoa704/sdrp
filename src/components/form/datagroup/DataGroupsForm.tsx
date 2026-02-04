@@ -1,128 +1,53 @@
-import React, { useState, useEffect } from 'react';
-import { ProductCategory, Product } from '@/types/product';
-import { Card } from '@/components/Card';
-import { productService } from '@/lib/api/medusa/productService';
-import { categoryService } from '@/lib/api/medusa/categoryService';
-import {
-  ArrowLeft,
-  MoreHorizontal,
-  ChevronLeft,
-  ChevronRight,
-  Package,
-  Database,
-  Code,
-  Plus,
-  CheckCircle2,
-  Search,
-  Check
-} from 'lucide-react';
-import { ConfirmModal } from '@/components/ConfirmModal';
-import { ProductSelectModal } from './ProductSelectModal';
-import { matchCategoryStatus, matchCategoryStatusColor, matchCategoryType, matchCategoryTypeColor, matchProductStatus, matchProductStatusColor } from '@/lib/helpers';
-import { cn } from '@/lib/utils';
-import { Button } from '../Button';
-import { TableView } from '../TableView';
-import { noImage } from '@/configs';
 
-interface CategoryDetailProps {
-  category: ProductCategory;
-  onBack: () => void;
-  onEdit: (category: ProductCategory) => void;
-  refreshCategories: () => void;
+import React, { useState, useMemo } from 'react';
+import { ArrowLeft, Check, Search, Globe, Smartphone, Store, Layers, Hash, CheckCircle, CheckCircle2, Zap } from 'lucide-react';
+import { TableView } from '@/components/TableView';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/Button';
+import { Card } from '@/components/Card';
+
+interface Product {
+  id: string;
+  title: string;
+  thumbnail?: string;
+  subtitle?: string;
+  category: string;
+  sales_channels: string[];
+  variants_count: number;
+  status: 'published' | 'draft';
 }
 
-export const CategoryDetail: React.FC<CategoryDetailProps> = ({
-  category: initialCategory,
-  onBack,
-  onEdit,
-  refreshCategories
-}) => {
-  const [category, setCategory] = useState<ProductCategory>(initialCategory);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [productsCount, setProductsCount] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [offset, setOffset] = useState(0);
-  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isProductSelectModalOpen, setIsProductSelectModalOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isAdding, setIsAdding] = useState(false);
-  const limit = 10;
-  const [searchTerm, setSearchTerm] = useState('');
+interface DataGroupsFormProps {
+  onCancel?: () => void;
+  onSave?: (data: any) => void;
+  initialData?: any;
+}
+
+const MOCK_PRODUCTS: Product[] = [
+  { id: '1', title: 'SuperKill 500WP', subtitle: 'IMIDACLOPRID', category: 'THUỐC TRỪ SÂU', sales_channels: ['web', 'app', 'store'], variants_count: 5, status: 'published' },
+  { id: '2', title: 'GrowFast Nitro', subtitle: 'NITROGEN 30%', category: 'PHÂN BÓN LÁ', sales_channels: ['store'], variants_count: 3, status: 'published' },
+  { id: '3', title: 'FungiGone 200SC', subtitle: 'AZOXYSTROBIN', category: 'THUỐC TRỪ BỆNH', sales_channels: ['web', 'app'], variants_count: 4, status: 'published' },
+  { id: '4', title: 'Antracol 70WP', subtitle: 'PROPINEB', category: 'THUỐC TRỪ BỆNH', sales_channels: ['web', 'store'], variants_count: 2, status: 'published' },
+  { id: '5', title: 'Tilt Super 300EC', subtitle: 'DIFENOCONAZOLE', category: 'THUỐC TRỪ BỆNH', sales_channels: ['web', 'app'], variants_count: 2, status: 'published' },
+];
+
+export const DataGroupsForm: React.FC<DataGroupsFormProps> = ({ onCancel, onSave, initialData }) => {
   const [formData, setFormData] = useState({
-    name: category.name,
-    description: category.description || ''
+    name: initialData?.name || '',
+    description: initialData?.description || ''
   });
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    fetchCategoryDetail();
-    fetchProducts();
-  }, [category.id, offset]);
-
-  const fetchCategoryDetail = async () => {
-    try {
-      const data = await categoryService.getCategory(initialCategory.id, {
-        include_descendants_tree: true
-      });
-      setCategory(data.product_category);
-    } catch (error) {
-      console.error('Failed to fetch category detail:', error);
-    }
-  };
-
-  const fetchProducts = async () => {
-    setLoading(true);
-    try {
-      const data = await productService.getProducts({
-        limit,
-        offset,
-        fields: "id,title,handle,status,*collection,*sales_channels,variants.id,thumbnail,-type,-tags,-variants"
-      });
-      setProducts(data.products);
-      setProductsCount(data.count);
-    } catch (error) {
-      console.error('Failed to fetch products for category:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const filteredProducts = useMemo(() => {
+    return MOCK_PRODUCTS.filter(p => p.title.toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [searchTerm]);
 
   const handleSelectAll = () => {
-    if (selectedProductIds.length === products.length) {
+    if (selectedProductIds.length === filteredProducts.length) {
       setSelectedProductIds([]);
     } else {
-      setSelectedProductIds(products.map(p => p.id));
-    }
-  };
-
-  const handleRemoveProductsFromCategory = async () => {
-    setIsDeleting(true);
-    try {
-      await categoryService.removeProductsFromCategory(initialCategory.id, selectedProductIds);
-      setSelectedProductIds([]);
-      setIsDeleteModalOpen(false);
-      fetchProducts();
-      refreshCategories();
-    } catch (error) {
-      console.error('Failed to remove products:', error);
-      alert('Không thể gỡ sản phẩm. Vui lòng thử lại.');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const handleAddProductsToCategory = async (productIds: string[]) => {
-    setIsAdding(true);
-    try {
-      await categoryService.addProductsToCategory(initialCategory.id, productIds);
-      fetchProducts();
-      refreshCategories();
-    } catch (error) {
-      console.error('Failed to add products:', error);
-      alert('Không thể thêm sản phẩm. Vui lòng thử lại.');
-    } finally {
-      setIsAdding(false);
+      setSelectedProductIds(filteredProducts.map(p => p.id));
     }
   };
 
@@ -134,31 +59,28 @@ export const CategoryDetail: React.FC<CategoryDetailProps> = ({
     }
   };
 
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
-  };
-
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6 pb-20">
-      {/* Header Bar */}
+    <div className="min-h-screen px-4 animate-fade-in relative z-50">
       <div className="sticky top-0 z-40 -mx-6 px-6 py-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 mb-8">
         <div className="flex items-center gap-4">
-          <button onClick={onBack} className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:bg-slate-50 transition-all border border-slate-200 dark:border-slate-800">
+          <button onClick={onCancel} className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:bg-slate-50 transition-all border border-slate-200 dark:border-slate-800">
             <ArrowLeft size={24} className="text-slate-500" />
           </button>
           <div>
-            <h1 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">{category.name}</h1>
+            <h1 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">Thiết lập Phân loại</h1>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">WORKSPACE / CAT-947</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <Button
             variant='secondary'
-            onClick={onBack}
+            onClick={onCancel}
           >
             Hủy bỏ
           </Button>
           <Button
             variant='primary'
+            onClick={() => onSave?.(formData)}
           >
             <CheckCircle2 size={16} />
             Lưu thay đổi
@@ -193,7 +115,29 @@ export const CategoryDetail: React.FC<CategoryDetailProps> = ({
               </div>
             </div>
           </div>
+
+          <div className="bg-[#0f172a] rounded-[32px] p-8 shadow-xl text-white relative overflow-hidden group">
+            <div className="flex items-center gap-1 mb-3">
+              <Zap size={24} className='text-primary' />
+              <p className="text-sm font-black uppercase tracking-widest">Thống kê nhóm</p>
+            </div>
+
+            <div className="space-y-2 relative z-10">
+              <div className="flex justify-between items-end border-b border-white/10 pb-4">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Tổng sản phẩm đã chọn:</p>
+                <p className="text-xl font-black text-[#00B074]">{selectedProductIds.length}</p>
+              </div>
+              <div className="flex justify-between items-end border-b border-white/10 pb-4">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Ngày khởi tạo:</p>
+                <p className="text-xl font-bold">04/02/2026</p>
+              </div>
+              <p className="text-[10px] text-slate-500 italic leading-relaxed">
+                * Việc chọn/bỏ chọn sản phẩm trong bảng bên cạnh sẽ có hiệu lực ngay sau khi bấm Lưu.
+              </p>
+            </div>
+          </div>
         </div>
+
         <div className="col-span-12 lg:col-span-8 space-y-6">
           <Card>
             <div className="relative">
@@ -207,6 +151,7 @@ export const CategoryDetail: React.FC<CategoryDetailProps> = ({
               />
             </div>
           </Card>
+
           <TableView
             columns={[
               {
@@ -216,10 +161,10 @@ export const CategoryDetail: React.FC<CategoryDetailProps> = ({
                       onClick={handleSelectAll}
                       className={cn(
                         "w-5 h-5 rounded-md border-2 border-white/50 cursor-pointer flex items-center justify-center transition-all",
-                        selectedProductIds.length === products.length && products.length > 0 ? "bg-white border-white" : ""
+                        selectedProductIds.length === filteredProducts.length && filteredProducts.length > 0 ? "bg-white border-white" : ""
                       )}
                     >
-                      {selectedProductIds.length === products.length && products.length > 0 && <Check size={14} className="text-[#00B074]" />}
+                      {selectedProductIds.length === filteredProducts.length && filteredProducts.length > 0 && <Check size={14} className="text-[#00B074]" />}
                     </div>
                   </div>
                 ),
@@ -232,14 +177,7 @@ export const CategoryDetail: React.FC<CategoryDetailProps> = ({
               { title: 'VARIANTS' },
               { title: 'STATUS', className: 'text-right' },
             ]}
-            pagination={{
-              currentPage,
-              totalPages: Math.ceil(productsCount / limit),
-              onPageChange: handlePageChange,
-              totalItems: productsCount,
-              itemsPerPage: limit
-            }}
-            data={products}
+            data={filteredProducts}
             renderRow={(product, index) => {
               const isSelected = selectedProductIds.includes(product.id);
               return (
@@ -263,7 +201,7 @@ export const CategoryDetail: React.FC<CategoryDetailProps> = ({
                   </td>
                   <td className="py-5 px-4">
                     <div className="flex items-center gap-4">
-                      <img src={product.thumbnail || noImage} className="w-12 h-12 rounded-xl shadow-sm object-cover" alt={product.title} />
+                      <img src={`https://picsum.photos/seed/${product.id}/100`} className="w-12 h-12 rounded-xl shadow-sm object-cover" alt={product.title} />
                       <div>
                         <p className={cn("text-sm font-black transition-colors", isSelected ? "text-[#00B074]" : "text-slate-800 dark:text-white")}>{product.title}</p>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5">{product.subtitle}</p>
@@ -271,16 +209,18 @@ export const CategoryDetail: React.FC<CategoryDetailProps> = ({
                     </div>
                   </td>
                   <td className="py-5 px-4">
-                    <p className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wide">{product?.categories?.map(category => category.name).join(', ') || "Global"}</p>
+                    <p className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wide">{product.category}</p>
                   </td>
                   <td className="py-5 px-4 text-center">
-                    <div className="flex justify-center gap-2 text-slate-500 dark:text-slate-400 text-xs">
-                      {product?.sales_channels?.map(channel => channel.name).join(', ') || "Global"}
+                    <div className="flex justify-center gap-2 text-slate-300">
+                      <Globe size={16} className={cn(product.sales_channels.includes('web') && "text-blue-500")} />
+                      <Smartphone size={16} className={cn(product.sales_channels.includes('app') && "text-purple-500")} />
+                      <Store size={16} className={cn(product.sales_channels.includes('store') && "text-amber-500")} />
                     </div>
                   </td>
                   <td className="py-5 px-4">
                     <span className="px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                      {product.variants.length} variants
+                      {product.variants_count} variants
                     </span>
                   </td>
                   <td className="py-5 px-4 text-right pr-8">
@@ -295,26 +235,6 @@ export const CategoryDetail: React.FC<CategoryDetailProps> = ({
           />
         </div>
       </div>
-
-      {/* Delete Confirmation Modal */}
-      <ConfirmModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        onConfirm={handleRemoveProductsFromCategory}
-        isLoading={isDeleting}
-        title="Xác nhận gỡ sản phẩm"
-        message={`Bạn có chắc chắn muốn gỡ ${selectedProductIds.length} sản phẩm đã chọn khỏi danh mục này? Sản phẩm vẫn sẽ tồn tại trong hệ thống.`}
-        variant="danger"
-        confirmText="Gỡ sản phẩm"
-      />
-
-      {/* Product Selection Modal */}
-      <ProductSelectModal
-        isOpen={isProductSelectModalOpen}
-        onClose={() => setIsProductSelectModalOpen(false)}
-        onAdd={handleAddProductsToCategory}
-        excludedProductIds={products.map(p => p.id)}
-      />
     </div>
   );
 };

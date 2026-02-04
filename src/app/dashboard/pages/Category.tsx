@@ -2,12 +2,13 @@ import { Breadcrumb, Button } from '@/components'
 import { useCategories } from '@/hooks';
 import { matchCategoryStatus, matchCategoryStatusColor, matchCategoryType, matchCategoryTypeColor } from '@/lib/helpers';
 import { cn } from '@/lib/utils';
-import { AlertCircle, ChevronLeft, ChevronRight, Edit3, MoreHorizontal, Plus, Trash2, Zap } from 'lucide-react';
-import React, { Fragment, useState } from 'react'
+import { AlertCircle, ChevronLeft, ChevronRight, Edit3, ListOrdered, MoreHorizontal, Plus, Tags, Trash2, Zap, Folder, CornerDownRight } from 'lucide-react';
+import React, { Fragment, useMemo, useState } from 'react'
 import { CategoryForm } from '@/components/form/category/CategoryForm';
 import { CategoryDetail } from '@/components/category/CategoryDetail';
 import { ProductCategory } from '@/types/product';
 import { ConfirmModal } from '@/components/ConfirmModal';
+import { TableView } from '@/components/TableView';
 import { categoryService } from '@/lib/api/medusa/categoryService';
 import { InputSearch } from '@/components/Search';
 import { Error } from '@/components/Error';
@@ -23,7 +24,7 @@ export default function Category() {
   const [categoryToDelete, setCategoryToDelete] = useState<ProductCategory | null>(null);
   const [viewingCategory, setViewingCategory] = useState<ProductCategory | null>(null);
 
-  const limit = 10;
+  const limit = 100; // Increased limit to ensure we get children for tree view if possible
   const offset = (currentPage - 1) * limit;
 
   //hook
@@ -32,6 +33,44 @@ export default function Category() {
     limit,
     offset
   });
+
+  const sortedCategories = useMemo(() => {
+    if (!categories) return [];
+
+    const getRank = (c: any) => c.rank ?? c.metadata?.rank ?? 0;
+
+    const catMap = new Map(categories.map(c => [c.id, c]));
+
+    const roots = categories.filter(c => !c.parent_category_id || !catMap.has(c.parent_category_id));
+
+    const childMap = new Map<string, ProductCategory[]>();
+    categories.forEach(c => {
+      if (c.parent_category_id && catMap.has(c.parent_category_id)) {
+        const existing = childMap.get(c.parent_category_id) || [];
+        existing.push(c);
+        childMap.set(c.parent_category_id, existing);
+      }
+    });
+
+    const sortFn = (a: ProductCategory, b: ProductCategory) => getRank(a) - getRank(b);
+
+    roots.sort(sortFn);
+
+    const result: ProductCategory[] = [];
+
+    const traverse = (cat: ProductCategory) => {
+      result.push(cat);
+      const children = childMap.get(cat.id);
+      if (children) {
+        children.sort(sortFn);
+        children.forEach(traverse);
+      }
+    };
+
+    roots.forEach(traverse);
+
+    return result;
+  }, [categories]);
 
   const totalPages = Math.ceil(count / limit);
 
@@ -101,7 +140,7 @@ export default function Category() {
       <div className="pb-32 animate-fade-in space-y-8 min-h-full relative">
         <Breadcrumb
           items={[
-            { label: 'QUẢN LÝ HÀNG', href: '#' },
+            { label: 'KHO HÀNG', href: '#' },
             { label: 'LOẠI HÀNG', href: '#' }
           ]}
         />
@@ -109,18 +148,27 @@ export default function Category() {
           <div className="shrink-0">
             <div className="flex items-center gap-2 mb-1">
               <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
-                CATEGORY MANAGEMENT
+                Type Architecture
               </span>
-              <Zap size={12} className='text-amber-500 animate-pulse' />
+              <Tags size={12} className='text-amber-500 animate-pulse' />
             </div>
             <h2 className="text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-none">
-              Phân loại <span className="text-emerald-600 font-black">Hàng hóa</span>
+              Cấu Trúc <span className="text-emerald-600 font-black">Loại Hàng</span>
             </h2>
+            <p className="text-slate-500 dark:text-slate-400 font-medium text-lg">Quản lý phân cấp và thứ tự hiển thị trên ứng dụng khách hàng</p>
           </div>
 
           <div className="flex items-center gap-3">
             <Button
-              className="h-14 rounded-2xl bg-white text-primary border-2 border-primary"
+              variant='secondary'
+              className='h-12 rounded-2xl text-xs font-semibold'
+              icon={<ListOrdered size={20} className='text-primary' />}
+            >
+              CHỈNH SỬA RANK
+            </Button>
+            <Button
+              variant='primary'
+              className="h-12 rounded-2xl text-xs font-semibold"
               icon={<Plus size={20} />}
               onClick={handleCreate}
             >
@@ -136,152 +184,131 @@ export default function Category() {
         {error && (
           <Error error={error} />
         )}
-        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[32px] shadow-sm overflow-visible">
-          <div className="overflow-visible">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/50 dark:bg-slate-800/50 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] border-b border-slate-100 dark:border-slate-800">
-                  <th className="py-5 px-8 rounded-tl-[32px]">Tên danh mục</th>
-                  <th className="py-5 px-4 text-center">Handle</th>
-                  <th className="py-5 px-4 text-center">Trạng thái</th>
-                  <th className="py-5 px-4 text-center">Loại</th>
-                  <th className="py-5 pr-8 text-right rounded-tr-[32px]">Hành động</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {loading ? (
-                  <tr>
-                    <td colSpan={5} className="py-20">
-                      <div className="flex justify-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (categories.length > 0 ? (
-                  categories.map((category) => (
-                    <tr
-                      key={category.id}
-                      onClick={() => setViewingCategory(category)}
-                      className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+        <TableView
+          columns={[
+            { title: 'Rank', width: '80px', className: 'pl-8 text-center' },
+            { title: 'Tên loại hàng' },
+            { title: 'URL / Path' },
+            { title: 'Trạng thái', className: 'text-right' },
+            { title: 'Hiển thị', className: 'text-right' },
+            { title: '', className: 'text-right pr-8' },
+          ]}
+          data={sortedCategories}
+          isLoading={loading}
+          emptyMessage={{
+            title: "Không có danh mục nào",
+            description: "Hãy tạo danh mục mới để bắt đầu"
+          }}
+          pagination={{
+            currentPage: currentPage,
+            totalPages: totalPages,
+            onPageChange: handlePageChange,
+            totalItems: count,
+            itemsPerPage: limit
+          }}
+          renderRow={(category: any, index: number) => {
+            const isChild = !!category.parent_category_id;
+            return (
+              <tr
+                key={category.id}
+                onClick={() => setViewingCategory(category)}
+                className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer border-b border-slate-50 dark:border-slate-800/50 last:border-none"
+              >
+                <td className="py-5 px-4 pl-8 text-center">
+                  <span className={cn(
+                    "w-8 h-8 rounded-lg font-bold text-xs flex items-center justify-center",
+                    isChild ? "bg-transparent text-slate-400" : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+                  )}>
+                    {isChild ? '' : index + 1}
+                  </span>
+                </td>
+                <td className="py-5 px-4 font-bold text-slate-700 dark:text-slate-200">
+                  <div className="flex items-center gap-3" style={{ paddingLeft: isChild ? '32px' : '0px' }}>
+                    {isChild && <CornerDownRight size={16} className="text-slate-300" />}
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
+                      isChild ? "bg-blue-50 dark:bg-blue-900/20 text-blue-500" : "bg-emerald-50 dark:bg-emerald-900/20 text-primary"
+                    )}>
+                      {isChild ? <Tags size={14} /> : <Folder size={16} className="fill-current opacity-20" />}
+                      {!isChild && <Folder size={16} className="absolute" />}
+                    </div>
+                    <span className="uppercase tracking-wide text-sm">{category.name}</span>
+                  </div>
+                </td>
+                <td className="py-5 px-4">
+                  <span className="text-xs font-medium text-slate-400">/{category.handle}</span>
+                </td>
+                <td className="py-5 px-4 text-right">
+                  <div className="flex justify-end items-center gap-2">
+                    <div className={cn("w-1.5 h-1.5 rounded-full bg-primary", category.is_active ? "animate-pulse" : "bg-slate-300")}></div>
+                    <span className={cn("text-[10px] font-black uppercase tracking-widest", category.is_active ? "text-primary" : "text-slate-400")}>
+                      {category.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                </td>
+                <td className="py-5 px-4 text-right">
+                  <div className="flex justify-end items-center gap-2">
+                    <div className={cn("w-1.5 h-1.5 rounded-full bg-[#00B074]", category.is_public !== false ? "animate-pulse" : "bg-slate-300")}></div>
+                    <span className={cn("text-[10px] font-black uppercase tracking-widest", category.is_public !== false ? "text-[#00B074]" : "text-slate-400")}>
+                      {category.is_public !== false ? 'Public' : 'Private'}
+                    </span>
+                  </div>
+                </td>
+                <td className="py-5 px-4 text-right">
+                  <div className="relative inline-block">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveMenuId(activeMenuId === category.id ? null : category.id);
+                      }}
+                      className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl transition-all"
                     >
-                      <td className="py-5 px-8 font-bold text-slate-700 dark:text-slate-200">{category.name}</td>
-                      <td className="py-5 px-4 text-center">
-                        <span className="text-xs font-medium text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg">/{category.handle}</span>
-                      </td>
-                      <td className="py-5 px-4 text-center">
-                        <div className="flex justify-center items-center gap-2 text-xs xl:text-sm">
-                          <div className={cn("w-2 h-2 rounded-full", matchCategoryStatusColor(category))}></div>
-                          <span className="font-bold">{matchCategoryStatus(category)}</span>
-                        </div>
-                      </td>
-                      <td className="py-5 px-4 text-center">
-                        <div className="flex justify-center items-center gap-2 text-xs xl:text-sm font-bold">
-                          <div className={cn("w-2 h-2 rounded-full", matchCategoryTypeColor(category))}></div>
-                          {matchCategoryType(category)}
-                        </div>
-                      </td>
-                      <td className="py-5 pr-8 text-right">
-                        <div className="relative inline-block">
+                      <MoreHorizontal size={20} />
+                    </button>
+
+                    {activeMenuId === category.id && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveMenuId(null);
+                          }}
+                        />
+                        <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xl z-20 overflow-hidden animate-in fade-in zoom-in duration-200">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setActiveMenuId(activeMenuId === category.id ? null : category.id);
+                              handleEdit(category);
+                              setActiveMenuId(null);
                             }}
-                            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl transition-all"
+                            className="w-full px-4 py-3 text-left text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors"
                           >
-                            <MoreHorizontal size={20} />
+                            <Edit3 size={16} className="text-blue-500" />
+                            Chỉnh sửa
                           </button>
-
-                          {activeMenuId === category.id && (
-                            <>
-                              <div
-                                className="fixed inset-0 z-10"
-                                onClick={() => setActiveMenuId(null)}
-                              />
-                              <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xl z-20 overflow-hidden animate-in fade-in zoom-in duration-200">
-                                <button
-                                  onClick={() => {
-                                    handleEdit(category);
-                                    setActiveMenuId(null);
-                                  }}
-                                  className="w-full px-4 py-3 text-left text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors"
-                                >
-                                  <Edit3 size={16} className="text-blue-500" />
-                                  Chỉnh sửa
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setCategoryToDelete(category);
-                                    setIsDeleteModalOpen(true);
-                                    setActiveMenuId(null);
-                                  }}
-                                  className="w-full px-4 py-3 text-left text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 flex items-center gap-3 transition-colors border-t border-slate-50 dark:border-slate-800/50"
-                                >
-                                  <Trash2 size={16} />
-                                  Xóa danh mục
-                                </button>
-                              </div>
-                            </>
-                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCategoryToDelete(category);
+                              setIsDeleteModalOpen(true);
+                              setActiveMenuId(null);
+                            }}
+                            className="w-full px-4 py-3 text-left text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 flex items-center gap-3 transition-colors border-t border-slate-50 dark:border-slate-800/50"
+                          >
+                            <Trash2 size={16} />
+                            Xóa danh mục
+                          </button>
                         </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="py-20">
-                      <div className="flex justify-center">
-                        <p className="text-sm font-bold opacity-40 uppercase tracking-widest">Không có danh mục nào</p>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                      </>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            );
+          }}
+        />
 
-        {!loading && count > limit && (
-          <div className="flex items-center justify-between px-8 py-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 rounded-b-[32px]">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                Đang hiển thị {offset + 1} - {Math.min(offset + limit, count)} trong số {count}
-              </span>
-            </div>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="p-2 rounded-xl text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-              >
-                <ChevronLeft size={18} />
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
-                .map((p, i, arr) => (
-                  <Fragment key={p}>
-                    {i > 0 && arr[i - 1] !== p - 1 && <span className="text-slate-300">...</span>}
-                    <button
-                      onClick={() => handlePageChange(p)}
-                      className={`w-9 h-9 rounded-xl text-xs font-black transition-all ${p === currentPage
-                        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20'
-                        : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                        }`}
-                    >
-                      {p}
-                    </button>
-                  </Fragment>
-                ))}
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="p-2 rounded-xl text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
-          </div>
-        )}
       </div>
       <ConfirmModal
         isOpen={isDeleteModalOpen}

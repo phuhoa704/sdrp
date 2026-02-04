@@ -38,7 +38,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({ initialData, onCance
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    /* try {
+    try {
       if (initialData) {
         await categoryService.updateCategory(initialData.id, {
           ...formData,
@@ -58,8 +58,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({ initialData, onCance
       alert('Không thể lưu danh mục. Vui lòng thử lại.');
     } finally {
       setLoading(false);
-    } */
-    console.log(formData)
+    }
   };
 
   const inputClass = "w-full h-12 px-4 rounded-xl bg-slate-900 border border-slate-800 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-sm font-bold text-white placeholder:text-slate-600 shadow-sm";

@@ -3,7 +3,7 @@ import React from 'react'
 
 export const AppLoading = () => {
   return (
-    <div className="absolute inset-0 z-[1000] bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl flex flex-col items-center justify-center animate-fade-in w-screen h-screen">
+    <div className="fixed inset-0 z-[1000] bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl flex flex-col items-center justify-center animate-fade-in w-screen h-screen">
       <div className="relative mb-8">
         <div className="w-20 h-20 md:w-24 md:h-24 bg-primary rounded-full flex items-center justify-center shadow-2xl shadow-green-500/40 animate-pulse">
           <Zap size={48} className="text-white" fill="currentColor" />

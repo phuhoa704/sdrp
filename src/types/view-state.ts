@@ -19,4 +19,5 @@ export type ViewState =
     | 'PRICING'
     | 'PROMOTIONS'
     | 'CATEGORY'
-    | 'COLLECTION';
+    | 'COLLECTION'
+    | 'DATA_GROUPS';

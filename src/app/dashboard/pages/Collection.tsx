@@ -8,6 +8,7 @@ import { Error } from '@/components/Error';
 import { ProductCollection } from '@/types/product';
 import { CollectionForm } from '@/components/form/collection/CollectionForm';
 import { ConfirmModal } from '@/components/ConfirmModal';
+import { TableView } from '@/components/TableView';
 import { collectionService } from '@/lib/api/medusa/collectionService';
 import { CollectionDetail } from '@/components/collection/CollectionDetail';
 
@@ -129,92 +130,81 @@ export default function Collection() {
         {error && (
           <Error error={error} />
         )}
-        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[32px] shadow-sm overflow-visible">
-          <div className="overflow-visible">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/50 dark:bg-slate-800/50 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] border-b border-slate-100 dark:border-slate-800">
-                  <th className="py-5 px-8 rounded-tl-[32px]">Tiêu đề</th>
-                  <th className="py-5 px-4 text-center">Handle</th>
-                  <th className="py-5 px-4 text-center">Sản phẩm</th>
-                  <th className="py-5 pr-8 text-right rounded-tr-[32px]"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {loading ? (
-                  <tr>
-                    <td colSpan={4} className='py-5 px-4'>
-                      <TableLoading />
-                    </td>
-                  </tr>
-                ) : (collections.length > 0 ? (
-                  collections.map((collection) => (
-                    <tr
-                      key={collection.id}
-                      className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
-                      onClick={() => setViewingCollection(collection)}
-                    >
-                      <td className="py-5 px-8">{collection.title}</td>
-                      <td className="py-5 px-4 text-center">/{collection.handle}</td>
-                      <td className="py-5 px-4 text-center">{collection.products?.length || 0}</td>
-                      <td className="py-5 pr-8 text-right">
-                        <div className="relative inline-block">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveMenuId(activeMenuId === collection.id ? null : collection.id);
-                            }}
-                            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl transition-all"
-                          >
-                            <MoreHorizontal size={20} />
-                          </button>
+        <TableView
+          columns={[
+            { title: 'Tiêu đề', className: 'pl-8' },
+            { title: 'Handle', className: 'text-center' },
+            { title: 'Sản phẩm', className: 'text-center' },
+            { title: '', className: 'text-right pr-8' },
+          ]}
+          data={collections}
+          isLoading={loading}
+          emptyMessage={{
+            title: "Không có bộ sưu tập nào",
+            description: "Hãy tạo bộ sưu tập mới để bắt đầu"
+          }}
+          renderRow={(collection: any, index: number) => (
+            <tr
+              key={collection.id}
+              className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer text-slate-700 dark:text-slate-200"
+              onClick={() => setViewingCollection(collection)}
+            >
+              <td className="py-5 px-8">{collection.title}</td>
+              <td className="py-5 px-4 text-center">/{collection.handle}</td>
+              <td className="py-5 px-4 text-center">{collection.products?.length || 0}</td>
+              <td className="py-5 pr-8 text-right">
+                <div className="relative inline-block">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveMenuId(activeMenuId === collection.id ? null : collection.id);
+                    }}
+                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl transition-all"
+                  >
+                    <MoreHorizontal size={20} />
+                  </button>
 
-                          {activeMenuId === collection.id && (
-                            <>
-                              <div
-                                className="fixed inset-0 z-10"
-                                onClick={() => setActiveMenuId(null)}
-                              />
-                              <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xl z-20 overflow-hidden animate-in fade-in zoom-in duration-200">
-                                <button
-                                  onClick={() => {
-                                    handleEdit(collection);
-                                    setActiveMenuId(null);
-                                  }}
-                                  className="w-full px-4 py-3 text-left text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors"
-                                >
-                                  <Edit3 size={16} className="text-blue-500" />
-                                  Chỉnh sửa
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setCollectionToDelete(collection);
-                                    setIsDeleteModalOpen(true);
-                                    setActiveMenuId(null);
-                                  }}
-                                  className="w-full px-4 py-3 text-left text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 flex items-center gap-3 transition-colors border-t border-slate-50 dark:border-slate-800/50"
-                                >
-                                  <Trash2 size={16} />
-                                  Xóa
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={4} className="py-5 px-8 text-center">
-                      Không có dữ liệu
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                  {activeMenuId === collection.id && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveMenuId(null);
+                        }}
+                      />
+                      <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xl z-20 overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(collection);
+                            setActiveMenuId(null);
+                          }}
+                          className="w-full px-4 py-3 text-left text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors"
+                        >
+                          <Edit3 size={16} className="text-blue-500" />
+                          Chỉnh sửa
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCollectionToDelete(collection);
+                            setIsDeleteModalOpen(true);
+                            setActiveMenuId(null);
+                          }}
+                          className="w-full px-4 py-3 text-left text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 flex items-center gap-3 transition-colors border-t border-slate-50 dark:border-slate-800/50"
+                        >
+                          <Trash2 size={16} />
+                          Xóa
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </td>
+            </tr>
+          )}
+        />
         {!loading && count > limit && (
           <div className="flex items-center justify-between px-8 py-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 rounded-b-[32px]">
             <div className="flex items-center gap-2">

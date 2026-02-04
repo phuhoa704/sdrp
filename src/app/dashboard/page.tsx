@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { selectIsAuthenticated, selectCurrentUser } from '@/store/selectors';
-import { logout, logoutFromMedusa } from '@/store/slices/authSlice';
+import { logoutFromMedusa } from '@/store/slices/authSlice';
 import { setView, toggleSidebar, toggleTheme } from '@/store/slices/uiSlice';
 import { selectIsSidebarCollapsed, selectIsDarkMode, selectCurrentView } from '@/store/selectors';
 import { UserRole } from '@/types/enum';
@@ -29,17 +29,16 @@ import Customers from './pages/Customers';
 import Pricing from './pages/Pricing';
 import Promotions from './pages/Promotions';
 import POS from './pages/pos/POS';
-import { Loader2, Zap } from 'lucide-react';
 import { Product } from '@/types/product';
 import { NewsView } from './dashboards/News';
 import { DiagnosisScreen } from './pages/DiagnosisScreen';
 import { DiseaseDetailScreen } from './pages/DiseaseDetailScreen';
 import { addToCart } from '@/store/slices/cartSlice';
 import { useMedusaProducts } from '@/hooks';
-import { B2COrder } from '@/types/order';
 import Category from './pages/Category';
 import Collection from './pages/Collection';
 import { AppLoading } from '@/components/AppLoading';
+import { DataGroups } from './pages/DataGroups';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -148,6 +147,8 @@ export default function DashboardPage() {
         return <POS onBack={() => handleSetView('HOME')} />;
       case 'WHOLESALE_MARKETPLACE':
         return <WholesaleMarketplace role={user.role} />;
+      case 'DATA_GROUPS':
+        return <DataGroups />;
       case 'MARKETPLACE':
         return <OrderHistory onGoToWholesale={() => handleSetView('WHOLESALE_MARKETPLACE')} />;
       case 'INVENTORY':
@@ -257,7 +258,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'dark' : ''}`}>
+    <div className={`relative min-h-screen ${isDarkMode ? 'dark' : ''}`}>
       <div className="flex bg-surface-light dark:bg-surface-dark transition-colors duration-300 min-h-screen">
         <Sidebar
           currentView={currentView}
