@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { UserRole } from '@/types/enum';
-import { authService, LoginCredentials, RegisterData, MedusaCustomer } from '@/lib/api/medusa/auth';
+import { authService, LoginCredentials, RegisterData, MedusaCustomer, Vendor } from '@/lib/api/medusa/auth';
 
 interface AuthState {
     isAuthenticated: boolean;
@@ -10,6 +10,7 @@ interface AuthState {
         email: string;
         role: UserRole;
         avatarUrl?: string;
+        vendor?: Vendor | null;
     } | null;
     token: string | null;
     loading: boolean;
@@ -31,6 +32,7 @@ const mapMedusaCustomerToUser = (customer: MedusaCustomer) => ({
     email: customer.email,
     role: (customer.metadata?.role as UserRole) || UserRole.RETAILER,
     avatarUrl: customer.metadata?.avatar_url as string | undefined,
+    vendor: customer.vendor,
 });
 
 // Async thunks

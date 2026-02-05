@@ -126,20 +126,18 @@ class CollectionService {
      * @param id Collection ID
      * @param productIds Array of product IDs to add
      */
-    async addProductsToCollection(id: string, productIds: string[]): Promise<{ collection: ProductCollection }> {
+    async updateProductsToCollection(id: string, payload: { add?: string[], remove?: string[] }): Promise<{ collection: ProductCollection }> {
         try {
-            const res = await bridgeClient.post(`/admin/collections/${id}/products`, {
-                product_ids: productIds
-            });
+            const res = await bridgeClient.post(`/admin/collections/${id}/products`, payload);
             return res.data;
         } catch (error: unknown) {
-            console.error(`Failed to add products to collection ${id}:`, error);
+            console.error(`Failed to update products to collection ${id}:`, error);
             throw new Error(
                 axios.isAxiosError(error)
                     ? (error.response?.data as { message?: string } | undefined)?.message || error.message
                     : error instanceof Error
                         ? error.message
-                        : 'Failed to add products to collection'
+                        : 'Failed to update products to collection'
             );
         }
     }

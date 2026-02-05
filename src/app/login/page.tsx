@@ -71,10 +71,10 @@ export default function LoginPage() {
   ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-dark-950 via-dark-900 to-dark-950 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-4 transition-colors duration-500">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-48 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 -right-48 w-96 h-96 bg-secondary-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/4 -left-48 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 -right-48 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
       <div className="w-full max-w-md relative z-10 animate-fade-in">
@@ -94,12 +94,12 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="glass rounded-3xl p-8 shadow-2xl border border-white/10 mt-8">
+        <div className="bg-white dark:bg-slate-900/50 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-slate-100 dark:border-white/10 mt-8 transition-colors duration-300">
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-sm font-bold text-dark-200 flex items-center gap-2">
-                <Mail size={16} className="text-primary-400" />
+              <label className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                <Mail size={16} className="text-emerald-500 dark:text-emerald-400" />
                 Email Address
               </label>
               <div className="relative">
@@ -108,7 +108,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="your.email@example.com"
-                  className="input w-full pl-4 pr-4"
+                  className="w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-400"
                   required
                   disabled={loading}
                 />
@@ -116,8 +116,8 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-dark-200 flex items-center gap-2">
-                <Lock size={16} className="text-primary-400" />
+              <label className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                <Lock size={16} className="text-emerald-500 dark:text-emerald-400" />
                 Password
               </label>
               <div className="relative">
@@ -126,7 +126,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="input w-full pl-4 pr-4"
+                  className="w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-400"
                   required
                   disabled={loading}
                 />
@@ -134,16 +134,16 @@ export default function LoginPage() {
             </div>
 
             {(error || authError) && (
-              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3">
-                <AlertCircle size={20} className="text-red-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-red-400 font-medium">{error || authError}</p>
+              <div className="p-4 bg-red-50 border border-red-100 dark:bg-red-500/10 dark:border-red-500/20 rounded-xl flex items-start gap-3">
+                <AlertCircle size={20} className="text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-600 dark:text-red-400 font-medium">{error || authError}</p>
               </div>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full h-14 text-base font-black flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-base font-black flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/30 transition-all uppercase tracking-wide"
             >
               {loading ? (
                 <>
@@ -161,9 +161,9 @@ export default function LoginPage() {
         </div>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-dark-400">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             Don't have an account?{' '}
-            <button className="text-primary-400 font-bold hover:text-primary-300 transition-colors">
+            <button className="text-emerald-600 dark:text-emerald-400 font-bold hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors">
               Contact Admin
             </button>
           </p>

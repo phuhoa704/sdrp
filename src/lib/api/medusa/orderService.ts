@@ -16,9 +16,9 @@ class OrderService {
         limit?: number;
         offset?: number;
         [key: string]: unknown;
-    }): Promise<{ orders: any[]; count: number; limit: number; offset: number }> {
+    }): Promise<{ message: string, status: string, data: { orders: any[]; count: number; limit: number; offset: number } }> {
         try {
-            const res = await bridgeClient.get('/admin/orders', { params: query });
+            const res = await bridgeClient.get('/custom/admin/orders', { params: query });
             return res.data;
         } catch (error: unknown) {
             console.error('Failed to fetch Medusa orders:', error);
@@ -36,9 +36,9 @@ class OrderService {
      * Get a single order by ID
      * @param id ID of the order
      */
-    async getOrder(id: string): Promise<{ order: any }> {
+    async getOrder(id: string, query?: { [key: string]: unknown }): Promise<{ order: any }> {
         try {
-            const res = await bridgeClient.get(`/admin/orders/${id}`);
+            const res = await bridgeClient.get(`/admin/orders/${id}`, { params: query });
             return res.data;
         } catch (error: unknown) {
             console.error(`Failed to fetch Medusa order ${id}:`, error);

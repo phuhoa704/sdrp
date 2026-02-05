@@ -1,5 +1,7 @@
 import { B2COrder } from "@/types/order";
 import { type ClassValue, clsx } from "clsx";
+import { formatDistanceToNow, format } from 'date-fns';
+import { vi } from 'date-fns/locale';
 import { twMerge } from "tailwind-merge";
 
 /**
@@ -78,7 +80,7 @@ export const mapMedusaToB2C = (order: any): B2COrder => ({
         phone: order.customer?.phone || order.shipping_address?.phone || '--',
         address: order.shipping_address ? `${order.shipping_address.address_1 || ''}, ${order.shipping_address.city || ''}` : 'Tại quầy'
     },
-    date: new Date(order.created_at).toLocaleDateString('vi-VN'),
+    date: order.created_at,
     timestamp: new Date(order.created_at).getTime(),
     total: order.summary?.accounting_total || order.total || 0,
     status: order.status || 'completed',
@@ -88,5 +90,30 @@ export const mapMedusaToB2C = (order: any): B2COrder => ({
         price: item.unit_price,
         variant: item.variant_title || 'Default',
         tech_specs: item.variant_sku
-    })) || []
+    })) || [],
+    sales_channel: order.sales_channel?.name || 'Unknown'
 });
+
+/* 
+* Format relative time
+*/
+export const formatRelativeTime = (dateString: string) => {
+    try {
+        const date = new Date(dateString);
+        return formatDistanceToNow(date, { addSuffix: true, locale: vi });
+    } catch {
+        return dateString;
+    }
+};
+
+/* 
+* Format time
+*/
+export const formatTime = (dateString: string) => {
+    try {
+        const date = new Date(dateString);
+        return format(date, 'HH:mm', { locale: vi });
+    } catch {
+        return '';
+    }
+};

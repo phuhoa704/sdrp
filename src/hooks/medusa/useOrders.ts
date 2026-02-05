@@ -14,8 +14,8 @@ export const useOrders = (query?: any) => {
         setError(null);
         try {
             const data = await orderService.getOrders(query);
-            setOrders(data.orders);
-            setCount(data.count);
+            setOrders(data.data.orders);
+            setCount(data.data.count);
         } catch (err: any) {
             setError(err.message || 'Failed to fetch orders');
         } finally {

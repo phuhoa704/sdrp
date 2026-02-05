@@ -37,6 +37,7 @@ import { selectSelectedSalesChannelId } from '@/store/selectors';
 import { matchProductStatus, matchProductStatusColor } from '@/lib/helpers';
 import { TableView } from '@/components/TableView';
 import { noImage } from '@/configs';
+import { SearchFilter } from '@/components/filters/Search';
 
 interface Props {
   onRestockProduct?: (p: Product) => void;
@@ -49,6 +50,8 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
   const [isProductFormOpen, setIsProductFormOpen] = useState(false);
 
   const [expandedProducts, setExpandedProducts] = useState<string[]>([]);
+  const [productVariants, setProductVariants] = useState<Record<string, ProductVariant[]>>({});
+  const [loadingVariants, setLoadingVariants] = useState<Record<string, boolean>>({});
 
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedTag, setSelectedTag] = useState<string>("");
@@ -229,10 +232,34 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
     dispatch(setPagination({ offset: (newPage - 1) * limit }));
   };
 
-  const toggleProductExpand = (id: string) => {
-    setExpandedProducts(prev =>
-      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
-    );
+  const toggleProductExpand = async (id: string) => {
+    const isCurrentlyExpanded = expandedProducts.includes(id);
+
+    if (isCurrentlyExpanded) {
+      // Collapse
+      setExpandedProducts(prev => prev.filter(p => p !== id));
+    } else {
+      // Expand and fetch variants
+      setExpandedProducts(prev => [...prev, id]);
+
+      // Only fetch if we haven't loaded variants for this product yet
+      if (!productVariants[id]) {
+        setLoadingVariants(prev => ({ ...prev, [id]: true }));
+        try {
+          const response = await productService.getVariants(id, {
+            order: 'variant_rank',
+            limit: 100,
+            fields: 'title,sku,*options,*prices'
+          });
+          setProductVariants(prev => ({ ...prev, [id]: response.variants || [] }));
+        } catch (error) {
+          console.error(`Failed to fetch variants for product ${id}:`, error);
+          setProductVariants(prev => ({ ...prev, [id]: [] }));
+        } finally {
+          setLoadingVariants(prev => ({ ...prev, [id]: false }));
+        }
+      }
+    }
   };
 
   const handleSaveProduct = async (data: any) => {
@@ -271,7 +298,7 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
         origin_country: data.origin_country || undefined,
         material: data.material || undefined,
         metadata: data.metadata || {},
-        categories: data.category_id ? [{ id: data.category_id }] : [],
+        categories: data.category_ids?.map((id: string) => ({ id })) || [],
         tags: data.tag_ids?.map((id: string) => ({ id })) || [],
         sales_channels: data.sales_channel_ids?.map((id: string) => ({ id })) || [],
         options: productOptions,
@@ -402,17 +429,12 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
             </Card>
           </div>
 
-          <div className="flex gap-4">
-            <div className="relative flex-1 group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors" size={18} />
-              <input
-                type="text"
-                placeholder="Tìm sản phẩm, hoạt chất..."
-                className="w-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all shadow-sm dark:text-slate-200"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+          <Card className='flex flex-col xl:flex-row gap-4'>
+            <SearchFilter
+              searchTerm={searchTerm}
+              handleSearchChange={setSearchTerm}
+              placeholder='Tìm kiếm sản phẩm...'
+            />
             <div className="flex flex-wrap gap-2 w-full xl:w-auto">
               <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-2xl items-center gap-1 shadow-inner">
                 <span className="text-[10px] font-black text-slate-400 uppercase px-3 hidden xl:block">NHÃN:</span>
@@ -420,7 +442,7 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
                 <button
                   onClick={() => setSelectedTag("")}
                   className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 transition-all ${selectedTag === ""
-                    ? 'bg-slate-200 dark:bg-slate-700 text-emerald-600 shadow-sm shadow-emerald-500/10'
+                    ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-sm shadow-emerald-500/10'
                     : 'text-slate-400 hover:text-slate-200'
                     }`}
                 >
@@ -433,7 +455,7 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
                     key={tag.id}
                     onClick={() => setSelectedTag(tag.id)}
                     className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 transition-all ${selectedTag === tag.id
-                      ? 'bg-slate-200 dark:bg-slate-700 text-emerald-600 shadow-sm shadow-emerald-500/10'
+                      ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-sm shadow-emerald-500/10'
                       : 'text-slate-400 hover:text-slate-200'
                       }`}
                   >
@@ -443,7 +465,7 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
                 ))}
               </div>
             </div>
-          </div>
+          </Card>
 
           {medusaError && (
             <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 p-6 rounded-3xl flex items-center gap-4 text-rose-600">
@@ -478,7 +500,6 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
               { title: '', width: '48px', className: 'pl-8' },
               { title: 'Sản phẩm / Hoạt chất' },
               { title: 'Phân loại', className: 'text-center' },
-              { title: 'Giá bán', className: 'text-right' },
               { title: 'Trạng thái', className: 'text-center' },
               { title: 'Quản lý', className: 'text-right pr-8' },
             ]}
@@ -517,7 +538,6 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
                         {p.categories?.map((c: any) => c.name).join(', ') || "Khác"}
                       </span>
                     </td>
-                    <td className="px-6 py-5 text-right font-black text-primary">{formatCurrency(price, currencyCode)}</td>
                     <td className="px-6 py-5 text-center font-black">
                       <div className="flex justify-center items-center gap-2 text-xs xl:text-sm text-slate-800 dark:text-slate-100">
                         <div className={cn("w-2 h-2 rounded-full", matchProductStatusColor(p.status))}></div>
@@ -586,9 +606,14 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
                           <div className="space-y-4">
                             <div className="flex items-center gap-3">
                               <Layers3 size={18} className="text-primary" />
-                              <h4 className="text-sm font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider">Danh sách biến thể & Quy cách ({p.variants?.length || 0})</h4>
+                              <h4 className="text-sm font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider">Danh sách biến thể & Quy cách ({productVariants[p.id]?.length || 0})</h4>
                             </div>
-                            {p.variants && p.variants.length > 0 ? (
+                            {loadingVariants[p.id] ? (
+                              <div className="p-10 border border-slate-100 dark:border-slate-800 rounded-3xl flex flex-col items-center justify-center">
+                                <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                                <p className="text-sm font-bold text-slate-500">Đang tải biến thể...</p>
+                              </div>
+                            ) : productVariants[p.id] && productVariants[p.id].length > 0 ? (
                               <div className="overflow-hidden border border-slate-100 dark:border-slate-800 rounded-3xl bg-white dark:bg-slate-900 shadow-inner-glow">
                                 <table className="w-full text-left">
                                   <thead className="bg-slate-50 dark:bg-slate-800 text-[9px] font-black dark:text-slate-400 text-slate-700 uppercase tracking-widest border-b dark:border-slate-700">
@@ -600,7 +625,7 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
                                     </tr>
                                   </thead>
                                   <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                                    {p.variants.map((v: any) => (
+                                    {productVariants[p.id].map((v: any) => (
                                       <tr key={v.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                                         <td className="px-6 py-4">
                                           <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{v.sku || "--"}</p>
@@ -610,7 +635,7 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                           <div className="flex gap-1.5 items-center">
-                                            {v.options.map((opt: any, index: number) => (
+                                            {v.options?.map((opt: any, index: number) => (
                                               <span key={index} className={cn("text-[10px] font-black px-2 py-1 rounded-xl border", getAttributeBgColor(index), getAttributeColor(index))}>{opt.value}</span>
                                             ))}
                                           </div>

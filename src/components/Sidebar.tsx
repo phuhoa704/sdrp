@@ -307,19 +307,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
               )}
 
-              {/* Collapsed Hover Popup */}
               {isCollapsed && hasChildren && hoveredMenu?.id === item.id && (
                 <div
-                  className="fixed left-[76px] w-[280px] bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.4)] overflow-hidden z-[999] animate-in fade-in slide-in-from-left-2 duration-300 pointer-events-auto"
+                  className="fixed left-[72px] w-[220px] bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.4)] overflow-hidden z-[999] animate-in fade-in slide-in-from-left-2 duration-200"
                   style={{ top: hoveredMenu.top }}
                   onMouseEnter={() => setHoveredMenu(hoveredMenu)}
                   onMouseLeave={() => setHoveredMenu(null)}
                 >
-                  <div className="px-6 py-5 flex items-center justify-between border-b border-white/5 bg-slate-50/50 dark:bg-white/5">
-                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">{item.label}</span>
-                    <ChevronRight size={14} className="text-slate-600" />
+                  <div className="px-5 py-3 flex items-center justify-between border-b border-white/5 bg-slate-50/50 dark:bg-white/5">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{item.label}</span>
+                    <ChevronRight size={12} className="text-slate-600" />
                   </div>
-                  <div className="p-2 space-y-1">
+                  <div className="p-2 space-y-0.5">
                     {item.children?.map(child => {
                       const isSubActive = isSubMenuActive(child.view);
                       return (
@@ -330,14 +329,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             setHoveredMenu(null);
                           }}
                           className={cn(
-                            "w-full flex items-center gap-4 px-5 py-3.5 rounded-2xl text-[12px] font-bold transition-all",
+                            "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-bold transition-all",
                             isSubActive
                               ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                               : "text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100"
                           )}
                         >
                           <div className={cn(
-                            "w-2 h-2 rounded-full shrink-0 transition-all duration-300",
+                            "w-1.5 h-1.5 rounded-full shrink-0 transition-all duration-300",
                             isSubActive ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.6)]" : "bg-slate-700 group-hover:bg-slate-500"
                           )} />
                           <span className="uppercase tracking-tight whitespace-nowrap">{child.label}</span>

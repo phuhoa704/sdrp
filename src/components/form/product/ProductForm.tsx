@@ -36,7 +36,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
     description: '',
     thumbnail: '',
     has_variants: false,
-    category_id: '',
+    category_ids: [] as string[],
     tag_ids: [] as string[],
     collection_id: '',
     sales_channel_ids: [] as string[],
@@ -78,7 +78,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
         description: initialData.description || '',
         thumbnail: initialData.thumbnail || '',
         has_variants: (initialData.variants?.length || 0) > 1 || options.length > 0,
-        category_id: initialData.categories?.[0]?.id || '',
+        category_ids: initialData.categories?.map(c => c.id) || [],
         tag_ids: initialData.tags?.map(t => t.id) || [],
         collection_id: initialData.collection_id || '',
         sales_channel_ids: initialData.sales_channels?.map(sc => sc.id) || [],
@@ -402,21 +402,81 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
                 <div className="space-y-8">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className={labelClass}>Nhóm hàng (Category)</label>
+                      <label className={labelClass}>Nhóm hàng (Categories)</label>
                       <div className="relative">
-                        <select
-                          value={formData.category_id}
-                          onChange={e => {
-                            setFormData({ ...formData, category_id: e.target.value });
-                            if (errors.category_id) setErrors({ ...errors, category_id: '' });
+                        <div
+                          className={cn(
+                            "min-h-[48px] px-4 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-pointer flex flex-wrap gap-2 items-center",
+                            errors.category_ids && "border-rose-500"
+                          )}
+                          onClick={() => {
+                            const dropdown = document.getElementById('category-dropdown');
+                            if (dropdown) {
+                              dropdown.classList.toggle('hidden');
+                            }
                           }}
-                          className={cn(inputClass, "appearance-none pr-10 cursor-pointer", errors.category_id && "border-rose-500")}
                         >
-                          <option value="">Chọn nhóm hàng</option>
-                          {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-                        </select>
-                        <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                        {errors.category_id && <p className="text-[10px] font-bold text-rose-500 mt-1.5 ml-1">{errors.category_id}</p>}
+                          {formData.category_ids.length === 0 ? (
+                            <span className="text-sm text-slate-400 font-medium">Chọn nhóm hàng...</span>
+                          ) : (
+                            formData.category_ids.map((catId: string) => {
+                              const cat = categories.find(c => c.id === catId);
+                              if (!cat) return null;
+                              return (
+                                <div
+                                  key={catId}
+                                  className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <span>{cat.name}</span>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const newCategories = formData.category_ids.filter((id: string) => id !== catId);
+                                      setFormData({ ...formData, category_ids: newCategories });
+                                    }}
+                                    className="hover:text-rose-500 transition-colors"
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                </div>
+                              );
+                            })
+                          )}
+                          <ChevronDown size={18} className="ml-auto text-slate-400" />
+                        </div>
+
+                        <div
+                          id="category-dropdown"
+                          className="hidden absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-64 overflow-y-auto"
+                        >
+                          {categories.map(cat => {
+                            const isSelected = formData.category_ids.includes(cat.id);
+                            return (
+                              <button
+                                key={cat.id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const newCategories = isSelected
+                                    ? formData.category_ids.filter((id: string) => id !== cat.id)
+                                    : [...formData.category_ids, cat.id];
+                                  setFormData({ ...formData, category_ids: newCategories });
+                                  if (errors.category_ids) setErrors({ ...errors, category_ids: '' });
+                                }}
+                                className="w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-left border-b border-slate-100 dark:border-slate-700 last:border-none"
+                              >
+                                <div className={cn(
+                                  "w-5 h-5 rounded border-2 flex items-center justify-center transition-all",
+                                  isSelected ? "bg-emerald-500 border-emerald-500" : "border-slate-300 dark:border-slate-600"
+                                )}>
+                                  {isSelected && <Check size={14} className="text-white" />}
+                                </div>
+                                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{cat.name}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {errors.category_ids && <p className="text-[10px] font-bold text-rose-500 mt-1.5 ml-1">{errors.category_ids}</p>}
                       </div>
                     </div>
                     <div>

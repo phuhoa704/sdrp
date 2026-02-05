@@ -38,7 +38,7 @@ import { useMedusaProducts } from '@/hooks';
 import Category from './pages/Category';
 import Collection from './pages/Collection';
 import { AppLoading } from '@/components/AppLoading';
-import { DataGroups } from './pages/DataGroups';
+import { ProductTypes } from './pages/ProductTypes';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -148,7 +148,7 @@ export default function DashboardPage() {
       case 'WHOLESALE_MARKETPLACE':
         return <WholesaleMarketplace role={user.role} />;
       case 'DATA_GROUPS':
-        return <DataGroups />;
+        return <ProductTypes />;
       case 'MARKETPLACE':
         return <OrderHistory onGoToWholesale={() => handleSetView('WHOLESALE_MARKETPLACE')} />;
       case 'INVENTORY':

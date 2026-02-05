@@ -108,24 +108,22 @@ class CategoryService {
     }
 
     /**
-     * Add products to a category
+     * Update products in a category (add and remove)
      * @param id Category ID
-     * @param productIds Array of product IDs to add
+     * @param payload Object with add and remove product ID arrays
      */
-    async addProductsToCategory(id: string, productIds: string[]): Promise<{ product_category: ProductCategory }> {
+    async updateProductsToCategory(id: string, payload: { add?: string[], remove?: string[] }): Promise<{ product_category: ProductCategory }> {
         try {
-            const res = await bridgeClient.post(`/admin/product-categories/${id}/products`, {
-                product_ids: productIds
-            });
+            const res = await bridgeClient.post(`/admin/product-categories/${id}/products`, payload);
             return res.data;
         } catch (error: unknown) {
-            console.error(`Failed to add products to category ${id}:`, error);
+            console.error(`Failed to update products in category ${id}:`, error);
             throw new Error(
                 axios.isAxiosError(error)
                     ? (error.response?.data as { message?: string } | undefined)?.message || error.message
                     : error instanceof Error
                         ? error.message
-                        : 'Failed to add products to category'
+                        : 'Failed to update products in category'
             );
         }
     }

@@ -59,4 +59,5 @@ export interface B2COrder {
     total: number;
     status: OrderStatus;
     items: { name: string, qty: number, price: number, variant?: string, tech_specs?: string }[];
+    sales_channel: string;
 }

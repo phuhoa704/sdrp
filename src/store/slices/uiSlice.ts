@@ -17,7 +17,7 @@ interface UIState {
 
 const initialState: UIState = {
     currentView: 'HOME',
-    isSidebarCollapsed: false,
+    isSidebarCollapsed: true,
     isDarkMode: false,
     selectedBranch: 'Chi nhánh Đồng Tháp',
     selectedSalesChannelId: null,

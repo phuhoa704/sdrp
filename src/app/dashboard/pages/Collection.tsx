@@ -2,15 +2,15 @@ import { Breadcrumb, Button } from '@/components'
 import { InputSearch } from '@/components/Search';
 import { TableLoading } from '@/components/TableLoading';
 import { useCollections } from '@/hooks/medusa/useCollections';
-import { ChevronLeft, ChevronRight, Edit3, MoreHorizontal, Plus, Trash2, Zap } from 'lucide-react'
+import { Plus, Zap } from 'lucide-react'
 import React, { Fragment, useState } from 'react'
 import { Error } from '@/components/Error';
 import { ProductCollection } from '@/types/product';
 import { CollectionForm } from '@/components/form/collection/CollectionForm';
 import { ConfirmModal } from '@/components/ConfirmModal';
-import { TableView } from '@/components/TableView';
 import { collectionService } from '@/lib/api/medusa/collectionService';
-import { CollectionDetail } from '@/components/collection/CollectionDetail';
+import { CollectionCard } from '@/components/collection/CollectionCard';
+import { Empty } from '@/components/Empty';
 
 export default function Collection() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -19,19 +19,16 @@ export default function Collection() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedCollectionData, setSelectedCollectionData] = useState<ProductCollection | null>(null)
   const [collectionToDelete, setCollectionToDelete] = useState<ProductCollection | null>(null)
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-  const [viewingCollection, setViewingCollection] = useState<ProductCollection | null>(null);
   const limit = 10;
   const offset = (currentPage - 1) * limit;
 
-  const { collections, count, loading, error, refresh } = useCollections({
+  const { collections, loading, error, refresh } = useCollections({
     autoFetch: true,
     q: searchTerm,
     limit,
     offset
   });
 
-  const totalPages = Math.ceil(count / limit);
 
   const handleCreate = () => {
     setSelectedCollectionData(null);
@@ -62,33 +59,19 @@ export default function Collection() {
     }
   };
 
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
-  };
   if (isFormOpen) {
     return (
       <CollectionForm
         initialData={selectedCollectionData}
-        onCancel={() => setIsFormOpen(false)}
+        onBack={() => {
+          setIsFormOpen(false);
+          setSelectedCollectionData(null);
+        }}
         onSave={handleSave}
       />
     );
   }
 
-  if (viewingCollection) {
-    return (
-      <CollectionDetail
-        collection={viewingCollection}
-        onBack={() => setViewingCollection(null)}
-        onEdit={(col) => {
-          setSelectedCollectionData(col);
-          setViewingCollection(null);
-          setIsFormOpen(true);
-        }}
-        refreshCollections={refresh}
-      />
-    );
-  }
 
   return (
     <Fragment>
@@ -130,120 +113,26 @@ export default function Collection() {
         {error && (
           <Error error={error} />
         )}
-        <TableView
-          columns={[
-            { title: 'Tiêu đề', className: 'pl-8' },
-            { title: 'Handle', className: 'text-center' },
-            { title: 'Sản phẩm', className: 'text-center' },
-            { title: '', className: 'text-right pr-8' },
-          ]}
-          data={collections}
-          isLoading={loading}
-          emptyMessage={{
-            title: "Không có bộ sưu tập nào",
-            description: "Hãy tạo bộ sưu tập mới để bắt đầu"
-          }}
-          renderRow={(collection: any, index: number) => (
-            <tr
-              key={collection.id}
-              className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer text-slate-700 dark:text-slate-200"
-              onClick={() => setViewingCollection(collection)}
-            >
-              <td className="py-5 px-8">{collection.title}</td>
-              <td className="py-5 px-4 text-center">/{collection.handle}</td>
-              <td className="py-5 px-4 text-center">{collection.products?.length || 0}</td>
-              <td className="py-5 pr-8 text-right">
-                <div className="relative inline-block">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setActiveMenuId(activeMenuId === collection.id ? null : collection.id);
-                    }}
-                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl transition-all"
-                  >
-                    <MoreHorizontal size={20} />
-                  </button>
-
-                  {activeMenuId === collection.id && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-10"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveMenuId(null);
-                        }}
-                      />
-                      <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xl z-20 overflow-hidden animate-in fade-in zoom-in duration-200">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(collection);
-                            setActiveMenuId(null);
-                          }}
-                          className="w-full px-4 py-3 text-left text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors"
-                        >
-                          <Edit3 size={16} className="text-blue-500" />
-                          Chỉnh sửa
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setCollectionToDelete(collection);
-                            setIsDeleteModalOpen(true);
-                            setActiveMenuId(null);
-                          }}
-                          className="w-full px-4 py-3 text-left text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 flex items-center gap-3 transition-colors border-t border-slate-50 dark:border-slate-800/50"
-                        >
-                          <Trash2 size={16} />
-                          Xóa
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </td>
-            </tr>
-          )}
-        />
-        {!loading && count > limit && (
-          <div className="flex items-center justify-between px-8 py-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 rounded-b-[32px]">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                Đang hiển thị {offset + 1} - {Math.min(offset + limit, count)} trong số {count}
-              </span>
-            </div>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="p-2 rounded-xl text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-              >
-                <ChevronLeft size={18} />
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
-                .map((p, i, arr) => (
-                  <Fragment key={p}>
-                    {i > 0 && arr[i - 1] !== p - 1 && <span className="text-slate-300">...</span>}
-                    <button
-                      onClick={() => handlePageChange(p)}
-                      className={`w-9 h-9 rounded-xl text-xs font-black transition-all ${p === currentPage
-                        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20'
-                        : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                        }`}
-                    >
-                      {p}
-                    </button>
-                  </Fragment>
-                ))}
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="p-2 rounded-xl text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
+        {loading ? (
+          <div>
+            <TableLoading />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {collections.length > 0 ? collections.map((collection: ProductCollection) => (
+              <CollectionCard
+                key={collection.id}
+                collection={collection}
+                onEdit={() => handleEdit(collection)}
+              />
+            )) : (
+              <div className="col-span-full">
+                <Empty
+                  title="Không có bộ sưu tập nào"
+                  description="Hãy tạo bộ sưu tập mới để bắt đầu"
+                />
+              </div>
+            )}
           </div>
         )}
       </div>

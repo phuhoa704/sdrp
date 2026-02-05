@@ -1,5 +1,6 @@
 import React, { Fragment } from 'react'
 import { Package, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Empty } from './Empty';
 
 interface Props<T> {
   columns: {
@@ -53,19 +54,7 @@ export const TableView = <T,>({ columns, data, isLoading, emptyMessage, renderRo
           ) : (
             <tr>
               <td colSpan={columns.length} className="py-32 text-center">
-                <div className="flex flex-col items-center justify-center gap-4 opacity-40">
-                  <div className="w-20 h-20 rounded-[32px] bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
-                    <Package size={40} />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">
-                      {emptyMessage?.title || 'No data'}
-                    </p>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-                      {emptyMessage?.description || 'No records found'}
-                    </p>
-                  </div>
-                </div>
+                <Empty title={emptyMessage?.title || 'No data'} description={emptyMessage?.description || 'No records found'} />
               </td>
             </tr>
           ))}

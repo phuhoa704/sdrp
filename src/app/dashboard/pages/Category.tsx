@@ -1,17 +1,16 @@
 import { Breadcrumb, Button } from '@/components'
 import { useCategories } from '@/hooks';
-import { matchCategoryStatus, matchCategoryStatusColor, matchCategoryType, matchCategoryTypeColor } from '@/lib/helpers';
 import { cn } from '@/lib/utils';
-import { AlertCircle, ChevronLeft, ChevronRight, Edit3, ListOrdered, MoreHorizontal, Plus, Tags, Trash2, Zap, Folder, CornerDownRight } from 'lucide-react';
+import { Edit3, ListOrdered, MoreHorizontal, Plus, Tags, Trash2, Zap, Folder, CornerDownRight } from 'lucide-react';
 import React, { Fragment, useMemo, useState } from 'react'
 import { CategoryForm } from '@/components/form/category/CategoryForm';
-import { CategoryDetail } from '@/components/category/CategoryDetail';
 import { ProductCategory } from '@/types/product';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { TableView } from '@/components/TableView';
 import { categoryService } from '@/lib/api/medusa/categoryService';
 import { InputSearch } from '@/components/Search';
 import { Error } from '@/components/Error';
+import { CategoryRanking } from '@/components/category/CategoryRanking';
 
 export default function Category() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -22,9 +21,9 @@ export default function Category() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<ProductCategory | null>(null);
-  const [viewingCategory, setViewingCategory] = useState<ProductCategory | null>(null);
+  const [isRankingOpen, setIsRankingOpen] = useState(false);
 
-  const limit = 100; // Increased limit to ensure we get children for tree view if possible
+  const limit = 100;
   const offset = (currentPage - 1) * limit;
 
   //hook
@@ -110,27 +109,29 @@ export default function Category() {
     }
   };
 
+  const handleSaveRanking = async () => {
+    refresh();
+  };
+
   if (isFormOpen) {
     return (
       <CategoryForm
         initialData={selectedCategoryData}
-        onCancel={() => setIsFormOpen(false)}
         onSave={handleSave}
+        onBack={() => {
+          setIsFormOpen(false);
+          setSelectedCategoryData(null);
+        }}
       />
     );
   }
 
-  if (viewingCategory) {
+  if (isRankingOpen) {
     return (
-      <CategoryDetail
-        category={viewingCategory}
-        onBack={() => setViewingCategory(null)}
-        onEdit={(cat) => {
-          setSelectedCategoryData(cat);
-          setViewingCategory(null);
-          setIsFormOpen(true);
-        }}
-        refreshCategories={refresh}
+      <CategoryRanking
+        categories={sortedCategories}
+        onCancel={() => setIsRankingOpen(false)}
+        onSave={handleSaveRanking}
       />
     );
   }
@@ -163,6 +164,7 @@ export default function Category() {
               variant='secondary'
               className='h-12 rounded-2xl text-xs font-semibold'
               icon={<ListOrdered size={20} className='text-primary' />}
+              onClick={() => setIsRankingOpen(true)}
             >
               CHỈNH SỬA RANK
             </Button>
@@ -211,7 +213,10 @@ export default function Category() {
             return (
               <tr
                 key={category.id}
-                onClick={() => setViewingCategory(category)}
+                onClick={() => {
+                  setSelectedCategoryData(category);
+                  setIsFormOpen(true);
+                }}
                 className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer border-b border-slate-50 dark:border-slate-800/50 last:border-none"
               >
                 <td className="py-5 px-4 pl-8 text-center">

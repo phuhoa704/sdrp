@@ -1,6 +1,5 @@
 import bridgeClient, { setBridgeAuthToken } from '../bridgeClient';
 import axios from 'axios';
-import { API_ENDPOINTS } from '../config';
 
 export interface MedusaAuthResponse {
     customer: {
@@ -10,6 +9,7 @@ export interface MedusaAuthResponse {
         last_name: string;
         has_account: boolean;
         metadata?: Record<string, unknown>;
+        vendor?: Vendor | null;
     };
     token?: string;
 }
@@ -25,6 +25,7 @@ export interface MedusaCustomer {
         avatar_url?: string;
         [key: string]: unknown;
     };
+    vendor?: Vendor | null;
 }
 
 export interface LoginCredentials {
@@ -37,6 +38,21 @@ export interface RegisterData extends LoginCredentials {
     last_name: string;
 }
 
+export type Vendor = {
+    id: string;
+    name: string;
+    handle: string,
+    logo: string | null,
+    address: string,
+    email: string,
+    phone: string,
+    tax_code: string | null,
+    metadata: Record<string, unknown>,
+    created_at: string,
+    updated_at: string,
+    deleted_at: string | null
+}
+
 type AdminMeResponse = {
     user: {
         id: string;
@@ -44,6 +60,7 @@ type AdminMeResponse = {
         first_name?: string;
         last_name?: string;
         metadata?: Record<string, unknown>;
+        vendor?: Vendor;
     };
 };
 
@@ -82,7 +99,11 @@ class AuthService {
             await bridgeClient.post('/auth/session');
 
             // Retrieve admin user details after successful login
-            const meRes = await bridgeClient.get<AdminMeResponse>('/admin/users/me');
+            const meRes = await bridgeClient.get<AdminMeResponse>('/admin/users/me', {
+                params: {
+                    fields: "*vendor"
+                }
+            });
             const user = meRes.data.user;
 
             return {
@@ -92,7 +113,8 @@ class AuthService {
                     first_name: user.first_name || '',
                     last_name: user.last_name || '',
                     has_account: true,
-                    metadata: user.metadata || {}
+                    metadata: user.metadata || {},
+                    vendor: user.vendor || null
                 },
                 token: token
             };
@@ -118,7 +140,11 @@ class AuthService {
      */
     async getSession(): Promise<{ customer: MedusaCustomer }> {
         try {
-            const meRes = await bridgeClient.get<AdminMeResponse>('/admin/users/me');
+            const meRes = await bridgeClient.get<AdminMeResponse>('/admin/users/me', {
+                params: {
+                    fields: "*vendor"
+                }
+            });
             const user = meRes.data.user;
             return {
                 customer: {

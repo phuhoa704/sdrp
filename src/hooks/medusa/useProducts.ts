@@ -30,7 +30,7 @@ export const useProducts = (options: UseProductsOptions = {}) => {
                 tags,
                 limit,
                 offset,
-                fields: "*categories,*sales_channels,*variants.prices"
+                fields: "*categories,*sales_channels,-variants"
             });
             setProducts(data.products);
             setCount(data.count);
