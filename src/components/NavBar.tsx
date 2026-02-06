@@ -1,7 +1,7 @@
 
 import React, { Fragment, useState } from 'react';
 import { ConfirmModal } from '@/components';
-import { LogOut, Bell, MonitorPlay, BrainCircuit, Sparkles, BookOpen, Zap, User, Wrench, ChevronDown, Info } from 'lucide-react';
+import { LogOut, Bell, MonitorPlay, BrainCircuit, Sparkles, BookOpen, Zap, User, Wrench, ChevronDown, Info, Settings } from 'lucide-react';
 import { UserRole } from '@/types/enum';
 import { cn } from '@/lib/utils';
 
@@ -27,9 +27,10 @@ const NEWS = [
 export const Header: React.FC<HeaderProps> = ({ title, subtitle, role, onLogout, onGoToPOS, onAIDiagnosis, onDiseaseLookup, avatarUrl = "https://picsum.photos/100/100", onShowNotifications }) => {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isToolsOpen, setIsToolsOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   return (
-    <header className="flex items-center justify-between py-4 px-4 lg:px-8 sticky top-0 bg-[#F8FAFC]/80 dark:bg-slate-950/80 z-40 backdrop-blur-2xl border-b border-white/80 dark:border-slate-800/40 transition-all duration-500 h-16 lg:h-20 inner-border-glow">
+    <header className="flex items-center justify-between py-4 px-4 lg:px-8 sticky top-0 bg-[#F8FAFC]/80 dark:bg-slate-950/80 z-[90] backdrop-blur-2xl border-b border-white/80 dark:border-slate-800/40 transition-all duration-500 h-16 lg:h-20 inner-border-glow">
       <div className="flex items-center gap-2 lg:gap-4 min-w-0 shrink">
         <div className="overflow-hidden">
           <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">{title}</h1>
@@ -136,7 +137,7 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, role, onLogout,
             </button>
           )}
         </div>
-
+        <div className="h-7 w-[1px] bg-slate-200 dark:bg-slate-800 mx-1 hidden sm:block opacity-50"></div>
         <button
           onClick={onShowNotifications}
           className="relative p-2.5 bg-white dark:bg-slate-900 rounded-2xl shadow-smooth text-slate-400 dark:text-slate-500 hover:text-primary transition-all border border-transparent dark:border-slate-800"
@@ -144,11 +145,45 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, role, onLogout,
           <Bell size={18} />
           <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-400 rounded-full border-2 border-white dark:border-slate-900"></span>
         </button>
-        <button onClick={() => setIsLogoutModalOpen(true)} className="p-2.5 bg-white dark:bg-slate-900 rounded-2xl shadow-smooth text-slate-400 dark:text-slate-500 hover:text-rose-400 transition-all border border-transparent dark:border-slate-800">
-          <LogOut size={18} />
-        </button>
-        <div className="w-11 h-11 bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 rounded-2xl shadow-smooth overflow-hidden flex justify-center items-center">
-          <User size={20} />
+        <div className="relative">
+          {isProfileOpen && (
+            <div className="fixed inset-0 z-10" onClick={() => setIsProfileOpen(false)} />
+          )}
+          <button
+            onClick={() => setIsProfileOpen(!isProfileOpen)}
+            className="w-11 h-11 bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 rounded-2xl shadow-smooth overflow-hidden flex justify-center items-center relative z-20 hover:scale-105 active:scale-95 transition-all border border-transparent dark:border-slate-800"
+          >
+            <img src={avatarUrl} alt="" className='w-full h-full object-cover' />
+          </button>
+
+          {isProfileOpen && (
+            <div className="absolute top-full right-0 mt-3 w-64 backdrop-blur-xs bg-white/80 dark:bg-slate-900/80 rounded-[32px] shadow-2xl border border-slate-100 dark:border-slate-800 z-30 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div className="p-5 bg-emerald-50/50 dark:bg-emerald-950/20 border-b border-emerald-100/50 dark:border-emerald-800/20">
+                <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1">Tài khoản quản trị</p>
+                <p className="text-sm font-black text-slate-800 dark:text-slate-100">{title}</p>
+              </div>
+
+              <div className="p-2">
+                <button
+                  className="w-full flex items-center gap-3 px-4 py-3 text-[11px] font-black text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl transition-all group uppercase tracking-widest"
+                >
+                  <Settings size={16} className="text-slate-400 group-hover:text-primary transition-colors" />
+                  Thiết lập hệ thống
+                </button>
+                <div className="h-[1px] bg-slate-100 dark:bg-slate-800 my-1 mx-2" />
+                <button
+                  onClick={() => {
+                    setIsProfileOpen(false);
+                    setIsLogoutModalOpen(true);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-[11px] font-black text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-2xl transition-all group uppercase tracking-widest"
+                >
+                  <LogOut size={16} className="text-rose-400 group-hover:scale-110 transition-transform" />
+                  Đăng xuất
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       <ConfirmModal

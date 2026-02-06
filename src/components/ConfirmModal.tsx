@@ -77,7 +77,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <Icon size={40} className={iconColor} />
         </div>
 
-        <h3 className="text-2xl font-black text-white mb-3 tracking-tight leading-tight">
+        <h3 className="text-2xl font-black dark:text-white text-slate-800 mb-3 tracking-tight leading-tight">
           {title}
         </h3>
 

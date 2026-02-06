@@ -282,14 +282,14 @@ export default function DashboardPage() {
 
         <div className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
           <Header
-            title={user.role === UserRole.RETAILER ? 'Đại lý Anh Bửu' : user.role === UserRole.SELLER ? 'NPP Hoàng Gia' : 'Admin Console'}
-            subtitle={user.role === UserRole.RETAILER ? 'Đồng Tháp' : undefined}
+            title={user?.vendor ? user?.vendor?.name : 'Admin Console'}
+            subtitle={user?.vendor ? user?.vendor?.address : undefined}
             role={user.role}
             onLogout={handleLogout}
             onGoToPOS={handleGoToPOS}
             onAIDiagnosis={() => handleSetView('AI_DIAGNOSIS')}
             onDiseaseLookup={handleDiseaseLookup}
-            avatarUrl={user.avatarUrl}
+            avatarUrl={user?.vendor?.logo || ""}
             onShowNotifications={handleShowNotifications}
           />
 
