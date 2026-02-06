@@ -20,4 +20,7 @@ export type ViewState =
     | 'PROMOTIONS'
     | 'CATEGORY'
     | 'COLLECTION'
-    | 'DATA_GROUPS';
+    | 'DATA_GROUPS'
+    | 'SALES_CHANNELS'
+    | 'PRODUCT_TAGS'
+    | 'STOCK_LOCATIONS';

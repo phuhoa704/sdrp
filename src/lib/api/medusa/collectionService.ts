@@ -1,17 +1,17 @@
+import { getVendorId } from '@/lib/utils';
 import bridgeClient from '../bridgeClient';
 import { ProductCollection } from '@/types/product';
 import axios from 'axios';
+import { CustomGetResponse } from '@/types/custom-response';
 
 /**
  * Medusa Collection Service
  * Handles product collection related interactions with Medusa Backend
  */
 
-export interface CollectionListResponse {
-    collections: ProductCollection[];
-    count: number;
-    offset: number;
-    limit: number;
+export interface CollectionListData {
+    product_collection_id: string;
+    product_collection: ProductCollection;
 }
 
 class CollectionService {
@@ -24,10 +24,11 @@ class CollectionService {
         limit?: number;
         offset?: number;
         [key: string]: unknown;
-    }): Promise<CollectionListResponse> {
+    }): Promise<CustomGetResponse<CollectionListData>> {
         try {
-            const res = await bridgeClient.get('/admin/collections', { params: query });
-            return res.data as CollectionListResponse;
+            const vendorId = getVendorId();
+            const res = await bridgeClient.get('/custom/admin/vendors/product-collections', { params: query, headers: { 'x-api-vendor': vendorId } });
+            return res.data as CustomGetResponse<CollectionListData>;
         } catch (error: unknown) {
             console.error('Failed to fetch Medusa collections:', error);
             throw new Error(

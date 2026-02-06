@@ -117,3 +117,36 @@ export const formatTime = (dateString: string) => {
         return '';
     }
 };
+
+/* 
+* Format date
+ */
+// export const formatDate = (dateString: string) => {
+//     try {
+//         const date = new Date(dateString);
+//         return format(date, 'dd/MM/yyyy', { locale: vi });
+//     } catch {
+//         return dateString;
+//     }
+// }
+
+/**
+ * Helper to get vendor ID from persisted Redux state
+ */
+export const getVendorId = (): string => {
+    if (typeof window === 'undefined') return '';
+
+    try {
+        const persistedState = localStorage.getItem('persist:root');
+        if (!persistedState) return '';
+
+        const parsed = JSON.parse(persistedState);
+        if (!parsed.auth) return '';
+
+        const authState = JSON.parse(parsed.auth);
+        return authState?.user?.vendor?.id || '';
+    } catch (error) {
+        console.error('Failed to get vendor ID from persisted state:', error);
+        return '';
+    }
+};

@@ -7,6 +7,7 @@ interface UIState {
     isDarkMode: boolean;
     selectedBranch: string;
     selectedSalesChannelId: string | null;
+    salesChannelsRefreshTrigger: number;
     notifications: Array<{
         id: string;
         message: string;
@@ -21,6 +22,7 @@ const initialState: UIState = {
     isDarkMode: false,
     selectedBranch: 'Chi nhánh Đồng Tháp',
     selectedSalesChannelId: null,
+    salesChannelsRefreshTrigger: 0,
     notifications: [],
 };
 
@@ -49,6 +51,9 @@ const uiSlice = createSlice({
         setSelectedSalesChannelId: (state, action: PayloadAction<string | null>) => {
             state.selectedSalesChannelId = action.payload;
         },
+        refreshSalesChannels: (state) => {
+            state.salesChannelsRefreshTrigger = Date.now();
+        },
         addNotification: (state, action: PayloadAction<Omit<UIState['notifications'][0], 'id' | 'timestamp'>>) => {
             state.notifications.push({
                 ...action.payload,
@@ -73,6 +78,7 @@ export const {
     setTheme,
     setSelectedBranch,
     setSelectedSalesChannelId,
+    refreshSalesChannels,
     addNotification,
     removeNotification,
     clearNotifications,

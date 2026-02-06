@@ -16,8 +16,8 @@ export const useProductTags = (autoFetch = true, query: any = {}) => {
         setError(null);
         try {
             const data = await productTagService.getProductTags(query);
-            setTags(data.product_tags);
-            setCount(data.count);
+            setTags(data.data.data.map((item: any) => item.product_tag));
+            setCount(data.data.pagination.count);
         } catch (err: any) {
             setError(err.message || 'Failed to fetch Medusa product tags');
         } finally {
@@ -31,11 +31,25 @@ export const useProductTags = (autoFetch = true, query: any = {}) => {
         }
     }, [autoFetch, fetchTags]);
 
+    const deleteProductTag = async (id: string) => {
+        setLoading(true);
+        setError(null);
+        try {
+            await productTagService.deleteProductTag(id);
+            await fetchTags();
+        } catch (err: any) {
+            setError(err.message || 'Failed to delete Medusa product tag');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return {
         tags,
         count,
         loading,
         error,
-        refresh: fetchTags
+        refresh: fetchTags,
+        deleteProductTag
     };
 };

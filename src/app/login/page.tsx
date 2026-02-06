@@ -7,11 +7,13 @@ import { loginWithMedusa } from '@/store/slices/authSlice';
 import { addNotification } from '@/store/slices/uiSlice';
 import { UserRole } from '@/types/enum';
 import { LogIn, Mail, Lock, User, Zap, AlertCircle } from 'lucide-react';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function LoginPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { loading, error: authError } = useAppSelector((state) => state.auth);
+  const { showToast } = useToast();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,6 +32,12 @@ export default function LoginPage() {
     try {
       // Real Medusa.js authentication
       const result = await dispatch(loginWithMedusa({ email, password })).unwrap();
+
+      // Check if vendor exists
+      if (!result.user.vendor) {
+        showToast('Tài khoản chưa được liên kết, vui lòng liên kết để tiếp tục sử dụng', 'error', 7000);
+        return;
+      }
 
       // Add welcome notification
       dispatch(addNotification({

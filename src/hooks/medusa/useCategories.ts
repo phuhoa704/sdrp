@@ -26,9 +26,10 @@ export const useCategories = (options: UseCategoriesOptions = {}) => {
                 limit,
                 offset
             });
-            setCategories(data.product_categories);
-            setCount(data.count);
+            setCategories(data.data.data.map(item => item.product_category));
+            setCount(data.data.pagination.total);
         } catch (err: any) {
+            console.log("error", err)
             setError(err.message || 'Failed to fetch Medusa categories');
         } finally {
             setLoading(false);

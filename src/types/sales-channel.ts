@@ -11,9 +11,21 @@ export interface SalesChannel {
     metadata: Metadata | null;
 }
 
+export interface SalesChannelData {
+    sales_channel_id: string;
+    sales_channel: SalesChannel;
+}
+
 export interface SalesChannelListResponse {
-    sales_channels: SalesChannel[];
-    count: number;
-    offset: number;
-    limit: number;
+    data: {
+        data: SalesChannelData[];
+        message: string;
+        pagination: {
+            count: number;
+            limit: number;
+            offset: number;
+        };
+        status: string
+    },
+    status: number;
 }

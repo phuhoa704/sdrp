@@ -18,29 +18,45 @@ import {
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
-import { MOCK_PRICE_LISTS } from '../../../../mocks/pricing';
 import { PriceListForm } from '@/components/form/pricelist/PriceListForm';
-import { PriceList } from '@/types/price';
+import { SearchFilter } from '@/components/filters/Search';
+import { usePriceList } from '@/hooks/medusa/usePriceList';
+import { formatDate } from '@/lib/utils';
+import { Empty } from '@/components/Empty';
+import { useToast } from '@/contexts/ToastContext';
+import { priceListService } from '@/lib/api/medusa/priceListService';
 
 
 export default function Pricing() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isPriceListFormOpen, setIsPriceListFormOpen] = useState<boolean>(false);
-  const [priceLists, setPriceLists] = useState<PriceList[]>(() => {
-    const saved = localStorage.getItem('price_lists');
-    return saved ? JSON.parse(saved) : MOCK_PRICE_LISTS;
-  });
+  const { priceLists, loading, error, fetchPriceLists, deletePriceList } = usePriceList();
+  const { showToast } = useToast();
+  const [isSaving, setIsSaving] = useState(false);
 
-  const filtered = priceLists.filter(p =>
-    p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p?.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleSavePriceList = async (data: any) => {
+    setIsSaving(true);
+    try {
+      await priceListService.createPriceList(data);
+      showToast('Tạo bảng giá thành công', 'success');
+      setIsPriceListFormOpen(false);
+      fetchPriceLists();
+    } catch (err: any) {
+      console.error('Failed to create price list:', err);
+      showToast(err.message || 'Không thể tạo bảng giá', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (isPriceListFormOpen) {
-    return <PriceListForm onCancel={() => setIsPriceListFormOpen(false)} onSave={(pl) => {
-      setPriceLists([pl, ...priceLists]);
-      setIsPriceListFormOpen(false);
-    }} />;
+    return (
+      <PriceListForm
+        onCancel={() => setIsPriceListFormOpen(false)}
+        onSave={handleSavePriceList}
+        isLoading={isSaving}
+      />
+    );
   }
 
   return (
@@ -65,46 +81,36 @@ export default function Pricing() {
         </Button>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 group">
-          <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors" size={20} />
-          <input
-            type="text"
-            placeholder="Tìm theo tiêu đề bảng giá..."
-            className="w-full bg-slate-900/40 border border-white/5 rounded-[24px] py-4 pl-14 pr-4 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/30 transition-all text-slate-200 placeholder:text-slate-600"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <button className="w-14 h-14 flex items-center justify-center bg-slate-900/40 border border-white/5 rounded-2xl text-slate-400 hover:text-white transition-all">
-          <Filter size={20} />
-        </button>
-      </div>
+      <Card className='flex xl:flex-row flex-col gap-4'>
+        <SearchFilter
+          placeholder="Tìm theo tiêu đề bảng giá..."
+          searchTerm={searchTerm}
+          handleSearchChange={setSearchTerm}
+        />
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filtered.length === 0 ? (
-          <div className="col-span-full py-20 text-center opacity-30">
-            <SearchX size={48} className="mx-auto mb-4" />
-            <p className="font-bold italic">Không tìm thấy bảng giá nào...</p>
+        {priceLists.length === 0 ? (
+          <div className="col-span-full py-20 text-center">
+            <Empty title="Không tìm thấy bảng giá nào" description="" />
           </div>
         ) : (
-          filtered.map(pl => (
+          priceLists.map(pl => (
             <Card key={pl.id} className="p-6 bg-white dark:bg-slate-900 hover:shadow-xl transition-all cursor-pointer border border-transparent hover:border-emerald-500/30 group">
               <div className="flex justify-between items-start mb-4">
-                <div className={`p-3 rounded-xl ${pl.type === 'discount' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'}`}>
+                <div className={`p-3 rounded-xl ${pl.type === 'sale' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'}`}>
                   <Tag size={20} />
                 </div>
                 <span className={`text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-widest ${pl.status === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
-                  {pl.status === 'active' ? 'Hoạt động' : 'Tạm dừng'}
+                  {pl.status === 'active' ? 'Hoạt động' : 'Nháp'}
                 </span>
               </div>
               <h3 className="text-xl font-black text-slate-800 dark:text-white mb-2">{pl.title}</h3>
               <p className="text-sm text-slate-500 line-clamp-2 mb-6 font-medium leading-relaxed">{pl.description}</p>
               <div className="pt-6 border-t dark:border-slate-800 space-y-3">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-400">
-                /* Fixed ReferenceError by importing Package above */
-                  <span className="flex items-center gap-2 uppercase tracking-tighter"><Package size={14} /> {pl.itemCount} Sản phẩm</span>
-                  <span className="flex items-center gap-2 uppercase tracking-tighter"><Calendar size={14} /> {pl.createdAt}</span>
+                  <span className="flex items-center gap-2 uppercase tracking-tighter"><Package size={14} /> {0} Sản phẩm</span>
+                  <span className="flex items-center gap-2 uppercase tracking-tighter"><Calendar size={14} /> {formatDate(pl.created_at)}</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
                   <Users size={14} className="text-emerald-500" />
@@ -112,8 +118,7 @@ export default function Pricing() {
                 </div>
               </div>
             </Card>
-          ))
-        )}
+          )))}
       </div>
 
       <Card className="p-8 bg-blue-900/10 border-none shadow-xl flex items-center gap-6 group">

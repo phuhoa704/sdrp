@@ -26,8 +26,8 @@ export const useCollections = (options: UseCollectionsOptions = {}) => {
                 offset,
                 fields: "title,handle,products.id"
             });
-            setCollections(data.collections);
-            setCount(data.count);
+            setCollections(data.data.data.map((item) => item.product_collection));
+            setCount(data.data.pagination.count);
         } catch (err: any) {
             setError(err.message || 'Failed to fetch Medusa collections');
         } finally {

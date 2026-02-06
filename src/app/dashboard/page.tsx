@@ -39,6 +39,9 @@ import Category from './pages/Category';
 import Collection from './pages/Collection';
 import { AppLoading } from '@/components/AppLoading';
 import { ProductTypes } from './pages/ProductTypes';
+import { SalesChannels } from './pages/SalesChannels';
+import { ProductTags } from './pages/ProductTags';
+import { StockLocations } from './pages/StockLocations';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -161,6 +164,12 @@ export default function DashboardPage() {
         return <Category />;
       case 'COLLECTION':
         return <Collection />;
+      case 'PRODUCT_TAGS':
+        return <ProductTags />;
+      case 'SALES_CHANNELS':
+        return <SalesChannels />;
+      case 'STOCK_LOCATIONS':
+        return <StockLocations />;
       case 'NEWS':
         return (
           <NewsView

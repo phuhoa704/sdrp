@@ -23,7 +23,7 @@ import { createPortal } from 'react-dom';
 import { DiseaseDetailScreen } from '../DiseaseDetailScreen';
 import { DiagnosisScreen } from '../DiagnosisScreen';
 import { useMedusaProducts, useCategories, useSalesChannels, useDraftOrders, useRegions } from '@/hooks';
-import { draftOrderService } from '@/lib/api/medusa/draftOrderService';
+import { draftOrderService, UpdateDraftOrderItemsPayload } from '@/lib/api/medusa/draftOrderService';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { RootState } from '@/store';
 import { selectCurrencyCode, selectIsDarkMode } from '@/store/selectors';
@@ -31,6 +31,7 @@ import { setSelectedSalesChannelId, toggleTheme } from '@/store/slices/uiSlice';
 import { DraftOrder } from '@/types/draft-order';
 import { OrderTab } from '@/store/slices/posSlice';
 import { CustomerModal } from '@/components/pos/customerModal';
+import { SalesChannel } from '@/types/sales-channel';
 
 interface POSScreenProps {
   onBack: () => void;
@@ -41,8 +42,8 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
   const { salesChannels } = useSalesChannels({ isDisabled: false });
   const { selectedSalesChannelId } = useAppSelector((state: RootState) => state.ui);
   const isDarkMode = useAppSelector(selectIsDarkMode);
-  const brands = useMemo(() => salesChannels.map(sc => sc.name), [salesChannels]);
-  const [currentBranch, setCurrentBranch] = useState("");
+  const channels = useMemo(() => salesChannels, [salesChannels]);
+  const [currentChannel, setCurrentChannel] = useState<SalesChannel | null>(null);
 
   const { regions } = useRegions();
   const { draftOrders, refresh: refreshDrafts, loading: draftsLoading } = useDraftOrders();
@@ -132,7 +133,7 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
         discount: draftOrderPreview.discount_total || 0,
         fulfillment: 'pickup',
         shippingFee: draftOrderPreview.shipping_total || 0,
-        branch: currentBranch,
+        branch: currentChannel?.name || "",
         subtotal: draftOrderPreview.subtotal || 0,
       }))
     } catch (error) {
@@ -219,10 +220,10 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
     }
   }, [refreshDrafts, deletingTabIds]);
 
-  const handleBranchChange = useCallback((branchName: string) => {
-    setCurrentBranch(branchName);
-    const channel = salesChannels.find(sc => sc.name === branchName);
+  const handleBranchChange = useCallback((id: string) => {
+    const channel = salesChannels.find((c: SalesChannel) => c.id === id);
     if (channel) {
+      setCurrentChannel(channel);
       dispatch(setSelectedSalesChannelId(channel.id));
     }
   }, [salesChannels, dispatch]);
@@ -246,7 +247,7 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
         discount: draft.discount_total || 0,
         fulfillment: 'pickup',
         shippingFee: draft.shipping_total || 0,
-        branch: currentBranch,
+        branch: currentChannel?.name || "",
         subtotal: draft.subtotal || 0,
       }));
       setTabs(mappedTabs);
@@ -258,7 +259,7 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
     } else if (!draftsLoading && regions.length > 0) {
       handleAddTab();
     }
-  }, [draftOrders, draftsLoading, currentBranch, regions.length, handleAddTab, activeTabId, handleSelectTab]);
+  }, [draftOrders, draftsLoading, currentChannel, regions.length, handleAddTab, activeTabId, handleSelectTab]);
 
   // Clean up timeouts on unmount
   useEffect(() => {
@@ -270,7 +271,7 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
   useEffect(() => {
     const selected = salesChannels.find(sc => sc.id === selectedSalesChannelId);
     if (selected) {
-      setCurrentBranch(selected.name);
+      setCurrentChannel(selected);
     }
   }, [selectedSalesChannelId, salesChannels]);
 
@@ -347,17 +348,22 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
     });
     try {
       setIsSyncing(true);
-      const res = await draftOrderService.updateLineItem(activeTabId, item.lineItemId, {
-        quantity: Math.max(1, item.quantity + delta)
-      });
-      if (res.draft_order_preview) {
-        updateActiveTab(res.draft_order_preview);
+      const payload: UpdateDraftOrderItemsPayload = {
+        removeItems: [],
+        updateItems: [{
+          id: item.lineItemId,
+          quantity: Math.max(1, item.quantity + delta)
+        }],
+        addItems: []
+      }
+      const res = await draftOrderService.updateDraftOrderItems(activeTabId, payload);
+      if (res.data && res.data.id) {
+        refreshActiveTabDetails(res.data.id)
       }
     } catch (err) {
       console.error("Failed to sync quantity to server:", err);
     } finally {
       setIsSyncing(false);
-      debouncedConfirm(activeTabId)
     }
   }, [activeTabId, activeTab]);
 
@@ -379,13 +385,19 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
     if (item.lineItemId) {
       try {
         setIsSyncing(true);
-        // Set quantity to 0 instead of calling delete endpoint
-        await draftOrderService.updateLineItem(activeTabId, item.lineItemId, { quantity: 0 });
+        const payload: UpdateDraftOrderItemsPayload = {
+          removeItems: [{ id: item.lineItemId, quantity: 0 }],
+          updateItems: [],
+          addItems: []
+        }
+        const res = await draftOrderService.updateDraftOrderItems(activeTabId, payload);
+        if (res.data && res.data.id) {
+          refreshActiveTabDetails(res.data.id)
+        }
       } catch (err) {
         console.error("Failed to sync removal to server:", err);
       } finally {
         setIsSyncing(false);
-        debouncedConfirm(activeTabId)
       }
     }
   }, [activeTabId, activeTab]);
@@ -490,8 +502,8 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
             <div className="w-6 h-6 bg-primary/20 text-primary rounded-lg flex items-center justify-center"><MapPin size={14} /></div>
             <div className="flex flex-col pr-4 border-r dark:border-slate-700">
               <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Chi nhánh</p>
-              <select value={currentBranch} onChange={(e) => handleBranchChange(e.target.value)} className="bg-transparent text-[11px] font-black text-slate-700 dark:text-slate-200 outline-none cursor-pointer appearance-none">
-                {brands.map((b: string) => <option key={b} value={b} className="dark:bg-slate-900">{b}</option>)}
+              <select value={currentChannel?.id} onChange={(e) => handleBranchChange(e.target.value)} className="bg-transparent text-[11px] font-black text-slate-700 dark:text-slate-200 outline-none cursor-pointer appearance-none">
+                {channels.map((b: SalesChannel) => <option key={b.id} value={b.id} className="dark:bg-slate-900">{b.name}</option>)}
               </select>
             </div>
             <ChevronDown size={14} className="text-slate-400 group-hover:text-primary" />
@@ -596,14 +608,18 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
             if (!variantId || !activeTabId) return;
 
             try {
-              const res = await draftOrderService.addLineItem(activeTabId, {
-                variant_id: variantId,
-                quantity: config.quantity,
-                unit_price: config.price
-              });
+              const payload: UpdateDraftOrderItemsPayload = {
+                removeItems: [],
+                updateItems: [],
+                addItems: [{
+                  variant_id: variantId,
+                  quantity: config.quantity,
+                }]
+              }
+              const res = await draftOrderService.updateDraftOrderItems(activeTabId, payload);
 
-              if (res.draft_order_preview) {
-                updateActiveTab(res.draft_order_preview);
+              if (res.data && res.data.order_id) {
+                refreshActiveTabDetails(res.data.order_id)
               }
               setProductToConfigure(null);
             } catch (err) {
@@ -620,9 +636,6 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
                 return { ...t, items: [...t.items, { id: product.id, name: product.title, price: config.price, quantity: config.quantity, variant: config.unit, image: product.thumbnail || '', tech_specs: config.tech_specs }] };
               }));
               setProductToConfigure(null);
-            } finally {
-              await draftOrderService.confirmDraftOrderEdit(activeTabId);
-              await draftOrderService.createDraftOrderEdit(activeTabId);
             }
           }}
         />

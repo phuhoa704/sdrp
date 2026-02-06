@@ -8,6 +8,8 @@ import { collectionService } from '@/lib/api/medusa/collectionService';
 import { noImage } from '@/configs';
 import { TableView } from '@/components/TableView';
 import { productService } from '@/lib/api/medusa/productService';
+import { useAppSelector } from '@/store/hooks';
+import { selectSelectedSalesChannelId } from '@/store/selectors';
 
 interface CollectionFormProps {
   initialData?: ProductCollection | null;
@@ -28,6 +30,7 @@ export const CollectionForm: React.FC<CollectionFormProps> = ({ initialData, onB
     title: '',
     handle: '',
   });
+  const sales_channel_id = useAppSelector(selectSelectedSalesChannelId);
 
   useEffect(() => {
     if (initialData) {
@@ -48,6 +51,7 @@ export const CollectionForm: React.FC<CollectionFormProps> = ({ initialData, onB
     try {
       const offset = (currentPage - 1) * limit;
       const data = await productService.getProducts({
+        sales_channel_id,
         limit,
         offset,
         fields: "id,title,handle,status,*collection,*sales_channels,variants.id,thumbnail,-type,-tags,-variants"
@@ -66,6 +70,7 @@ export const CollectionForm: React.FC<CollectionFormProps> = ({ initialData, onB
     try {
       const data = await productService.getProducts({
         collection_id: id,
+        sales_channel_id,
         fields: "id,title,handle,status,*collection,*sales_channels,variants.id,thumbnail,-type,-tags,-variants"
       });
       setSelectedProductIds(data.products.map((p: any) => p.id));

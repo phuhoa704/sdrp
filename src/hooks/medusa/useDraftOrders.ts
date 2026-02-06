@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { draftOrderService } from '@/lib/api/medusa/draftOrderService';
 import { DraftOrder } from '@/types/draft-order';
+import { useAppSelector } from '@/store/hooks';
+import { selectSelectedSalesChannelId } from '@/store/selectors';
 
 export interface UseDraftOrdersOptions {
     autoFetch?: boolean;
@@ -16,6 +18,7 @@ export const useDraftOrders = (options: UseDraftOrdersOptions = {}) => {
     const [count, setCount] = useState<number>(0);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const selectedSalesChannelId = useAppSelector(selectSelectedSalesChannelId)
 
     const fetchDraftOrders = useCallback(async () => {
         setLoading(true);
@@ -25,7 +28,8 @@ export const useDraftOrders = (options: UseDraftOrdersOptions = {}) => {
                 // q,
                 // limit,
                 // offset,
-                fields: "id,items"
+                fields: "id,items",
+                // sales_channel_id: selectedSalesChannelId
             });
             setDraftOrders(data.draft_orders);
             setCount(data.count);

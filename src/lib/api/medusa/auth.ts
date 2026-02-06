@@ -153,7 +153,8 @@ class AuthService {
                     first_name: user.first_name || '',
                     last_name: user.last_name || '',
                     has_account: true,
-                    metadata: user.metadata || {}
+                    metadata: user.metadata || {},
+                    vendor: user.vendor || null
                 }
             };
         } catch {
@@ -178,7 +179,11 @@ class AuthService {
      */
     async getCustomerProfile(): Promise<{ customer: MedusaCustomer }> {
         try {
-            const meRes = await bridgeClient.get<AdminMeResponse>('/admin/users/me');
+            const meRes = await bridgeClient.get<AdminMeResponse>('/admin/users/me', {
+                params: {
+                    fields: "*vendor"
+                }
+            });
             const user = meRes.data.user;
             return {
                 customer: {
@@ -187,7 +192,8 @@ class AuthService {
                     first_name: user.first_name || '',
                     last_name: user.last_name || '',
                     has_account: true,
-                    metadata: user.metadata || {}
+                    metadata: user.metadata || {},
+                    vendor: user.vendor || null
                 }
             };
         } catch (error) {
@@ -203,7 +209,11 @@ class AuthService {
     ): Promise<{ customer: MedusaCustomer }> {
         try {
             // First get the user to obtain the ID
-            const meRes = await bridgeClient.get<AdminMeResponse>('/admin/users/me');
+            const meRes = await bridgeClient.get<AdminMeResponse>('/admin/users/me', {
+                params: {
+                    fields: "*vendor"
+                }
+            });
             const currentMe = meRes.data.user;
 
             const updateRes = await bridgeClient.post<AdminMeResponse>(`/admin/users/${currentMe.id}`, data);
@@ -215,7 +225,8 @@ class AuthService {
                     first_name: user.first_name || '',
                     last_name: user.last_name || '',
                     has_account: true,
-                    metadata: user.metadata || {}
+                    metadata: user.metadata || {},
+                    vendor: user.vendor || null
                 }
             };
         } catch (error) {

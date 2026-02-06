@@ -22,8 +22,8 @@ export const useProductType = (options: UseProductTypeProps) => {
         setError(null)
         try {
             const data = await productTypeService.getProductTypes(options)
-            setProductTypes(data.product_types)
-            setCount(data.count)
+            setProductTypes(data.data.data.map(item => item.product_type))
+            setCount(data.data.pagination.count)
         } catch (err: any) {
             setError(err.message || 'Failed to fetch Medusa product types')
         } finally {

@@ -1,17 +1,17 @@
+import { getVendorId } from '@/lib/utils';
 import bridgeClient from '../bridgeClient';
 import { StockLocation } from '@/types/stock';
 import axios from 'axios';
+import { CustomGetResponse } from '@/types/custom-response';
 
 /**
  * Medusa Stock Location Service
  * Handles stock location related interactions with Medusa Backend (Admin domain)
  */
 
-export interface StockLocationListResponse {
-    stock_locations: StockLocation[];
-    count: number;
-    offset: number;
-    limit: number;
+export interface StockLocationData {
+    stock_location: StockLocation;
+    stock_location_id: string;
 }
 
 class StockLocationService {
@@ -19,10 +19,11 @@ class StockLocationService {
      * Get list of stock locations from Medusa
      * @param query Query parameters for filtering and pagination
      */
-    async getStockLocations(query?: Record<string, unknown>): Promise<StockLocationListResponse> {
+    async getStockLocations(query?: Record<string, unknown>): Promise<CustomGetResponse<StockLocationData>> {
         try {
-            const res = await bridgeClient.get('/admin/stock-locations', { params: query });
-            return res.data as StockLocationListResponse;
+            const vendorId = getVendorId();
+            const res = await bridgeClient.get('/custom/admin/vendors/stock-location', { params: query, headers: { 'x-api-vendor': vendorId } });
+            return res.data as CustomGetResponse<StockLocationData>;
         } catch (error: unknown) {
             console.error('Failed to fetch Medusa stock locations:', error);
             throw new Error(
@@ -59,9 +60,10 @@ class StockLocationService {
      * Create a new stock location
      * @param data Data for creating the stock location
      */
-    async createStockLocation(data: { name: string; address_id?: string; metadata?: Record<string, unknown> }): Promise<{ stock_location: StockLocation }> {
+    async createStockLocation(data: { name: string; address: Record<string, unknown> }): Promise<{ stock_location: StockLocation }> {
         try {
-            const res = await bridgeClient.post('/admin/stock-locations', data);
+            const vendorId = getVendorId();
+            const res = await bridgeClient.post('/custom/admin/vendors/stock-location', data, { headers: { 'x-api-vendor': vendorId } });
             return res.data as { stock_location: StockLocation };
         } catch (error: unknown) {
             console.error('Failed to create Medusa stock location:', error);

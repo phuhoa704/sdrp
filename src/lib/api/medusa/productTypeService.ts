@@ -1,12 +1,15 @@
 import bridgeClient from "../bridgeClient";
 import axios from "axios";
 import { ProductType } from "@/types/product-type";
+import { getVendorId } from "@/lib/utils";
+import { CustomGetResponse, CustomResponse } from "@/types/custom-response";
 
-export interface ProductTypeListResponse {
-    product_types: ProductType[];
-    count: number;
-    offset: number;
-    limit: number;
+export interface ProductTypeData {
+    product_type: ProductType;
+    product_type_id: string;
+}
+
+export interface ProductTypeListResponse extends CustomGetResponse<ProductTypeData> {
 }
 
 class ProductTypeService {
@@ -15,9 +18,10 @@ class ProductTypeService {
         limit?: number;
         offset?: number;
         [key: string]: unknown;
-    }): Promise<{ product_types: ProductType[]; count: number; limit: number; offset: number }> {
+    }): Promise<ProductTypeListResponse> {
         try {
-            const res = await bridgeClient.get('/admin/product-types', { params: query });
+            const vendorId = getVendorId();
+            const res = await bridgeClient.get('/custom/admin/vendors/product-types', { params: query, headers: { 'x-api-vendor': vendorId } });
             return res.data;
         } catch (error: unknown) {
             console.error('Failed to fetch Medusa product types:', error);
@@ -31,9 +35,10 @@ class ProductTypeService {
         }
     }
 
-    async createProductType(data: { value: string; metadata?: Record<string, unknown> }): Promise<{ product_type: ProductType }> {
+    async createProductType(data: { value: string; metadata?: Record<string, unknown> }): Promise<CustomResponse<ProductType>> {
         try {
-            const res = await bridgeClient.post('/admin/product-types', data);
+            const vendorId = getVendorId();
+            const res = await bridgeClient.post('/custom/admin/vendors/product-types', data, { headers: { 'x-api-vendor': vendorId } });
             return res.data;
         } catch (error: unknown) {
             console.error('Failed to create Medusa product type:', error);

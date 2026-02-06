@@ -6,6 +6,7 @@ import { useProductType } from '@/hooks/medusa/useProductType';
 import { ProductTypeCard } from '@/components/productType/ProductTypeCard';
 import { ProductType } from '@/types/product-type';
 import { TableLoading } from '@/components/TableLoading';
+import { Empty } from '@/components/Empty';
 
 export const ProductTypes = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -79,9 +80,13 @@ export const ProductTypes = () => {
           <TableLoading />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {productTypes.map((prdType) => (
+            {productTypes.length > 0 ? productTypes.map((prdType) => (
               <ProductTypeCard key={prdType.id} productType={prdType} onClick={() => handleEdit(prdType)} />
-            ))}
+            )) : (
+              <div className="col-span-full">
+                <Empty title='Không tìm thấy phân loại' description='Hãy thêm phân loại để bắt đầu' />
+              </div>
+            )}
           </div>
         )}
       </div>

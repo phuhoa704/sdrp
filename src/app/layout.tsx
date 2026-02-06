@@ -4,6 +4,7 @@ import "./globals.css";
 import { ReduxProvider } from "@/components/providers/ReduxProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { StockProvider } from "@/components/providers/StockProvider";
+import { ToastProvider } from "@/contexts/ToastContext";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -39,12 +40,14 @@ export default function RootLayout({
     <html lang="en" className={`${plusJakartaSans.variable} ${inter.variable}`}>
       <body className="min-h-screen font-sans">
         <ReduxProvider>
-          <AuthProvider>
-            <StockProvider>
-              {children}
-              <div id="modal-root" />
-            </StockProvider>
-          </AuthProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <StockProvider>
+                {children}
+                <div id="modal-root" />
+              </StockProvider>
+            </AuthProvider>
+          </ToastProvider>
         </ReduxProvider>
       </body>
     </html>

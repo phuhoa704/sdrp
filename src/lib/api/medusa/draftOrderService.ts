@@ -1,11 +1,28 @@
+import { getVendorId } from '@/lib/utils';
 import bridgeClient from '../bridgeClient';
 import { DraftOrder, DraftOrderListResponse, CreateDraftOrderPayload, DraftOrderCheckAvailabilityResponse } from '@/types/draft-order';
 import axios from 'axios';
+import { CustomResponse } from '@/types/custom-response';
 
 /**
  * Medusa Draft Order Service
  * Handles draft order related interactions with Medusa Backend
  */
+
+export interface UpdateDraftOrderItemsPayload {
+    addItems: {
+        variant_id: string;
+        quantity: number;
+    }[],
+    updateItems: {
+        id: string;
+        quantity: number;
+    }[],
+    removeItems: {
+        id: string;
+        quantity: number;
+    }[]
+}
 
 class DraftOrderService {
     /**
@@ -59,7 +76,8 @@ class DraftOrderService {
      */
     async createDraftOrder(payload: CreateDraftOrderPayload): Promise<{ draft_order: DraftOrder }> {
         try {
-            const res = await bridgeClient.post('/admin/draft-orders', payload);
+            const vendorId = getVendorId();
+            const res = await bridgeClient.post('/admin/draft-orders', { ...payload, additional_data: { vendor_id: vendorId } });
             return res.data;
         } catch (error: unknown) {
             console.error('Failed to create Medusa draft order:', error);
@@ -130,6 +148,33 @@ class DraftOrderService {
                     : error instanceof Error
                         ? error.message
                         : 'Failed to complete draft order'
+            );
+        }
+    }
+
+    /* 
+     *
+    * Update item of draft order
+    * @param id ID of the draft order
+    * 
+    */
+    async updateDraftOrderItems(id: string, payload: UpdateDraftOrderItemsPayload): Promise<CustomResponse<any>> {
+        try {
+            const vendorId = getVendorId();
+            const res = await bridgeClient.patch(`/custom/admin/orders/${id}/draft`, payload, {
+                headers: {
+                    'x-api-vendor': vendorId,
+                },
+            });
+            return res.data;
+        } catch (error: unknown) {
+            console.error(`Failed to update Medusa draft order ${id}:`, error);
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to update draft order'
             );
         }
     }

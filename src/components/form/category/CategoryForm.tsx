@@ -8,6 +8,8 @@ import { categoryService } from '@/lib/api/medusa/categoryService';
 import { noImage } from '@/configs';
 import { TableView } from '@/components/TableView';
 import { productService } from '@/lib/api/medusa/productService';
+import { useAppSelector } from '@/store/hooks';
+import { selectSelectedSalesChannelId } from '@/store/selectors';
 
 interface CategoryFormProps {
   initialData?: ProductCategory | null;
@@ -30,6 +32,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({ initialData, onSave,
     is_active: true,
     is_internal: false,
   });
+  const sales_channel_id = useAppSelector(selectSelectedSalesChannelId);
 
   useEffect(() => {
     if (initialData) {
@@ -52,6 +55,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({ initialData, onSave,
     try {
       const offset = (currentPage - 1) * limit;
       const data = await productService.getProducts({
+        sales_channel_id,
         limit,
         offset,
         fields: "id,title,handle,status,*collection,*sales_channels,variants.id,thumbnail,-type,-tags,-variants"
@@ -70,6 +74,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({ initialData, onSave,
     try {
       const data = await productService.getProducts({
         category_id: id,
+        sales_channel_id,
         fields: "id,title,handle,status,*collection,*sales_channels,variants.id,thumbnail,-type,-tags,-variants"
       });
       setSelectedProductIds(data.products.map((p: any) => p.id));
@@ -96,7 +101,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({ initialData, onSave,
         const result = await categoryService.createCategory({
           ...formData
         });
-        categoryId = result.product_category.id;
+        categoryId = result.data.id;
       }
 
       const add = selectedProductIds.filter(id => !initialProductIds.includes(id));
@@ -109,7 +114,6 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({ initialData, onSave,
       onSave();
     } catch (error) {
       console.error('Failed to save category:', error);
-      alert('Không thể lưu danh mục. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }

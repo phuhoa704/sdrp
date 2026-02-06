@@ -54,8 +54,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['marketplace', 'warehouse']);
   const [hoveredMenu, setHoveredMenu] = useState<{ id: string, top: number } | null>(null);
 
-  const { salesChannels, loading: channelsLoading } = useSalesChannels({ isDisabled: false });
-  const { selectedSalesChannelId } = useAppSelector((state: RootState) => state.ui);
+  const { salesChannels, loading: channelsLoading, refresh } = useSalesChannels({ isDisabled: false });
+  const { selectedSalesChannelId, salesChannelsRefreshTrigger } = useAppSelector((state: RootState) => state.ui);
 
   const selectedChannel = useMemo(() =>
     salesChannels.find(sc => sc.id === selectedSalesChannelId) || salesChannels[0],
@@ -75,6 +75,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       onBrandChange(selectedChannel.name);
     }
   }, [selectedChannel, onBrandChange]);
+
+  // Refresh sales channels when trigger changes
+  useEffect(() => {
+    if (salesChannelsRefreshTrigger > 0) {
+      refresh();
+    }
+  }, [salesChannelsRefreshTrigger, refresh]);
 
 
   const toggleMenu = (menuId: string) => {
@@ -115,6 +122,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             { id: 'category', label: 'LOẠI HÀNG', view: 'CATEGORY' },
             { id: 'collection', label: 'BỘ SƯU TẬP', view: 'COLLECTION' },
             { id: 'orders', label: 'ĐƠN HÀNG', view: 'CATALOG' },
+            { id: 'sales-channels', label: 'KÊNH BÁN HÀNG', view: 'SALES_CHANNELS' },
+            { id: 'product-tags', label: 'THẺ SẢN PHẨM', view: 'PRODUCT_TAGS' },
+            { id: 'stock-locations', label: 'VỊ TRÍ KHO', view: 'STOCK_LOCATIONS' },
             { id: 'stock-check', label: 'KIỂM KHO', view: 'STOCK_CHECK' },
             { id: 'export', label: 'XUẤT HỦY', view: 'STOCK_DISPOSAL' },
           ],
@@ -369,7 +379,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {isBrandMenuOpen && !isCollapsed && (
               <div className="absolute bottom-full left-0 right-0 mb-3 glass-panel rounded-2xl shadow-2xl border border-white/20 overflow-hidden animate-slide-up z-[60] backdrop-blur-sm">
                 <div className="p-1.5 max-h-48 overflow-y-auto no-scrollbar">
-                  {salesChannels.map(channel => (
+                  {salesChannels.length > 0 ? salesChannels.map(channel => (
                     <button
                       key={channel.id}
                       onClick={() => {
@@ -382,7 +392,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <span className="truncate pr-2">{channel.name}</span>
                       {selectedSalesChannelId === channel.id && <Check size={14} className="shrink-0" />}
                     </button>
-                  ))}
+                  )) : (
+                    <div className="flex items-center justify-center p-3 text-slate-400 text-sm">
+                      Không có chi nhánh
+                    </div>
+                  )}
                 </div>
               </div>
             )}

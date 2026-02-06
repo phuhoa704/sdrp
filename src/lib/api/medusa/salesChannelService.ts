@@ -1,6 +1,8 @@
+import { getVendorId } from '@/lib/utils';
 import bridgeClient from '../bridgeClient';
 import { SalesChannel, SalesChannelListResponse } from '@/types/sales-channel';
 import axios from 'axios';
+
 
 /**
  * Medusa Sales Channel Service
@@ -13,7 +15,13 @@ class SalesChannelService {
      */
     async getSalesChannels(query?: Record<string, unknown>): Promise<SalesChannelListResponse> {
         try {
-            const res = await bridgeClient.get('/admin/sales-channels', { params: query });
+            const vendorId = getVendorId();
+            const res = await bridgeClient.get('/custom/admin/vendors/sales-channel', {
+                params: query,
+                headers: {
+                    'x-api-vendor': vendorId
+                }
+            });
             return res.data as SalesChannelListResponse;
         } catch (error: unknown) {
             console.error('Failed to fetch Medusa sales channels:', error);
@@ -53,7 +61,12 @@ class SalesChannelService {
      */
     async createSalesChannel(data: Record<string, unknown>): Promise<{ sales_channel: SalesChannel }> {
         try {
-            const res = await bridgeClient.post('/admin/sales-channels', data);
+            const vendorId = getVendorId();
+            const res = await bridgeClient.post('/custom/admin/vendors/sales-channel', data, {
+                headers: {
+                    'x-api-vendor': vendorId
+                }
+            });
             return res.data as { sales_channel: SalesChannel };
         } catch (error: unknown) {
             console.error('Failed to create Medusa sales channel:', error);

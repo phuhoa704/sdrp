@@ -33,6 +33,8 @@ export default function Category() {
     offset
   });
 
+  console.log(categories);
+
   const sortedCategories = useMemo(() => {
     if (!categories) return [];
 

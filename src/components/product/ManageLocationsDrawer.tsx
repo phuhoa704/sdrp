@@ -42,7 +42,7 @@ export const ManageLocationsDrawer: React.FC<ManageLocationsDrawerProps> = ({
     setLoading(true);
     try {
       const res = await stockLocationService.getStockLocations({ limit: 100 });
-      setLocations(res.stock_locations);
+      setLocations(res.data.data.map((item) => item.stock_location));
     } catch (error) {
       console.error('Failed to fetch stock locations', error);
     } finally {

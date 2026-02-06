@@ -10,10 +10,11 @@ export interface UseProductsOptions {
     limit?: number;
     offset?: number;
     autoFetch?: boolean;
+    fields?: string;
 }
 
 export const useProducts = (options: UseProductsOptions = {}) => {
-    const { q, category_id, sales_channel_id, tags, limit = 10, offset = 0, autoFetch = true } = options;
+    const { q, category_id, sales_channel_id, tags, limit = 10, offset = 0, autoFetch = true, fields } = options;
     const [products, setProducts] = useState<Product[]>([]);
     const [count, setCount] = useState<number>(0);
     const [loading, setLoading] = useState<boolean>(false);
@@ -30,7 +31,7 @@ export const useProducts = (options: UseProductsOptions = {}) => {
                 tags,
                 limit,
                 offset,
-                fields: "*categories,*sales_channels,-variants"
+                fields: fields || "*categories,*sales_channels,-variants"
             });
             setProducts(data.products);
             setCount(data.count);
@@ -39,7 +40,7 @@ export const useProducts = (options: UseProductsOptions = {}) => {
         } finally {
             setLoading(false);
         }
-    }, [q, category_id, sales_channel_id, tags, limit, offset]);
+    }, [q, category_id, sales_channel_id, tags, limit, offset, fields]);
 
     useEffect(() => {
         if (autoFetch) {

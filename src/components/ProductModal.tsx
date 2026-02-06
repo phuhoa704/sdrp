@@ -4,6 +4,8 @@ import { createPortal } from 'react-dom';
 import { X, Package, ShoppingCart, Plus, Minus, AlignLeft, Globe, Zap } from 'lucide-react';
 import { Product, ProductVariant } from '@/types/product';
 import { Button } from './Button';
+import { productService } from '@/lib/api/medusa/productService';
+import { TableLoading } from './TableLoading';
 
 interface ProductModalProps {
   product: Product | null;
@@ -24,13 +26,15 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   const [quantity, setQuantity] = useState(1);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [selectedUnit, setSelectedUnit] = useState('Chai/Gói');
+  const [variantsLoading, setVariantsLoading] = useState(false);
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
 
   useEffect(() => {
     setCurrentProduct(initialProduct);
     if (initialProduct) {
-      setSelectedVariant(initialProduct.variants?.[0] || null);
       setSelectedUnit(mode === 'WHOLESALE' ? 'Thùng' : 'Chai/Gói');
       setQuantity(1);
+      fetchVariants(initialProduct.id)
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -47,6 +51,23 @@ export const ProductModal: React.FC<ProductModalProps> = ({
     : basePrice;
 
   const [isLoading, setIsLoading] = useState(false);
+
+  const fetchVariants = async (id: string) => {
+    setVariantsLoading(true)
+    try {
+      const res = await productService.getVariants(id, {
+        order: 'variant_rank',
+        limit: 100,
+        fields: 'title,sku,*options,*prices'
+      })
+      setVariants(res.variants)
+      setSelectedVariant(res.variants[0])
+    } catch (error) {
+      console.log(error)
+    } finally {
+      setVariantsLoading(false)
+    }
+  }
 
   const handleAddToCart = async () => {
     if (onAddToCart) {
@@ -103,7 +124,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 <h3 className="text-[11px] font-black text-[#6B7280] dark:text-slate-500 uppercase tracking-widest flex items-center gap-3">
                   <AlignLeft size={16} style={{ color: primaryColor }} /> Đặc tính kỹ thuật
                 </h3>
-                <p className="text-sm text-[#4B5563] dark:text-slate-300 leading-relaxed font-medium bg-slate-50 dark:bg-slate-800/50 p-6 rounded-[24px] border border-slate-100 dark:border-slate-800">
+                <p className="text-sm text-[#4B5563] dark:text-slate-300 leading-relaxed font-medium bg-slate-50 dark:bg-slate-800/50 p-6 rounded-[24px] border border-slate-100 dark:border-slate-800 line-clamp-5">
                   {currentProduct.description || `Sản phẩm bảo vệ thực vật công nghệ cao, nồng độ hoạt chất tối ưu giúp kiểm soát dịch hại triệt để.`}
                 </p>
               </div>
@@ -123,13 +144,15 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             </div>
 
             {/* Variant Selector - Nồng độ & Công nghệ */}
-            {currentProduct.variants && currentProduct.variants.length > 0 && (
+            {variantsLoading ? (
+              <TableLoading />
+            ) : (
               <div className="space-y-4">
                 <h3 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 flex items-center gap-2">
                   <Zap size={14} style={{ color: primaryColor }} /> Nồng độ / Công nghệ bào chế
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {currentProduct.variants.map((v) => (
+                  {variants.map((v) => (
                     <button
                       key={v.id}
                       onClick={() => setSelectedVariant(v)}
@@ -142,7 +165,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                       <span className={`text-sm font-black ${selectedVariant?.id === v.id ? 'text-slate-800 dark:text-white' : ''}`}>
                         {v.title}
                       </span>
-                      <div className="flex items-center gap-2 text-[10px] font-bold opacity-70">
+                      <div className="flex items-center gap-2 text-[10px] font-bold opacity-70 text-slate-700 dark:text-slate-300">
                         <Globe size={12} /> {v.sku}
                       </div>
                     </button>
@@ -172,7 +195,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 <label className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">Số lượng</label>
                 <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 p-1.5 rounded-xl border border-slate-100 dark:border-slate-700">
                   <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-10 h-10 rounded-lg bg-white dark:bg-slate-700 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-primary transition-all"><Minus size={18} /></button>
-                  <span className="text-lg font-black dark:text-slate-200">{quantity}</span>
+                  <span className="text-lg font-black text-slate-800 dark:text-slate-200">{quantity}</span>
                   <button onClick={() => setQuantity(quantity + 1)} className="w-10 h-10 rounded-lg bg-white dark:bg-slate-700 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-primary transition-all"><Plus size={18} /></button>
                 </div>
               </div>

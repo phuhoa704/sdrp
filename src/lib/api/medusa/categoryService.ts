@@ -1,17 +1,31 @@
+import { getVendorId } from '@/lib/utils';
 import bridgeClient from '../bridgeClient';
 import { ProductCategory } from '@/types/product';
 import axios from 'axios';
+import { CustomResponse } from '@/types/custom-response';
 
 /**
  * Medusa Category Service
  * Handles product category related interactions with Medusa Backend
  */
 
+export interface CategoryListData {
+    product_category: ProductCategory;
+    product_category_id: string;
+}
+
 export interface CategoryListResponse {
-    product_categories: ProductCategory[];
-    count: number;
-    offset: number;
-    limit: number;
+    status: number;
+    data: {
+        data: CategoryListData[];
+        message: string;
+        status: string;
+        pagination: {
+            page: number;
+            limit: number;
+            total: number;
+        }
+    }
 }
 
 class CategoryService {
@@ -26,7 +40,8 @@ class CategoryService {
         [key: string]: unknown;
     }): Promise<CategoryListResponse> {
         try {
-            const res = await bridgeClient.get('/admin/product-categories', { params: query });
+            const vendorId = getVendorId();
+            const res = await bridgeClient.get('custom/admin/vendors/product-categories', { params: query, headers: { 'x-api-vendor': vendorId } });
             return res.data as CategoryListResponse;
         } catch (error: unknown) {
             console.error('Failed to fetch Medusa categories:', error);
@@ -59,9 +74,10 @@ class CategoryService {
             );
         }
     }
-    async createCategory(payload: any): Promise<{ product_category: ProductCategory }> {
+    async createCategory(payload: any): Promise<CustomResponse<ProductCategory>> {
         try {
-            const res = await bridgeClient.post('/admin/product-categories', payload);
+            const vendorId = getVendorId();
+            const res = await bridgeClient.post('custom/admin/vendors/product-categories', payload, { headers: { 'x-api-vendor': vendorId } });
             return res.data;
         } catch (error: unknown) {
             console.error('Failed to create Medusa category:', error);

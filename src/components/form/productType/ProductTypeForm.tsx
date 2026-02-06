@@ -9,6 +9,9 @@ import { Product } from '@/types/product';
 import { productService } from '@/lib/api/medusa/productService';
 import { noImage } from '@/configs';
 import { ProductType } from '@/types/product-type';
+import { productTypeService } from '@/lib/api/medusa/productTypeService';
+import { useAppSelector } from '@/store/hooks';
+import { selectSelectedSalesChannelId } from '@/store/selectors';
 
 interface ProductTypeProps {
   onCancel?: () => void;
@@ -29,6 +32,7 @@ export const ProductTypeForm: React.FC<ProductTypeProps> = ({ onCancel, onSave, 
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const limit = 10;
+  const selectedSalesChannelId = useAppSelector(selectSelectedSalesChannelId);
 
   useEffect(() => {
     if (initialData) {
@@ -49,6 +53,7 @@ export const ProductTypeForm: React.FC<ProductTypeProps> = ({ onCancel, onSave, 
     try {
       const offset = (currentPage - 1) * limit;
       const data = await productService.getProducts({
+        sales_channel_id: selectedSalesChannelId,
         limit,
         offset,
         fields: "id,title,handle,status,*categories,*sales_channels,variants.id,thumbnail,-type,-tags,-variants"
@@ -67,6 +72,7 @@ export const ProductTypeForm: React.FC<ProductTypeProps> = ({ onCancel, onSave, 
     try {
       const data = await productService.getProducts({
         type_id: [typeId],
+        sales_channel_id: selectedSalesChannelId,
         fields: "id,title,handle,status,*categories,*sales_channels,variants.id,thumbnail,-type,-tags,-variants"
       });
       setSelectedProductIds(data.products.map((p: any) => p.id));
@@ -81,6 +87,15 @@ export const ProductTypeForm: React.FC<ProductTypeProps> = ({ onCancel, onSave, 
   const handleSubmit = async () => {
     setLoading(true);
     try {
+      let productTypeId: string;
+      if (initialData) {
+        await productTypeService.updateProductType(initialData.id, { value: formData.name });
+        productTypeId = initialData.id;
+      } else {
+        const data = await productTypeService.createProductType({ value: formData.name });
+        productTypeId = data.data.id;
+      }
+
       const productsToUpdate = selectedProductIds.filter(id => !initialProductIds.includes(id));
       const productsToRemove = initialProductIds.filter(id => !selectedProductIds.includes(id));
 

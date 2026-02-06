@@ -21,7 +21,7 @@ export const fetchStockLocations = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const response = await stockLocationService.getStockLocations();
-            return response.stock_locations;
+            return response.data.data.map((item) => item.stock_location);
         } catch (error: any) {
             return rejectWithValue(error.message || 'Failed to fetch stock locations');
         }
