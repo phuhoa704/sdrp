@@ -100,14 +100,13 @@ interface POSCartProps {
   onSetShippingPartner: (partner: string) => void;
   loadingTabId?: string | null;
   isSyncing?: boolean;
-  debouncedConfirm: (activeTabId: string) => void;
 }
 
 export const POSCart: React.FC<POSCartProps> = ({
   width, activeTab, subtotal, totalAmount, isCreatingShipping,
   onUpdateQty, onRemoveItem, onSetFulfillment,
   onUpdateShippingFee, onUpdateDiscount, onOpenCustomerModal, onCheckout,
-  loadingTabId, isSyncing = false, debouncedConfirm
+  loadingTabId, isSyncing = false
 }) => {
   const [showPromoModal, setShowPromoModal] = useState(false);
   const [discountType, setDiscountType] = useState<'amount' | 'percent'>('amount');
@@ -145,7 +144,6 @@ export const POSCart: React.FC<POSCartProps> = ({
     } catch (err) {
       console.error('Failed to apply promotion:', err);
     } finally {
-      debouncedConfirm(activeTab.id);
       setPromotionLoading(false)
     }
   };
@@ -330,9 +328,20 @@ export const POSCart: React.FC<POSCartProps> = ({
 
   return (
     <div
-      className="bg-white dark:bg-slate-900 border-l dark:border-slate-800 flex flex-col shrink-0 shadow-[-10px_0_30px_rgba(0,0,0,0.03)] h-full"
+      className="bg-white dark:bg-slate-900 border-l dark:border-slate-800 flex flex-col shrink-0 shadow-[-10px_0_30px_rgba(0,0,0,0.03)] h-full relative"
       style={{ width: `${width}px` }}
     >
+      {isCreatingShipping && (
+        <div className="fixed inset-0 z-[2000] bg-blue-600/10 backdrop-blur-sm animate-fade-in flex items-center justify-center cursor-wait">
+          <div className="bg-white dark:bg-slate-900 px-8 py-6 rounded-[32px] shadow-2xl border dark:border-slate-800 flex items-center gap-4 animate-slide-up">
+            <div className="w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+            <div>
+              <p className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-widest">Đang hoàn tất đơn hàng</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Vui lòng không đóng trình duyệt...</p>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="shrink-0 p-4 pb-0 space-y-3">
         <div className="flex justify-between items-center px-1">
           <div className="flex items-center gap-2">
@@ -434,7 +443,6 @@ export const POSCart: React.FC<POSCartProps> = ({
                         } catch (err) {
                           console.error('Failed to remove promotion:', err);
                         } finally {
-                          debouncedConfirm(activeTab.id);
                           setPromotionLoading(false)
                         }
                       }}

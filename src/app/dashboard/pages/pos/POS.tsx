@@ -3,7 +3,7 @@ import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import {
   ArrowLeft, AlertTriangle, X, CheckCircle2,
   BookOpen, Sparkles,
-  History, Receipt, User, Calendar, MapPin, ChevronDown,
+  History, Receipt, User, Calendar, MapPin, ChevronDown, Check,
   GripVertical,
   Sun,
   Moon
@@ -23,7 +23,8 @@ import { createPortal } from 'react-dom';
 import { DiseaseDetailScreen } from '../DiseaseDetailScreen';
 import { DiagnosisScreen } from '../DiagnosisScreen';
 import { useMedusaProducts, useCategories, useSalesChannels, useDraftOrders, useRegions } from '@/hooks';
-import { draftOrderService, UpdateDraftOrderItemsPayload } from '@/lib/api/medusa/draftOrderService';
+import { draftOrderService, UpdateDraftOrderItemsAction, UpdateDraftOrderItemsPayload } from '@/lib/api/medusa/draftOrderService';
+import { customerService } from '@/lib/api/medusa/customerService';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { RootState } from '@/store';
 import { selectCurrencyCode, selectIsDarkMode } from '@/store/selectors';
@@ -32,18 +33,22 @@ import { DraftOrder } from '@/types/draft-order';
 import { OrderTab } from '@/store/slices/posSlice';
 import { CustomerModal } from '@/components/pos/customerModal';
 import { SalesChannel } from '@/types/sales-channel';
+import { useToast } from '@/contexts/ToastContext';
 
 interface POSScreenProps {
   onBack: () => void;
 }
 
 const POS: React.FC<POSScreenProps> = ({ onBack }) => {
+  const { showToast } = useToast();
   const dispatch = useAppDispatch();
   const { salesChannels } = useSalesChannels({ isDisabled: false });
   const { selectedSalesChannelId } = useAppSelector((state: RootState) => state.ui);
   const isDarkMode = useAppSelector(selectIsDarkMode);
   const channels = useMemo(() => salesChannels, [salesChannels]);
   const [currentChannel, setCurrentChannel] = useState<SalesChannel | null>(null);
+  const [isBranchMenuOpen, setIsBranchMenuOpen] = useState(false);
+  const branchMenuRef = useRef<HTMLDivElement>(null);
 
   const { regions } = useRegions();
   const { draftOrders, refresh: refreshDrafts, loading: draftsLoading } = useDraftOrders();
@@ -81,7 +86,8 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
 
   const { products: allProducts, loading: productsLoading } = useMedusaProducts({
     limit: 100,
-    sales_channel_id: selectedSalesChannelId || undefined
+    sales_channel_id: selectedSalesChannelId || undefined,
+    fields: "+variants"
   });
   const { categories: medusaCategories } = useCategories();
 
@@ -89,6 +95,23 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
     try {
       const res = await draftOrderService.getDraftOrder(id);
       if (res.draft_order) {
+        let customerInfo = res.draft_order.email ? { name: res.draft_order.email.split('@')[0], phone: '', address: '' } : null;
+
+        if (res.draft_order.customer_id) {
+          try {
+            const customerRes = await customerService.getCustomer(res.draft_order.customer_id);
+            if (customerRes.customer) {
+              customerInfo = {
+                name: `${customerRes.customer.first_name || ''} ${customerRes.customer.last_name || ''}`.trim() || customerRes.customer.email,
+                phone: customerRes.customer.phone || '',
+                address: ''
+              };
+            }
+          } catch (err) {
+            console.error("Failed to fetch detailed customer info for POS:", err);
+          }
+        }
+
         setActiveTab(prev => ({
           id: res.draft_order.id,
           label: res.draft_order.id,
@@ -103,7 +126,7 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
             image: item.thumbnail || '',
             tech_specs: item.variant_sku
           })),
-          customer: res.draft_order.email ? { name: res.draft_order.email.split('@')[0], phone: '', address: '' } : null,
+          customer: customerInfo,
           discount: res.draft_order.discount_total || 0,
           shippingFee: res.draft_order.shipping_total || 0,
           subtotal: res.draft_order.total || 0,
@@ -141,50 +164,20 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
     }
   }, [])
 
-  const debouncedConfirm = useCallback((tabId: string) => {
-    // Clear existing timeout for this tab
-    if (confirmTimeoutRef.current[tabId]) {
-      clearTimeout(confirmTimeoutRef.current[tabId]);
-    }
-
-    // Set new timeout to confirm after 3 seconds of inactivity
-    confirmTimeoutRef.current[tabId] = setTimeout(async () => {
-      try {
-        setIsSyncing(true);
-        console.log(`Auto-confirming changes for ${tabId}...`);
-        await draftOrderService.confirmDraftOrderEdit(tabId);
-        await draftOrderService.createDraftOrderEdit(tabId);
-        // Clean up timeout ref
-        delete confirmTimeoutRef.current[tabId];
-      } catch (err) {
-        console.error(`Failed to auto-confirm edit for ${tabId}:`, err);
-      } finally {
-        setIsSyncing(false);
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (branchMenuRef.current && !branchMenuRef.current.contains(event.target as Node)) {
+        setIsBranchMenuOpen(false);
       }
-    }, 3000);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSelectTab = useCallback(async (id: string) => {
-    const previousId = activeTabId;
-    setActiveTabId(id);
-    setLoadingTabId(id);
-    try {
-      if (previousId && previousId !== id) {
-        await draftOrderService.cancelDraftOrderEdit(previousId).catch(err => {
-          console.warn("Failed to cancel previous edit:", err);
-        });
-      }
 
-      const res = await draftOrderService.createDraftOrderEdit(id);
-      if (res.draft_order_preview) {
-        updateActiveTab(res.draft_order_preview);
-      }
-    } catch (err) {
-      console.error("Failed to initiate draft order edit:", err);
-    } finally {
-      setLoadingTabId(null);
-    }
-  }, [activeTabId, updateActiveTab]);
+  const handleSelectTab = useCallback(async (id: string) => {
+    setActiveTabId(id);
+  }, [activeTabId]);
 
   const handleAddTab = useCallback(async () => {
     if (!currentRegion || isAddingTab) return;
@@ -233,16 +226,7 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
       const mappedTabs: OrderTab[] = draftOrders.map((draft, idx) => ({
         id: draft.id,
         label: `Đơn ${draft.display_id}`,
-        items: draft.items.map(item => ({
-          id: item.product_id,
-          lineItemId: item.id,
-          name: item.title,
-          price: item.unit_price,
-          quantity: item.quantity,
-          variant: item.variant_title || 'Default',
-          image: item.thumbnail || '',
-          tech_specs: item.variant_sku
-        })),
+        items: [],
         customer: draft.email ? { name: draft.email.split('@')[0], phone: '', address: '' } : null,
         discount: draft.discount_total || 0,
         fulfillment: 'pickup',
@@ -349,6 +333,7 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
     try {
       setIsSyncing(true);
       const payload: UpdateDraftOrderItemsPayload = {
+        action: UpdateDraftOrderItemsAction.UPDATE,
         removeItems: [],
         updateItems: [{
           id: item.lineItemId,
@@ -357,8 +342,8 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
         addItems: []
       }
       const res = await draftOrderService.updateDraftOrderItems(activeTabId, payload);
-      if (res.data && res.data.id) {
-        refreshActiveTabDetails(res.data.id)
+      if (res.data) {
+        refreshActiveTabDetails(res.data)
       }
     } catch (err) {
       console.error("Failed to sync quantity to server:", err);
@@ -386,13 +371,14 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
       try {
         setIsSyncing(true);
         const payload: UpdateDraftOrderItemsPayload = {
+          action: UpdateDraftOrderItemsAction.REMOVE,
           removeItems: [{ id: item.lineItemId, quantity: 0 }],
           updateItems: [],
           addItems: []
         }
         const res = await draftOrderService.updateDraftOrderItems(activeTabId, payload);
-        if (res.data && res.data.id) {
-          refreshActiveTabDetails(res.data.id)
+        if (res.data) {
+          refreshActiveTabDetails(res.data)
         }
       } catch (err) {
         console.error("Failed to sync removal to server:", err);
@@ -408,11 +394,13 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
     try {
       setIsSyncing(true);
       await draftOrderService.convertToOrder(activeTabId);
+      showToast('Đã hoàn tất đơn hàng', 'success');
       setShowCheckoutSuccess(true);
       setTimeout(() => setShowCheckoutSuccess(false), 2000);
       await refreshDrafts();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Checkout failed:", err);
+      showToast(err.message || 'Thanh toán thất bại', 'error');
     } finally {
       setIsSyncing(false);
     }
@@ -498,15 +486,47 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
           <button onClick={onBack} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
             <ArrowLeft size={20} className="text-slate-500" />
           </button>
-          <div className="h-10 px-3 bg-slate-50 dark:bg-slate-800 rounded-xl border dark:border-slate-700 flex items-center gap-2 group cursor-pointer hover:bg-white transition-all shadow-sm">
-            <div className="w-6 h-6 bg-primary/20 text-primary rounded-lg flex items-center justify-center"><MapPin size={14} /></div>
-            <div className="flex flex-col pr-4 border-r dark:border-slate-700">
-              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Chi nhánh</p>
-              <select value={currentChannel?.id} onChange={(e) => handleBranchChange(e.target.value)} className="bg-transparent text-[11px] font-black text-slate-700 dark:text-slate-200 outline-none cursor-pointer appearance-none">
-                {channels.map((b: SalesChannel) => <option key={b.id} value={b.id} className="dark:bg-slate-900">{b.name}</option>)}
-              </select>
-            </div>
-            <ChevronDown size={14} className="text-slate-400 group-hover:text-primary" />
+          <div className="relative h-full flex items-center" ref={branchMenuRef}>
+            <button
+              onClick={() => setIsBranchMenuOpen(!isBranchMenuOpen)}
+              className="h-10 px-3 bg-slate-50 dark:bg-slate-800 rounded-xl border dark:border-slate-700 flex items-center gap-2 group cursor-pointer hover:bg-white transition-all shadow-sm"
+            >
+              <div className="w-6 h-6 bg-primary/20 text-primary rounded-lg flex items-center justify-center"><MapPin size={14} /></div>
+              <div className="flex flex-col pr-4 border-r dark:border-slate-700 text-left">
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Chi nhánh</p>
+                <p className="text-[11px] font-black text-slate-700 dark:text-slate-200 truncate max-w-[120px]">
+                  {currentChannel?.name || "Chọn chi nhánh"}
+                </p>
+              </div>
+              <ChevronDown size={14} className={`text-slate-400 transition-transform duration-300 ${isBranchMenuOpen ? 'rotate-180 text-primary' : 'group-hover:text-primary'}`} />
+            </button>
+
+            {isBranchMenuOpen && (
+              <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-2xl z-[300] overflow-hidden animate-slide-up backdrop-blur-sm">
+                <div className="p-2 max-h-64 overflow-y-auto no-scrollbar">
+                  {channels.length > 0 ? channels.map((b: SalesChannel) => (
+                    <button
+                      key={b.id}
+                      onClick={() => {
+                        handleBranchChange(b.id);
+                        setIsBranchMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between p-3 rounded-xl text-[11px] font-bold tracking-wide transition-all mb-1 last:mb-0 ${currentChannel?.id === b.id ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full ${currentChannel?.id === b.id ? 'bg-white' : 'bg-emerald-500'}`} />
+                        <span className="truncate pr-2">{b.name}</span>
+                      </div>
+                      {currentChannel?.id === b.id && <Check size={14} className="shrink-0" />}
+                    </button>
+                  )) : (
+                    <div className="flex items-center justify-center p-4 text-slate-400 text-[11px] font-bold uppercase tracking-widest">
+                      Không có chi nhánh
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
           <div className="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 hidden sm:block" />
           <POSTabs
@@ -564,7 +584,6 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
           onCheckout={handleCheckout}
           loadingTabId={loadingTabId}
           isSyncing={isSyncing}
-          debouncedConfirm={debouncedConfirm}
         />
       </div>
       {showAlertDrawer && (
@@ -609,6 +628,7 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
 
             try {
               const payload: UpdateDraftOrderItemsPayload = {
+                action: UpdateDraftOrderItemsAction.ADD,
                 removeItems: [],
                 updateItems: [],
                 addItems: [{
@@ -618,8 +638,8 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
               }
               const res = await draftOrderService.updateDraftOrderItems(activeTabId, payload);
 
-              if (res.data && res.data.order_id) {
-                refreshActiveTabDetails(res.data.order_id)
+              if (res.data) {
+                refreshActiveTabDetails(res.data)
               }
               setProductToConfigure(null);
             } catch (err) {

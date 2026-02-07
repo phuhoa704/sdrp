@@ -1,22 +1,16 @@
 'use client';
 
-import { Fragment, useState, useMemo, useEffect } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import {
   Plus,
   Upload,
-  Search,
   Zap,
-  SearchX,
-  Filter,
-  ArrowUpDown,
-  Download,
   Users,
   Activity,
   AlertTriangle,
   TrendingUp,
   User,
   ChevronRight,
-  ChevronLeft,
   MoreHorizontal,
   BarChart3,
   BookOpen,
@@ -28,7 +22,8 @@ import {
   Settings,
   History,
   Edit3,
-  Trash2
+  Trash2,
+  User2
 } from 'lucide-react';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { Card } from '@/components/Card';
@@ -42,16 +37,49 @@ import { Customer } from '@/types/customer';
 import { TableLoading } from '@/components/TableLoading';
 import { CustomerForm } from '@/components/form/customer/CustomerForm';
 import { ConfirmModal } from '@/components';
+import { useToast } from '@/contexts/ToastContext';
+
+function TabButton({ label, active, onClick }: any) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest transition-all rounded-[20px] ${active ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function DetailInfoRow({ icon, label, value }: any) {
+  return (
+    <div className="flex items-start gap-3 group/item">
+      <div className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-300 group-hover/item:text-primary transition-colors shrink-0">
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{label}</p>
+        <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{value}</p>
+      </div>
+    </div>
+  );
+}
 
 export default function Customers() {
+  const { showToast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState<'info' | 'address' | 'debt'>('info');
-  const { customers, count, loading, error, refresh, deleteCustomer } = useCustomers();
   const [customerDetails, setCustomerDetails] = useState<Customer | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const limit = 10;
+  const { customers, count, loading, error, refresh, deleteCustomer } = useCustomers({
+    query: {
+      limit,
+      offset: (currentPage - 1) * limit,
+      q: searchTerm,
+    }
+  });
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Customer | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -102,14 +130,17 @@ export default function Customers() {
     try {
       if (selectedUser) {
         await customerService.updateCustomer(selectedUser.id, data);
+        showToast('Cập nhật khách hàng thành công', 'success');
       } else {
         await customerService.createCustomer(data);
+        showToast('Thêm khách hàng mới thành công', 'success');
       }
       setIsFormOpen(false);
       setSelectedUser(null);
       refresh();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save customer:', err);
+      showToast(err.message || 'Không thể lưu khách hàng', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -144,7 +175,7 @@ export default function Customers() {
             <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
               CUSTOMER RELATION MANAGEMENT
             </span>
-            <Zap size={12} className='text-amber-500 animate-pulse' />
+            <User2 size={12} className='text-amber-500 animate-pulse' />
           </div>
           <h1 className="text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-none">
             Khách Hàng <span className="text-emerald-600 font-black">Thân Thiết</span>
@@ -239,7 +270,7 @@ export default function Customers() {
                 </div>
               </td>
               <td className="px-6 py-6">
-                <span className="px-3 py-1 bg-slate-800 text-slate-400 rounded-full text-[9px] font-black uppercase tracking-tighter border border-white/5 group-hover:border-emerald-500/30 transition-colors">
+                <span className="px-3 py-1 dark:bg-slate-800 bg-slate-100 text-slate-400 rounded-full text-[9px] font-black uppercase tracking-tighter border border-white/5 group-hover:border-emerald-500/30 transition-colors">
                   {'Chưa nhóm'}
                 </span>
               </td>
@@ -260,7 +291,7 @@ export default function Customers() {
                   <button onClick={(e) => {
                     e.stopPropagation();
                     setActiveMenuId(activeMenuId === c.id ? null : c.id);
-                  }} className="p-2 text-slate-500 hover:text-white rounded-lg hover:bg-white/5 transition-all">
+                  }} className="p-2 text-slate-500  dark:hover:text-white rounded-lg hover:bg-white/5 transition-all">
                     <MoreHorizontal size={18} />
                   </button>
                   {activeMenuId === c.id && (
@@ -302,14 +333,14 @@ export default function Customers() {
                 </div>
               </td>
             </tr>
-            {expandedId === c.id && (loadingDetails ? (
-              <tr>
-                <td colSpan={7}>
-                  <TableLoading />
-                </td>
-              </tr>
-            ) :
-              (
+            {expandedId === c.id && (
+              loadingDetails ? (
+                <tr>
+                  <td colSpan={7}>
+                    <TableLoading />
+                  </td>
+                </tr>
+              ) : (
                 <tr className="bg-slate-50/30 dark:bg-slate-900/30 animate-fade-in border-x-2 border-emerald-500">
                   <td colSpan={7} className="px-10 py-10">
                     <div className="flex flex-col lg:flex-row gap-12">
@@ -456,30 +487,9 @@ export default function Customers() {
                 </tr>
               )
             )}
-            <ConfirmModal
-              isOpen={isDeleteModalOpen}
-              onClose={() => {
-                setIsDeleteModalOpen(false);
-                setCustomerToDelete(null);
-              }}
-              onConfirm={async () => {
-                if (customerToDelete) {
-                  await deleteCustomer(customerToDelete.id);
-                }
-                setIsDeleteModalOpen(false);
-                setCustomerToDelete(null);
-              }}
-              isLoading={loading}
-              title="Xác nhận xóa khách hàng"
-              message={`Bạn có chắc chắn muốn xóa khách hàng "${customerToDelete?.first_name} ${customerToDelete?.last_name}"? Hành động này không thể hoàn tác.`}
-              variant="danger"
-              confirmText="Xóa khách hàng"
-              cancelText="Quay lại"
-            />
           </Fragment>
         )}
       />
-
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
         <Card className="p-8 bg-blue-900/10 border-none shadow-xl flex items-center gap-6 group cursor-pointer hover:bg-blue-900/20 transition-all">
@@ -504,27 +514,32 @@ export default function Customers() {
           <ChevronRight className="ml-auto text-emerald-500/30 group-hover:text-emerald-500 transition-all" size={24} />
         </Card>
       </div>
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setCustomerToDelete(null);
+        }}
+        onConfirm={async () => {
+          if (customerToDelete) {
+            const res = await deleteCustomer(customerToDelete.id);
+            if (res.success) {
+              showToast('Xóa khách hàng thành công', 'success');
+            } else {
+              showToast(res.error || 'Không thể xóa khách hàng', 'error');
+            }
+          }
+          setIsDeleteModalOpen(false);
+          setCustomerToDelete(null);
+        }}
+        isLoading={loading}
+        title="Xác nhận xóa khách hàng"
+        message={`Bạn có chắc chắn muốn xóa khách hàng "${customerToDelete?.first_name} ${customerToDelete?.last_name}"? Hành động này không thể hoàn tác.`}
+        variant="danger"
+        confirmText="Xóa khách hàng"
+        cancelText="Quay lại"
+      />
     </div>
   );
 }
-
-const TabButton = ({ label, active, onClick }: any) => (
-  <button
-    onClick={onClick}
-    className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest transition-all rounded-[20px] ${active ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
-  >
-    {label}
-  </button>
-);
-
-const DetailInfoRow = ({ icon, label, value }: any) => (
-  <div className="flex items-start gap-3 group/item">
-    <div className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-300 group-hover/item:text-primary transition-colors shrink-0">
-      {icon}
-    </div>
-    <div className="min-w-0">
-      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{label}</p>
-      <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{value}</p>
-    </div>
-  </div>
-);

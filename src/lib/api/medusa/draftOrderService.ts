@@ -9,7 +9,13 @@ import { CustomResponse } from '@/types/custom-response';
  * Handles draft order related interactions with Medusa Backend
  */
 
+export enum UpdateDraftOrderItemsAction {
+    ADD = 'addItems',
+    UPDATE = 'updateItems',
+    REMOVE = 'removeItems'
+}
 export interface UpdateDraftOrderItemsPayload {
+    action: UpdateDraftOrderItemsAction;
     addItems: {
         variant_id: string;
         quantity: number;
@@ -36,7 +42,8 @@ class DraftOrderService {
         [key: string]: unknown;
     }): Promise<DraftOrderListResponse> {
         try {
-            const res = await bridgeClient.get('/admin/draft-orders', { params: query });
+            const vendorId = getVendorId();
+            const res = await bridgeClient.get('/custom/admin/orders', { params: query, headers: { 'x-api-vendor': vendorId } });
             return res.data as DraftOrderListResponse;
         } catch (error: unknown) {
             console.error('Failed to fetch Medusa draft orders:', error);
@@ -56,7 +63,7 @@ class DraftOrderService {
      */
     async getDraftOrder(id: string): Promise<{ draft_order: DraftOrder }> {
         try {
-            const res = await bridgeClient.get(`/admin/draft-orders/${id}`);
+            const res = await bridgeClient.get(`/admin/draft-orders/${id}`, { params: { fields: "+customer_id" } });
             return res.data;
         } catch (error: unknown) {
             console.error(`Failed to fetch Medusa draft order ${id}:`, error);
@@ -158,10 +165,10 @@ class DraftOrderService {
     * @param id ID of the draft order
     * 
     */
-    async updateDraftOrderItems(id: string, payload: UpdateDraftOrderItemsPayload): Promise<CustomResponse<any>> {
+    async updateDraftOrderItems(id: string, payload: UpdateDraftOrderItemsPayload): Promise<CustomResponse<string>> {
         try {
             const vendorId = getVendorId();
-            const res = await bridgeClient.patch(`/custom/admin/orders/${id}/draft`, payload, {
+            const res = await bridgeClient.post(`/custom/admin/orders/${id}/draft`, payload, {
                 headers: {
                     'x-api-vendor': vendorId,
                 },

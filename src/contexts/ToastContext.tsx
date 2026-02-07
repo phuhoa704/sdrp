@@ -1,14 +1,10 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { Toast, ToastType } from '@/components/Toast';
+import React, { createContext, useContext, useCallback } from 'react';
+import { toast, ToastContainer, Slide } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-interface ToastMessage {
-    id: string;
-    message: string;
-    type: ToastType;
-    duration?: number;
-}
+type ToastType = 'success' | 'error' | 'warning' | 'info';
 
 interface ToastContextType {
     showToast: (message: string, type?: ToastType, duration?: number) => void;
@@ -25,31 +21,30 @@ export const useToast = () => {
 };
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [toasts, setToasts] = useState<ToastMessage[]>([]);
-
     const showToast = useCallback((message: string, type: ToastType = 'info', duration = 5000) => {
-        const id = Date.now().toString();
-        setToasts((prev) => [...prev, { id, message, type, duration }]);
-    }, []);
-
-    const removeToast = useCallback((id: string) => {
-        setToasts((prev) => prev.filter((toast) => toast.id !== id));
+        toast[type](message, {
+            autoClose: duration,
+        });
     }, []);
 
     return (
         <ToastContext.Provider value={{ showToast }}>
             {children}
-            <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-3 max-w-md">
-                {toasts.map((toast) => (
-                    <Toast
-                        key={toast.id}
-                        message={toast.message}
-                        type={toast.type}
-                        duration={toast.duration}
-                        onClose={() => removeToast(toast.id)}
-                    />
-                ))}
-            </div>
+            <ToastContainer
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored"
+                transition={Slide}
+                className="mt-20 rounded-xl"
+                toastClassName="relative flex p-1 min-h-10 rounded-xl justify-between overflow-hidden cursor-pointer bg-white dark:bg-slate-900 shadow-2xl mb-4 border border-slate-100 dark:border-slate-800 text-sm font-bold text-slate-800 dark:text-slate-200"
+            />
         </ToastContext.Provider>
     );
 };

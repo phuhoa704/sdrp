@@ -36,15 +36,13 @@ import { cn, formatCurrency } from '@/lib/utils';
 import { selectSelectedSalesChannelId } from '@/store/selectors';
 import { matchProductStatus, matchProductStatusColor } from '@/lib/helpers';
 import { TableView } from '@/components/TableView';
+import { useToast } from '@/contexts/ToastContext';
 import { noImage } from '@/configs';
 import { SearchFilter } from '@/components/filters/Search';
 
-interface Props {
-  onRestockProduct?: (p: Product) => void;
-  onGoToWholesale?: () => void;
-}
 
-export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Props) {
+export default function ProductCatalog() {
+  const { showToast } = useToast();
 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isProductFormOpen, setIsProductFormOpen] = useState(false);
@@ -333,8 +331,10 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
 
       if (editingProduct?.id) {
         await productService.updateProduct(editingProduct.id, payload);
+        showToast('Cập nhật sản phẩm thành công', 'success');
       } else {
         await productService.createProduct(payload);
+        showToast('Thêm sản phẩm mới thành công', 'success');
       }
 
       setIsProductFormOpen(false);
@@ -717,7 +717,12 @@ export default function ProductCatalog({ onRestockProduct, onGoToWholesale }: Pr
         }}
         onConfirm={async () => {
           if (productToDelete) {
-            await deleteProduct(productToDelete.id);
+            try {
+              await deleteProduct(productToDelete.id);
+              showToast('Xóa sản phẩm thành công', 'success');
+            } catch (err: any) {
+              showToast(err.message || 'Không thể xóa sản phẩm', 'error');
+            }
           }
           setIsDeleteModalOpen(false);
           setProductToDelete(null);

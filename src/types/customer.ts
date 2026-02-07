@@ -30,4 +30,5 @@ export type Customer = {
     last_name: string;
     addresses: CustomerAddress[];
     phone: string;
+    metadata: Record<string, any> | null;
 };

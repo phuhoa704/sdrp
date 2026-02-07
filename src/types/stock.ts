@@ -60,6 +60,8 @@ export interface StockLocationAddress {
     metadata: Record<string, unknown> | null;
 }
 
+import { SalesChannel } from "./sales-channel";
+
 export interface StockLocation {
     id: string;
     name: string;
@@ -69,4 +71,5 @@ export interface StockLocation {
     created_at: string;
     updated_at: string;
     deleted_at: string | null;
+    sales_channels?: SalesChannel[];
 }

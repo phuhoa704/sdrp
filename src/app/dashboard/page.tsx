@@ -42,6 +42,8 @@ import { ProductTypes } from './pages/ProductTypes';
 import { SalesChannels } from './pages/SalesChannels';
 import { ProductTags } from './pages/ProductTags';
 import { StockLocations } from './pages/StockLocations';
+import { CustomerGroup } from './pages/CustomerGroup';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -156,9 +158,7 @@ export default function DashboardPage() {
         return <OrderHistory onGoToWholesale={() => handleSetView('WHOLESALE_MARKETPLACE')} />;
       case 'INVENTORY':
         return (
-          <ProductCatalog
-            onGoToWholesale={() => handleSetView('WHOLESALE_MARKETPLACE')}
-          />
+          <ProductCatalog />
         );
       case 'CATEGORY':
         return <Category />;
@@ -207,6 +207,8 @@ export default function DashboardPage() {
         return <Cashbook />;
       case 'CUSTOMERS':
         return <Customers />;
+      case 'CUSTOMERS_GROUP':
+        return <CustomerGroup />;
       case 'PRICING':
         return <Pricing />;
       case 'PROMOTIONS':

@@ -68,7 +68,7 @@ export const InventoryItemDetail: React.FC<InventoryItemDetailProps> = ({ invent
           <ChevronLeft size={20} />
         </button>
         <div>
-          <h2 className="text-xl font-bold dark:text-white text-slate-800 max-w-md truncate">{item?.title || 'Loading...'}</h2>
+          <h2 className="text-xl font-bold dark:text-white text-slate-800 max-w-md truncate">Quản lý tồn kho: {item?.title || 'Loading...'}</h2>
           <p className="text-xs dark:text-slate-500 text-slate-700 font-bold">Chi tiết kho</p>
         </div>
       </div>

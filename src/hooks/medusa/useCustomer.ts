@@ -2,7 +2,13 @@ import { useState, useEffect, useCallback } from "react";
 import { customerService } from "@/lib/api/medusa/customerService";
 import { Customer } from "@/types/customer";
 
-export const useCustomers = (autoFetch = true, query: any = {}) => {
+interface Props {
+    autoFetch?: boolean;
+    query?: any;
+}
+
+export const useCustomers = (props: Props) => {
+    const { autoFetch = true, query } = props;
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [count, setCount] = useState<number>(0);
     const [loading, setLoading] = useState<boolean>(false);

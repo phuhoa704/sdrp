@@ -6,6 +6,9 @@ import { Product, ProductVariant } from '@/types/product';
 import { Button } from './Button';
 import { productService } from '@/lib/api/medusa/productService';
 import { TableLoading } from './TableLoading';
+import { useAppSelector } from '@/store/hooks';
+import { selectSelectedSalesChannelId } from '@/store/selectors';
+import { draftOrderService } from '@/lib/api/medusa/draftOrderService';
 
 interface ProductModalProps {
   product: Product | null;
@@ -28,6 +31,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   const [selectedUnit, setSelectedUnit] = useState('Chai/Gói');
   const [variantsLoading, setVariantsLoading] = useState(false);
   const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [availability, setAvailability] = useState<number | null>(null);
+  const selectedSalesChannelId = useAppSelector(selectSelectedSalesChannelId);
 
   useEffect(() => {
     setCurrentProduct(initialProduct);
@@ -41,6 +46,30 @@ export const ProductModal: React.FC<ProductModalProps> = ({
     }
     return () => { document.body.style.overflow = 'unset'; };
   }, [initialProduct, mode]);
+
+  useEffect(() => {
+    if (selectedVariant && selectedSalesChannelId) {
+      const checkStock = async () => {
+        try {
+          const res = await draftOrderService.checkAvailability({
+            variant_id: selectedVariant.id,
+            sales_channel_id: selectedSalesChannelId
+          });
+          if (res.data && res.data[selectedVariant.id]) {
+            setAvailability(res.data[selectedVariant.id].availability);
+          } else {
+            setAvailability(0);
+          }
+        } catch (error) {
+          console.error("Failed to check availability:", error);
+          setAvailability(0);
+        }
+      };
+      checkStock();
+    } else {
+      setAvailability(null);
+    }
+  }, [selectedVariant, selectedSalesChannelId]);
 
   if (!currentProduct) return null;
 
@@ -106,7 +135,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             <div>
               <h2 className="text-xl md:text-2xl font-black text-[#1F2937] dark:text-slate-100 leading-tight">{currentProduct.title}</h2>
               <p className="text-[10px] md:text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
-                Hoạt chất: {"--"}
+                {currentProduct.tags?.map((t) => t.value).join(', ')}
               </p>
             </div>
           </div>
@@ -124,9 +153,11 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 <h3 className="text-[11px] font-black text-[#6B7280] dark:text-slate-500 uppercase tracking-widest flex items-center gap-3">
                   <AlignLeft size={16} style={{ color: primaryColor }} /> Đặc tính kỹ thuật
                 </h3>
-                <p className="text-sm text-[#4B5563] dark:text-slate-300 leading-relaxed font-medium bg-slate-50 dark:bg-slate-800/50 p-6 rounded-[24px] border border-slate-100 dark:border-slate-800 line-clamp-5">
-                  {currentProduct.description || `Sản phẩm bảo vệ thực vật công nghệ cao, nồng độ hoạt chất tối ưu giúp kiểm soát dịch hại triệt để.`}
-                </p>
+                <div className="p-6 rounded-[24px] border border-slate-100 dark:border-slate-800 overflow-hidden bg-slate-50 dark:bg-slate-800/50">
+                  <p className="text-sm text-[#4B5563] dark:text-slate-300 leading-relaxed font-medium line-clamp-5">
+                    {currentProduct.description || `Sản phẩm bảo vệ thực vật công nghệ cao, nồng độ hoạt chất tối ưu giúp kiểm soát dịch hại triệt để.`}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -149,7 +180,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             ) : (
               <div className="space-y-4">
                 <h3 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 flex items-center gap-2">
-                  <Zap size={14} style={{ color: primaryColor }} /> Nồng độ / Công nghệ bào chế
+                  <Zap size={14} style={{ color: primaryColor }} /> Biến thể
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {variants.map((v) => (
@@ -158,7 +189,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                       onClick={() => setSelectedVariant(v)}
                       className={`p-4 rounded-2xl border-2 transition-all flex flex-col gap-1 text-left ${selectedVariant?.id === v.id
                         ? 'bg-white dark:bg-slate-800 shadow-lg'
-                        : 'bg-white/50 dark:bg-slate-900/50 border-transparent text-slate-500'
+                        : 'bg-white/50 dark:bg-slate-900/50 border-transparent text-slate-500 shadow-sm'
                         }`}
                       style={selectedVariant?.id === v.id ? { borderColor: primaryColor } : {}}
                     >
@@ -168,6 +199,11 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                       <div className="flex items-center gap-2 text-[10px] font-bold opacity-70 text-slate-700 dark:text-slate-300">
                         <Globe size={12} /> {v.sku}
                       </div>
+                      {selectedVariant?.id === v.id && availability !== null && (
+                        <div className={`mt-2 text-[10px] font-black uppercase tracking-widest ${availability > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                          {availability > 0 ? `Còn hàng (${availability})` : 'Hết hàng'}
+                        </div>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -176,7 +212,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
             {/* Quantity & Unit */}
             <div className="grid grid-cols-2 gap-6 p-6 bg-white dark:bg-slate-800 rounded-[32px] shadow-sm border border-gray-100 dark:border-slate-700">
-              <div className="space-y-4">
+              {/* <div className="space-y-4">
                 <label className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">Đóng gói</label>
                 <div className="flex gap-2">
                   {(isWholesale ? ['Thùng', 'Lốc'] : ['Chai/Gói', 'Lốc']).map(u => (
@@ -190,7 +226,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                     </button>
                   ))}
                 </div>
-              </div>
+              </div> */}
               <div className="space-y-4">
                 <label className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">Số lượng</label>
                 <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 p-1.5 rounded-xl border border-slate-100 dark:border-slate-700">
@@ -218,8 +254,9 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 size="lg"
                 loading={isLoading}
                 onClick={handleAddToCart}
-                className={`h-14 rounded-2xl flex-1 md:flex-none px-12 font-black text-base shadow-xl text-white`}
-                style={{ backgroundColor: primaryColor }}
+                disabled={availability === null || availability <= 0}
+                className={`h-14 rounded-2xl flex-1 md:flex-none px-12 font-black text-base shadow-xl text-white ${availability === null || availability <= 0 ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
+                style={{ backgroundColor: (availability === null || availability <= 0) ? '#94a3b8' : primaryColor }}
                 icon={<ShoppingCart size={20} />}
               >
                 {isWholesale ? 'NHẬP HÀNG SỈ' : 'THÊM VÀO ĐƠN'}

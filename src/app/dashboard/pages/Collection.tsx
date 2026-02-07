@@ -11,8 +11,10 @@ import { ConfirmModal } from '@/components/ConfirmModal';
 import { collectionService } from '@/lib/api/medusa/collectionService';
 import { CollectionCard } from '@/components/collection/CollectionCard';
 import { Empty } from '@/components/Empty';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function Collection() {
+  const { showToast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -50,12 +52,13 @@ export default function Collection() {
     if (!collectionToDelete) return;
     try {
       await collectionService.deleteCollection(collectionToDelete.id);
+      showToast('Xóa bộ sưu tập thành công', 'success');
       setIsDeleteModalOpen(false);
       setCollectionToDelete(null);
       refresh();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to delete collection:', err);
-      alert('Không thể xóa bộ sưu tập. Vui lòng thử lại.');
+      showToast(err.message || 'Không thể xóa bộ sưu tập', 'error');
     }
   };
 

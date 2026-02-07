@@ -9,8 +9,10 @@ import { ProductTag } from '@/types/product';
 import { ProductTagForm } from '@/components/form/productTag/ProductTagForm';
 import { formatDate } from '@/lib/utils';
 import { productTagService } from '@/lib/api/medusa/productTagService';
+import { useToast } from '@/contexts/ToastContext';
 
 export const ProductTags = () => {
+  const { showToast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const { tags, loading, error, count, refresh, deleteProductTag } = useProductTags();
   const [selectedProductTag, setSelectedProductTag] = useState<ProductTag | null>(null);
@@ -46,10 +48,12 @@ export const ProductTags = () => {
         await productTagService.createProductTag(data);
       }
       await refresh();
+      showToast(selectedProductTag ? 'Cập nhật thẻ sản phẩm thành công' : 'Tạo thẻ sản phẩm thành công', 'success');
       setIsFormOpen(false);
       setSelectedProductTag(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save product tag:', error);
+      showToast(error.message || 'Không thể lưu thẻ sản phẩm', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -190,7 +194,12 @@ export const ProductTags = () => {
         }}
         onConfirm={async () => {
           if (productTagToDelete) {
-            await deleteProductTag(productTagToDelete.id);
+            try {
+              await deleteProductTag(productTagToDelete.id);
+              showToast('Xóa thẻ sản phẩm thành công', 'success');
+            } catch (error: any) {
+              showToast(error.message || 'Không thể xóa thẻ sản phẩm', 'error');
+            }
           }
           setIsDeleteModalOpen(false);
           setProductTagToDelete(null);

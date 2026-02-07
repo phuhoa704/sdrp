@@ -12,6 +12,7 @@ import { ProductType } from '@/types/product-type';
 import { productTypeService } from '@/lib/api/medusa/productTypeService';
 import { useAppSelector } from '@/store/hooks';
 import { selectSelectedSalesChannelId } from '@/store/selectors';
+import { useToast } from '@/contexts/ToastContext';
 
 interface ProductTypeProps {
   onCancel?: () => void;
@@ -20,6 +21,7 @@ interface ProductTypeProps {
 }
 
 export const ProductTypeForm: React.FC<ProductTypeProps> = ({ onCancel, onSave, initialData }) => {
+  const { showToast } = useToast();
   const [formData, setFormData] = useState({
     name: initialData?.value || '',
     description: ''
@@ -114,11 +116,11 @@ export const ProductTypeForm: React.FC<ProductTypeProps> = ({ onCancel, onSave, 
           )
         );
       }
-
+      showToast(initialData ? 'Cập nhật phân loại thành công' : 'Tạo phân loại thành công', 'success');
       onSave?.(formData);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update products:', error);
-      alert('Không thể cập nhật sản phẩm. Vui lòng thử lại.');
+      showToast(error.message || 'Không thể lưu phân loại', 'error');
     } finally {
       setLoading(false);
     }

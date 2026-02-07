@@ -102,10 +102,19 @@ export interface DraftOrder {
 }
 
 export interface DraftOrderListResponse {
-    draft_orders: DraftOrder[];
-    count: number;
-    offset: number;
-    limit: number;
+    status: number;
+    data: {
+        data: {
+            data: DraftOrder[];
+            pagination: {
+                count: number;
+                offset: number;
+                limit: number;
+            }
+        },
+        message: string;
+        status: string
+    }
 }
 
 export interface DraftOrderCheckAvailabilityResponse {

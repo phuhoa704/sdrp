@@ -67,7 +67,13 @@ class CollectionService {
      */
     async createCollection(payload: any): Promise<{ collection: ProductCollection }> {
         try {
-            const res = await bridgeClient.post('/admin/collections', payload);
+            const vendor = getVendorId();
+            const res = await bridgeClient.post('/admin/collections', {
+                ...payload,
+                additional_data: {
+                    vendor_id: vendor
+                }
+            });
             return res.data;
         } catch (error: unknown) {
             console.error('Failed to create Medusa collection:', error);

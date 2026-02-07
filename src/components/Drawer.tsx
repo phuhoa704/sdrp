@@ -90,7 +90,7 @@ export function Drawer({
 
       <div className={cn("fixed inset-y-0 z-[200] flex pointer-events-none", positionClasses[position])}>
         <div
-          className={cn(`h-full ${widthClasses[width]} flex flex-col w-screen bg-slate-900 dark:bg-slate-950 shadow-2xl border-l border-slate-800 pointer-events-auto`)}
+          className={cn(`h-full ${widthClasses[width]} flex flex-col w-screen bg-white dark:bg-slate-950 shadow-2xl border-l border-slate-100 dark:border-slate-800 pointer-events-auto`)}
           onClick={(e) => e.stopPropagation()}
           role="dialog"
           aria-modal="true"
@@ -98,7 +98,7 @@ export function Drawer({
         >
           {/* Header */}
           {(title || showCloseButton) && (
-            <div className="flex items-center justify-between p-6 border-b border-slate-800 shrink-0">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800 shrink-0">
               <div className="flex items-center gap-3">
                 {Icon && (
                   <div className={`w-10 h-10 ${iconBgColor} rounded-xl flex items-center justify-center`}>
@@ -106,7 +106,7 @@ export function Drawer({
                   </div>
                 )}
                 {title && (
-                  <h2 id="drawer-title" className="text-xl font-black text-white">
+                  <h2 id="drawer-title" className="text-xl font-black text-slate-900 dark:text-white">
                     {title}
                   </h2>
                 )}
@@ -114,7 +114,7 @@ export function Drawer({
               {showCloseButton && (
                 <button
                   onClick={onClose}
-                  className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-800 transition-colors text-slate-400 hover:text-white"
+                  className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   aria-label="Close drawer"
                 >
                   <X size={20} />
@@ -130,7 +130,7 @@ export function Drawer({
 
           {/* Footer */}
           {footer && (
-            <div className="p-4 border-t border-slate-800 shrink-0">
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 shrink-0">
               {footer}
             </div>
           )}

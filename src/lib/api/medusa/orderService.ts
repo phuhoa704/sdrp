@@ -1,3 +1,4 @@
+import { getVendorId } from '@/lib/utils';
 import bridgeClient from '../bridgeClient';
 import axios from 'axios';
 
@@ -18,7 +19,8 @@ class OrderService {
         [key: string]: unknown;
     }): Promise<{ message: string, status: string, data: { orders: any[]; count: number; limit: number; offset: number } }> {
         try {
-            const res = await bridgeClient.get('/custom/admin/orders', { params: query });
+            // const vendorId = getVendorId();
+            const res = await bridgeClient.get('/admin/orders', { params: query });
             return res.data;
         } catch (error: unknown) {
             console.error('Failed to fetch Medusa orders:', error);

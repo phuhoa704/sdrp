@@ -10,6 +10,7 @@ import { TableView } from '@/components/TableView';
 import { productService } from '@/lib/api/medusa/productService';
 import { useAppSelector } from '@/store/hooks';
 import { selectSelectedSalesChannelId } from '@/store/selectors';
+import { useToast } from '@/contexts/ToastContext';
 
 interface CategoryFormProps {
   initialData?: ProductCategory | null;
@@ -18,6 +19,7 @@ interface CategoryFormProps {
 }
 
 export const CategoryForm: React.FC<CategoryFormProps> = ({ initialData, onSave, onBack }) => {
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
@@ -110,10 +112,11 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({ initialData, onSave,
       if (add.length > 0 || remove.length > 0) {
         await categoryService.updateProductsToCategory(categoryId, { add, remove });
       }
-
+      showToast(initialData ? 'Cập nhật danh mục thành công' : 'Tạo danh mục thành công', 'success');
       onSave();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save category:', error);
+      showToast(error.message || 'Không thể lưu danh mục', 'error');
     } finally {
       setLoading(false);
     }

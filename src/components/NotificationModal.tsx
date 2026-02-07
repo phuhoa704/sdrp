@@ -57,7 +57,7 @@ export function NotificationModal({ isOpen, onClose }: NotificationModalProps) {
         </button>
       }
     >
-      <div className="p-4 space-y-3">
+      <div className="p-4 space-y-3 dark:bg-slate-950 bg-[#F9FAF9]">
         {notifications.length === 0 ? (
           <div className="text-center py-12">
             <Bell size={48} className="text-slate-700 mx-auto mb-4" />
@@ -67,10 +67,10 @@ export function NotificationModal({ isOpen, onClose }: NotificationModalProps) {
           notifications.map((notification) => (
             <div
               key={notification.id}
-              className="bg-slate-800/50 rounded-2xl p-4 hover:bg-slate-800 transition-colors group"
+              className="dark:bg-slate-800/50 bg-white rounded-2xl p-4 hover:border-[#22C55E]/20 transition-colors group"
             >
               <div className="flex items-start justify-between mb-2">
-                <h3 className="font-bold text-white text-sm flex-1">
+                <h3 className="font-bold dark:text-white text-slate-800 text-sm flex-1">
                   {notification.message.split('.')[0]}
                 </h3>
                 <span className="text-xs text-slate-500 ml-2 whitespace-nowrap">

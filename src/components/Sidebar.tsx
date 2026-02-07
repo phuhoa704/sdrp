@@ -104,15 +104,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           view: 'HOME',
         },
         {
-          id: 'marketplace',
-          label: 'MARKETPLACE',
-          icon: ShoppingBag,
-          children: [
-            { id: 'wholesale-store', label: 'GIAN HÀNG SỈ', view: 'WHOLESALE_MARKETPLACE' },
-            { id: 'order-history', label: 'LỊCH SỬ NHẬP', view: 'MARKETPLACE' },
-          ],
-        },
-        {
           id: 'warehouse',
           label: 'KHO HÀNG',
           icon: Package,
@@ -139,7 +130,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           id: 'customers',
           label: 'KHÁCH HÀNG',
           icon: User,
-          view: 'CUSTOMERS',
+          children: [
+            { id: 'customers', label: 'DANH SÁCH KHÁCH HÀNG', view: 'CUSTOMERS' },
+            { id: 'customers-group', label: 'NHÓM KHÁCH HÀNG', view: 'CUSTOMERS_GROUP' },
+          ],
         },
         {
           id: 'pricing',
@@ -152,6 +146,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
           label: 'KHUYẾN MÃI',
           icon: Ticket,
           view: 'PROMOTIONS',
+        },
+        {
+          id: 'marketplace',
+          label: 'MARKETPLACE',
+          icon: ShoppingBag,
+          children: [
+            { id: 'wholesale-store', label: 'GIAN HÀNG SỈ', view: 'WHOLESALE_MARKETPLACE' },
+            { id: 'order-history', label: 'LỊCH SỬ NHẬP', view: 'MARKETPLACE' },
+          ],
         },
       ];
     }

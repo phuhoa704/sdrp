@@ -14,6 +14,11 @@ export interface StockLocationData {
     stock_location_id: string;
 }
 
+export interface ManageSalesChannelsPayload {
+    add: string[];
+    remove: string[];
+}
+
 class StockLocationService {
     /**
      * Get list of stock locations from Medusa
@@ -42,7 +47,11 @@ class StockLocationService {
      */
     async getStockLocation(id: string): Promise<{ stock_location: StockLocation }> {
         try {
-            const res = await bridgeClient.get(`/admin/stock-locations/${id}`);
+            const res = await bridgeClient.get(`/admin/stock-locations/${id}`, {
+                params: {
+                    fields: "name,*sales_channels,*address"
+                }
+            });
             return res.data as { stock_location: StockLocation };
         } catch (error: unknown) {
             console.error(`Failed to fetch Medusa stock location ${id}:`, error);
@@ -82,7 +91,7 @@ class StockLocationService {
      * @param id ID of the stock location to update
      * @param data Data for updating the stock location
      */
-    async updateStockLocation(id: string, data: { name?: string; address_id?: string; metadata?: Record<string, unknown> }): Promise<{ stock_location: StockLocation }> {
+    async updateStockLocation(id: string, data: { name?: string; address_id?: string; address?: Record<string, unknown>; metadata?: Record<string, unknown> }): Promise<{ stock_location: StockLocation }> {
         try {
             const res = await bridgeClient.post(`/admin/stock-locations/${id}`, data);
             return res.data as { stock_location: StockLocation };
@@ -114,6 +123,22 @@ class StockLocationService {
                     : error instanceof Error
                         ? error.message
                         : 'Failed to delete stock location'
+            );
+        }
+    }
+
+    async manageSalesChannels(stockLocationId: string, payload: ManageSalesChannelsPayload) {
+        try {
+            const res = await bridgeClient.post(`/admin/stock-locations/${stockLocationId}/sales-channels`, payload);
+            return res.data as { stock_location: StockLocation };
+        } catch (error: unknown) {
+            console.error(`Failed to manage sales channels for Medusa stock location ${stockLocationId}:`, error);
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to manage sales channels'
             );
         }
     }

@@ -1,14 +1,19 @@
 'use client'
 
 import React, { useState } from 'react';
-import { ArrowLeft, Clock, Search, ChevronDown, ChevronRight, Check } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronRight, Check } from 'lucide-react';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
-import { PriceList } from '@/types/price';
 import { TableView } from '@/components/TableView';
 import { useProducts } from '@/hooks/medusa/useProducts';
-import { Product, ProductVariant } from '@/types/product';
+import { Product, ProductStatus, ProductVariant } from '@/types/product';
 import { cn } from '@/lib/utils';
+import { selectSelectedSalesChannelId } from '@/store/selectors';
+import { useAppSelector } from '@/store/hooks';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { useCustomerGroups } from '@/hooks/medusa/useCustomerGroups';
+import { Calendar as CalendarIcon, Users, X } from 'lucide-react';
 
 interface PriceListFormProps {
   onCancel: () => void;
@@ -24,10 +29,20 @@ export const PriceListForm: React.FC<PriceListFormProps> = ({ onCancel, onSave, 
   const [description, setDescription] = useState("Chương trình khai trương, giảm toàn cửa hàng 20%");
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   const [variantPrices, setVariantPrices] = useState<Record<string, { amount: number, currency_code: string }>>({});
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [selectedCustomerGroupIds, setSelectedCustomerGroupIds] = useState<string[]>([]);
+  const [isCustomerGroupsOpen, setIsCustomerGroupsOpen] = useState(false);
+  const selectedSalesChannelId = useAppSelector(selectSelectedSalesChannelId)
 
   const { products, loading } = useProducts({
-    fields: "*,*variants",
-    autoFetch: true
+    fields: "+variants",
+    autoFetch: true,
+    sales_channel_id: selectedSalesChannelId || undefined
+  });
+
+  const { customerGroups, loading: groupsLoading } = useCustomerGroups({
+    fields: "id,name",
   });
 
   const inputStyle = "w-full h-12 px-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 text-sm font-medium text-slate-800 dark:text-white transition-all";
@@ -62,6 +77,11 @@ export const PriceListForm: React.FC<PriceListFormProps> = ({ onCancel, onSave, 
       description,
       type,
       status,
+      starts_at: startDate,
+      ends_at: endDate,
+      rules: {
+        "customer.groups.id": selectedCustomerGroupIds
+      },
       prices: Object.entries(variantPrices).map(([variantId, price]) => ({
         variant_id: variantId,
         amount: price.amount,
@@ -177,6 +197,113 @@ export const PriceListForm: React.FC<PriceListFormProps> = ({ onCancel, onSave, 
                 <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
             </div>
+
+            <div className="space-y-2">
+              <label className={labelStyle}>Ngày bắt đầu (Tùy chọn)</label>
+              <div className="relative">
+                <DatePicker
+                  selected={startDate}
+                  onChange={(date: Date | null) => setStartDate(date)}
+                  placeholderText="Chọn ngày bắt đầu"
+                  className={inputStyle}
+                  dateFormat="dd/MM/yyyy"
+                  wrapperClassName='w-full'
+                />
+                <CalendarIcon size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className={labelStyle}>Ngày kết thúc (Tùy chọn)</label>
+              <div className="relative">
+                <DatePicker
+                  selected={endDate}
+                  onChange={(date: Date | null) => setEndDate(date)}
+                  placeholderText="Chọn ngày kết thúc"
+                  className={inputStyle}
+                  dateFormat="dd/MM/yyyy"
+                  minDate={startDate || undefined}
+                  wrapperClassName='w-full'
+                />
+                <CalendarIcon size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Customer Groups */}
+            <div className="md:col-span-2 space-y-2">
+              <label className={labelStyle}>Nhóm khách hàng (Tùy chọn)</label>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsCustomerGroupsOpen(!isCustomerGroupsOpen)}
+                  className={`${inputStyle} text-left flex items-center justify-between`}
+                >
+                  <span className={cn(selectedCustomerGroupIds.length === 0 ? "text-slate-400" : "text-slate-800 dark:text-white")}>
+                    {selectedCustomerGroupIds.length === 0
+                      ? "Chọn nhóm khách hàng"
+                      : `${selectedCustomerGroupIds.length} nhóm đã chọn`}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Users size={16} className="text-slate-400" />
+                    <ChevronDown size={16} className={cn("text-slate-400 transition-transform", isCustomerGroupsOpen && "rotate-180")} />
+                  </div>
+                </button>
+
+                {isCustomerGroupsOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setIsCustomerGroupsOpen(false)} />
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-20 max-h-60 overflow-y-auto p-2 space-y-1">
+                      {groupsLoading ? (
+                        <div className="p-4 text-center text-xs text-slate-400">Đang tải...</div>
+                      ) : customerGroups.length === 0 ? (
+                        <div className="p-4 text-center text-xs text-slate-400">Không tìm thấy nhóm khách hàng nào</div>
+                      ) : (
+                        customerGroups.map(group => (
+                          <label
+                            key={group.id}
+                            className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg cursor-pointer transition-colors"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedCustomerGroupIds.includes(group.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedCustomerGroupIds([...selectedCustomerGroupIds, group.id]);
+                                } else {
+                                  setSelectedCustomerGroupIds(selectedCustomerGroupIds.filter(id => id !== group.id));
+                                }
+                              }}
+                              className="w-4 h-4 rounded border-slate-300 text-blue-500 focus:ring-blue-500"
+                            />
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{group.name}</span>
+                          </label>
+                        ))
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+              {selectedCustomerGroupIds.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {selectedCustomerGroupIds.map(id => {
+                    const group = customerGroups.find(g => g.id === id);
+                    if (!group) return null;
+                    return (
+                      <div key={id} className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-xs font-bold border border-blue-100 dark:border-blue-800/50 animate-fade-in">
+                        {group.name}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCustomerGroupIds(selectedCustomerGroupIds.filter(gid => gid !== id))}
+                          className="hover:text-blue-800 dark:hover:text-blue-200"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             <div className="md:col-span-2 space-y-2">
               <label className={labelStyle}>Mô tả</label>
               <textarea
@@ -212,7 +339,7 @@ export const PriceListForm: React.FC<PriceListFormProps> = ({ onCancel, onSave, 
             }}
             renderRow={(product: Product) => (
               <tr key={product.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                <td className="px-6 py-4">
+                <td className="py-5 px-4 pl-8">
                   <input
                     type="checkbox"
                     checked={selectedProducts.some(p => p.id === product.id)}
@@ -220,18 +347,18 @@ export const PriceListForm: React.FC<PriceListFormProps> = ({ onCancel, onSave, 
                     className="w-5 h-5 rounded border-slate-300 text-blue-500 focus:ring-blue-500"
                   />
                 </td>
-                <td className="px-6 py-4">
+                <td className="py-5 px-4">
                   <div className="font-bold text-sm text-slate-800 dark:text-white">{product.title}</div>
                 </td>
-                <td className="px-6 py-4">
+                <td className="py-5 px-4">
                   <span className="text-sm text-slate-600 dark:text-slate-400">{product.variants?.length || 0} biến thể</span>
                 </td>
-                <td className="px-6 py-4">
+                <td className="py-5 px-4 pr-8">
                   <span className={cn(
                     "px-3 py-1 rounded-full text-xs font-bold",
-                    product.status === 'published' ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                    product.status === ProductStatus.PUBLISHED ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                   )}>
-                    {product.status === 'published' ? 'Đã xuất bản' : 'Nháp'}
+                    {product.status === ProductStatus.PUBLISHED ? 'Công khai' : 'Bản nháp'}
                   </span>
                 </td>
               </tr>

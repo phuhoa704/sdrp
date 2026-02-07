@@ -8,12 +8,16 @@ import { TableView } from '@/components/TableView'
 import { StockLocation } from '@/types/stock'
 import { StockLocationForm } from '@/components/form/stockLocation/StockLocationForm'
 import { stockLocationService } from '@/lib/api/medusa/stockLocationService'
+import { useToast } from '@/contexts/ToastContext'
+import { StockLocationDetail } from '@/components/stock-location/StockLocationDetail'
 
 export const StockLocations = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const { locations, loading, error, refresh, count, deleteStockLocation } = useStockLocations();
   const [currentPage, setCurrentPage] = useState(1)
+  const { showToast } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedStockLocation, setSelectedStockLocation] = useState<StockLocation | null>(null);
@@ -36,18 +40,32 @@ export const StockLocations = () => {
     try {
       if (selectedStockLocation?.id) {
         await stockLocationService.updateStockLocation(selectedStockLocation.id, data);
+        showToast('Cập nhật vị trí kho thành công', 'success');
       } else {
         await stockLocationService.createStockLocation(data);
+        showToast('Tạo vị trí kho mới thành công', 'success');
       }
       setIsFormOpen(false);
       setSelectedStockLocation(null);
       refresh();
     } catch (err: any) {
       console.error('Failed to save stock location:', err);
-      alert(err.message || 'Không thể lưu vị trí kho');
+      showToast(err.message || 'Không thể lưu vị trí kho', 'error');
     } finally {
       setIsSaving(false);
     }
+  }
+
+  if (selectedLocationId) {
+    return (
+      <StockLocationDetail
+        id={selectedLocationId}
+        onBack={() => {
+          setSelectedLocationId(null)
+          refresh()
+        }}
+      />
+    )
   }
 
   if (isFormOpen) {
@@ -77,12 +95,12 @@ export const StockLocations = () => {
           <div className="shrink-0">
             <div className="flex items-center gap-2 mb-1">
               <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
-                SALES CHANNELS MANAGEMENT
+                STOCK LOCATIONS MANAGEMENT
               </span>
               <Store size={12} className='text-amber-500 animate-pulse' />
             </div>
             <h2 className="text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-none">
-              Quản lý <span className="text-emerald-600 font-black">Kênh bán hàng</span>
+              Quản lý <span className="text-emerald-600 font-black">Vị trí kho</span>
             </h2>
           </div>
 
@@ -125,7 +143,7 @@ export const StockLocations = () => {
             totalItems: count
           }}
           renderRow={(item, index) => (
-            <tr key={item.id} onClick={() => handleEdit(item)} className="group border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+            <tr key={item.id} onClick={() => setSelectedLocationId(item.id)} className="group border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer">
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="text-sm font-medium text-gray-900 dark:text-white">{item.name}</div>
               </td>

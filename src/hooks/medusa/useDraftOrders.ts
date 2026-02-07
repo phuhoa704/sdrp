@@ -28,11 +28,11 @@ export const useDraftOrders = (options: UseDraftOrdersOptions = {}) => {
                 // q,
                 // limit,
                 // offset,
-                fields: "id,items",
-                // sales_channel_id: selectedSalesChannelId
+                fields: "id,-items,display_id",
+                sales_channel_id: [selectedSalesChannelId]
             });
-            setDraftOrders(data.draft_orders);
-            setCount(data.count);
+            setDraftOrders(data.data.data.data);
+            setCount(data.data.data.pagination.count);
         } catch (err: any) {
             setError(err.message || 'Failed to fetch Medusa draft orders');
         } finally {

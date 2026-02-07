@@ -10,8 +10,10 @@ import { SalesChannelForm } from '@/components/form/salesChannel/SalesChannelFor
 import { salesChannelService } from '@/lib/api/medusa/salesChannelService'
 import { useAppDispatch } from '@/store/hooks'
 import { refreshSalesChannels } from '@/store/slices/uiSlice'
+import { useToast } from '@/contexts/ToastContext';
 
 export const SalesChannels = () => {
+  const { showToast } = useToast();
   const dispatch = useAppDispatch();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSalesChannel, setSelectedSalesChannel] = useState<SalesChannel | null>(null);
@@ -48,11 +50,12 @@ export const SalesChannels = () => {
       }
       setIsFormOpen(false);
       setSelectedSalesChannel(null);
+      showToast(selectedSalesChannel?.id ? 'Cập nhật kênh bán hàng thành công' : 'Tạo kênh bán hàng thành công', 'success');
       refresh();
       dispatch(refreshSalesChannels()); // Trigger refresh in Sidebar
     } catch (err: any) {
       console.error('Failed to save sales channel:', err);
-      alert(err.message || 'Không thể lưu kênh bán hàng');
+      showToast(err.message || 'Không thể lưu kênh bán hàng', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -205,7 +208,12 @@ export const SalesChannels = () => {
         }}
         onConfirm={async () => {
           if (salesChannelToDelete) {
-            await deleteSalesChannel(salesChannelToDelete.id);
+            try {
+              await deleteSalesChannel(salesChannelToDelete.id);
+              showToast('Xóa kênh bán hàng thành công', 'success');
+            } catch (err: any) {
+              showToast(err.message || 'Không thể xóa kênh bán hàng', 'error');
+            }
           }
           setIsDeleteModalOpen(false);
           setSalesChannelToDelete(null);

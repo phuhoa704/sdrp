@@ -11,8 +11,10 @@ import { categoryService } from '@/lib/api/medusa/categoryService';
 import { InputSearch } from '@/components/Search';
 import { Error } from '@/components/Error';
 import { CategoryRanking } from '@/components/category/CategoryRanking';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function Category() {
+  const { showToast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -100,12 +102,13 @@ export default function Category() {
     setIsDeleting(true);
     try {
       await categoryService.deleteCategory(categoryToDelete.id);
+      showToast('Xóa danh mục thành công', 'success');
       setIsDeleteModalOpen(false);
       setCategoryToDelete(null);
       refresh();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to delete category:', error);
-      alert('Không thể xóa danh mục. Vui lòng thử lại.');
+      showToast(error.message || 'Không thể xóa danh mục', 'error');
     } finally {
       setIsDeleting(false);
     }

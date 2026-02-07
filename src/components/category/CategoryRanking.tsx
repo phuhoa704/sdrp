@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react'
 import { Button } from '../Button';
 import { ProductCategory } from '@/types/product';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/contexts/ToastContext';
 import {
   DndContext,
   closestCenter,
@@ -95,6 +96,7 @@ const SortableItem = ({ category, index, isChild }: SortableItemProps) => {
 };
 
 export const CategoryRanking = ({ categories, onCancel, onSave }: Props) => {
+  const { showToast } = useToast();
   // Organize categories once on mount
   const initialOrganized = useMemo(() => {
     const getRank = (c: ProductCategory) => (c as any).rank ?? (c as any).metadata?.rank ?? 0;
@@ -163,10 +165,11 @@ export const CategoryRanking = ({ categories, onCancel, onSave }: Props) => {
         });
 
         await Promise.all(updatePromises);
-
+        showToast('Cập nhật thứ tự danh mục thành công', 'success');
         onSave();
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to update category ranks:', error);
+        showToast(error.message || 'Không thể cập nhật thứ tự danh mục', 'error');
         setOrganizedCategories(organizedCategories);
       } finally {
         setIsUpdating(false);

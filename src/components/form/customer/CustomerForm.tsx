@@ -3,6 +3,7 @@ import { Customer } from '@/types/customer';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/contexts/ToastContext';
 
 interface CustomerFormProps {
   initialData?: Customer | null;
@@ -12,6 +13,7 @@ interface CustomerFormProps {
 }
 
 export const CustomerForm = ({ initialData, onSave, onCancel, loading }: CustomerFormProps) => {
+  const { showToast } = useToast();
   const [formData, setFormData] = useState({
     email: '',
     company_name: '',
@@ -96,6 +98,9 @@ export const CustomerForm = ({ initialData, onSave, onCancel, loading }: Custome
 
       <div className="max-w-3xl mx-auto">
         <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-8 shadow-xl">
+          <h3 className="text-lg font-black text-slate-800 dark:text-white mb-4 uppercase tracking-tight">
+            Thông tin cơ bản
+          </h3>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className={labelClass}>

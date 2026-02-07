@@ -10,6 +10,7 @@ import { TableView } from '@/components/TableView';
 import { productService } from '@/lib/api/medusa/productService';
 import { useAppSelector } from '@/store/hooks';
 import { selectSelectedSalesChannelId } from '@/store/selectors';
+import { useToast } from '@/contexts/ToastContext';
 
 interface CollectionFormProps {
   initialData?: ProductCollection | null;
@@ -18,6 +19,7 @@ interface CollectionFormProps {
 }
 
 export const CollectionForm: React.FC<CollectionFormProps> = ({ initialData, onBack, onSave }) => {
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
@@ -101,11 +103,11 @@ export const CollectionForm: React.FC<CollectionFormProps> = ({ initialData, onB
       if (add.length > 0 || remove.length > 0) {
         await collectionService.updateProductsToCollection(collectionId, { add, remove });
       }
-
+      showToast(initialData ? 'Cập nhật bộ sưu tập thành công' : 'Tạo bộ sưu tập thành công', 'success');
       onSave();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save collection:', error);
-      alert('Không thể lưu bộ sưu tập. Vui lòng thử lại.');
+      showToast(error.message || 'Không thể lưu bộ sưu tập', 'error');
     } finally {
       setLoading(false);
     }
@@ -139,7 +141,7 @@ export const CollectionForm: React.FC<CollectionFormProps> = ({ initialData, onB
             <ArrowLeft size={24} className="text-slate-500" />
           </button>
           <div>
-            <h1 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">Thiết lập Loại hàng</h1>
+            <h1 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">Thiết lập Bộ sưu tập</h1>
             {initialData && (
               <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em] mt-2">{initialData.title}</p>
             )}

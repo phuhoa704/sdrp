@@ -23,4 +23,5 @@ export type ViewState =
     | 'DATA_GROUPS'
     | 'SALES_CHANNELS'
     | 'PRODUCT_TAGS'
-    | 'STOCK_LOCATIONS';
+    | 'STOCK_LOCATIONS'
+    | 'CUSTOMERS_GROUP';
