@@ -1,5 +1,7 @@
 'use client';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectIsDarkMode } from '@/store/selectors';
 import React, { createContext, useContext, useCallback } from 'react';
 import { toast, ToastContainer, Slide } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -21,6 +23,7 @@ export const useToast = () => {
 };
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const isDarkMode = useAppSelector(selectIsDarkMode);
     const showToast = useCallback((message: string, type: ToastType = 'info', duration = 5000) => {
         toast[type](message, {
             autoClose: duration,
@@ -40,7 +43,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 pauseOnFocusLoss
                 draggable
                 pauseOnHover
-                theme="colored"
+                theme={isDarkMode ? "dark" : "light"}
                 transition={Slide}
                 className="mt-20 rounded-xl"
                 toastClassName="relative flex p-1 min-h-10 rounded-xl justify-between overflow-hidden cursor-pointer bg-white dark:bg-slate-900 shadow-2xl mb-4 border border-slate-100 dark:border-slate-800 text-sm font-bold text-slate-800 dark:text-slate-200"

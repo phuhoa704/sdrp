@@ -20,6 +20,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { Drawer } from '@/components/Drawer'
 import { Customer } from '@/types/customer'
 import { useCustomers } from '@/hooks/medusa/useCustomer'
+import { SearchFilter } from '../filters/Search'
 
 interface Props {
   id: string
@@ -43,7 +44,7 @@ export const CustomerGroupDetail = ({ id, onBack }: Props) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([])
   const { customers: allCustomers, loading: customersLoading } = useCustomers({ query: { limit: 100, q: searchQuery } })
-  const { customers: groupCustomers, loading: groupCustomersLoading } = useCustomers({ query: { limit: 100, q: searchQuery, groups: id } })
+  const { customers: groupCustomers, loading: groupCustomersLoading, refresh: refreshGroupCustomers } = useCustomers({ query: { limit: 100, q: searchQuery, groups: id } })
 
   const fetchDetail = async () => {
     setLoading(true)
@@ -96,6 +97,7 @@ export const CustomerGroupDetail = ({ id, onBack }: Props) => {
       setIsAddCustomersDrawerOpen(false)
       setSelectedCustomerIds([])
       fetchDetail()
+      refreshGroupCustomers();
     } catch (error: any) {
       showToast(error.message || 'Không thể thêm khách hàng', 'error')
     } finally {
@@ -108,6 +110,7 @@ export const CustomerGroupDetail = ({ id, onBack }: Props) => {
       await customerGroupService.manageCustomers(id, { remove: [customerId] })
       showToast('Đã xóa khách hàng khỏi nhóm', 'success')
       fetchDetail()
+      refreshGroupCustomers();
     } catch (error: any) {
       showToast(error.message || 'Không thể xóa khách hàng', 'error')
     }
@@ -351,19 +354,14 @@ export const CustomerGroupDetail = ({ id, onBack }: Props) => {
           </div>
         }
       >
-        <div className="space-y-6">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-14 pl-12 pr-6 bg-slate-800 dark:bg-white/5 rounded-2xl border border-slate-700 dark:border-white/10 outline-none focus:border-emerald-500 transition-all text-sm font-bold text-white"
-              placeholder="Tìm khách hàng..."
-            />
-          </div>
+        <div className="flex flex-col gap-6">
+          <SearchFilter
+            searchTerm={searchQuery}
+            handleSearchChange={setSearchQuery}
+            placeholder='Tìm kiếm khách hàng...'
+          />
 
-          <div className="space-y-1 max-h-[500px] overflow-y-auto no-scrollbar">
+          <div className="flex-1 space-y-1 overflow-y-auto no-scrollbar">
             {customersLoading ? (
               <div className="py-20 flex justify-center">
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-500"></div>
@@ -388,16 +386,16 @@ export const CustomerGroupDetail = ({ id, onBack }: Props) => {
                       "w-full p-4 rounded-2xl flex items-center justify-between transition-all border-2 mb-2",
                       isSelected
                         ? "bg-emerald-500/10 border-emerald-500/50"
-                        : "bg-slate-800 dark:bg-white/5 border-transparent hover:border-slate-600",
+                        : "bg-white dark:bg-white/5 border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 shadow-sm",
                       alreadyInGroup && "opacity-40 cursor-not-allowed"
                     )}
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-slate-700 dark:bg-slate-800 rounded-xl flex items-center justify-center text-slate-400 font-bold border border-slate-600">
+                      <div className="w-10 h-10 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center text-slate-400 dark:text-slate-500 font-bold border border-slate-100 dark:border-slate-700">
                         {customer.first_name?.[0]}{customer.last_name?.[0]}
                       </div>
                       <div className="text-left">
-                        <p className="text-sm font-bold text-white">
+                        <p className={cn("text-sm font-bold", isSelected ? "text-emerald-600 dark:text-emerald-400" : "text-slate-900 dark:text-white")}>
                           {customer.first_name} {customer.last_name}
                         </p>
                         <p className="text-[10px] text-slate-500 font-bold uppercase">{customer.email}</p>

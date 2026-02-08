@@ -144,9 +144,9 @@ export const CustomerGroup = () => {
           }}
           renderRow={(grp, idx) => (
             <tr key={idx} onClick={() => setSelectedGroupId(grp.id)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-              <td className='py-5 px-4 pl-8'>{grp.name}</td>
-              <td className='py-5 px-4'>{grp?.customers?.length || 0}</td>
-              <td className='py-5 px-4'>{formatDate(grp.created_at)}</td>
+              <td className='py-5 px-4 pl-8 text-slate-800 dark:text-white'>{grp.name}</td>
+              <td className='py-5 px-4 text-slate-800 dark:text-white'>{grp?.customers?.length || 0}</td>
+              <td className='py-5 px-4 text-slate-800 dark:text-white'>{formatDate(grp.created_at)}</td>
               <td className='py-5 px-4 pr-8 text-right'>
                 <div className="relative inline-block">
                   <button onClick={(e) => {

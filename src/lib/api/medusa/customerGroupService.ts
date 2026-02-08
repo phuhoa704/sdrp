@@ -60,7 +60,11 @@ class CustomerGroupService {
 
     async getCustomerGroup(customerGroupId: string): Promise<{ customer_group: CustomerGroup }> {
         try {
-            const response = await bridgeClient.get(`/admin/customer-groups/${customerGroupId}`);
+            const response = await bridgeClient.get(`/admin/customer-groups/${customerGroupId}`, {
+                params: {
+                    fields: "id,name,created_at,updated_at,customers.id"
+                }
+            });
             return response.data;
         } catch (error) {
             console.error('Failed to fetch Medusa customer group:', error);
