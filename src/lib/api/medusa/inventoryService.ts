@@ -1,58 +1,33 @@
 import bridgeClient from '../bridgeClient';
 import axios from 'axios';
-import { Product, ProductVariant } from '@/types/product';
+import { InventoryItem, InventoryLevel } from '@/types/inventory-item';
 
-export interface StockLocation {
-    id: string;
-    name: string;
-}
-
-export interface InventoryLevel {
-    id: string;
-    location_id: string;
-    available_quantity: number;
-    stocked_quantity: number;
-    reserved_quantity: number;
-    incoming_quantity: number;
-    metadata: Record<string, any> | null;
-    created_at: string;
-    updated_at: string;
-    stock_locations?: StockLocation[];
-}
-
-export interface InventoryItemVariant extends ProductVariant {
-    product?: Product;
-}
-
-export interface InventoryItem {
-    id: string;
-    sku: string | null;
-    title: string | null;
-    description: string | null;
-    thumbnail: string | null;
-    origin_country: string | null;
-    hs_code: string | null;
-    requires_shipping: boolean;
-    mid_code: string | null;
-    material: string | null;
-    weight: number | null;
-    length: number | null;
-    height: number | null;
-    width: number | null;
-    metadata: Record<string, any> | null;
-    reserved_quantity: number;
-    stocked_quantity: number;
-    created_at: string;
-    updated_at: string;
-    location_levels: InventoryLevel[];
-    variants: InventoryItemVariant[];
-}
 
 export interface InventoryItemResponse {
     inventory_item: InventoryItem;
 }
 
 class InventoryService {
+    /**
+     * Get inventory items
+     * @param query Query parameters (fields, expand, etc.)
+     */
+    async getInventoryItems(query?: Record<string, unknown>): Promise<{ inventory_items: InventoryItem[]; count: number; offset: number; limit: number }> {
+        try {
+            const res = await bridgeClient.get('/admin/inventory-items', { params: query });
+            return res.data;
+        } catch (error: unknown) {
+            console.error('Failed to fetch inventory items:', error);
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to fetch inventory items'
+            );
+        }
+    }
+
     /**
      * Get inventory item details
      * @param id Inventory Item ID

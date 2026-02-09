@@ -1,6 +1,7 @@
 import React, { Fragment } from 'react'
 import { Package, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Empty } from './Empty';
+import { cn } from '@/lib/utils';
 
 interface Props<T> {
   columns: {
@@ -30,7 +31,7 @@ export const TableView = <T,>({ columns, data, isLoading, emptyMessage, renderRo
     <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[32px] overflow-hidden shadow-sm">
       <table className="w-full text-left border-collapse">
         <thead>
-          <tr className={`bg-primary dark:bg-slate-800/50 text-[10px] font-black text-white dark:text-slate-500 uppercase tracking-[0.15em] border-b border-slate-100 dark:border-slate-800 ${headerClassName || ''}`}>
+          <tr className={cn(`bg-primary dark:bg-slate-800/50 text-[10px] font-black text-white dark:text-slate-500 uppercase tracking-[0.15em] border-b border-slate-100 dark:border-slate-800`, headerClassName || "")}>
             {columns.map((column, index) => (
               <th key={index} className={`py-5 px-4 first:pl-8 last:pr-8 ${column.className || ''}`} style={{ width: column.width }}>
                 {column.title}

@@ -19,8 +19,8 @@ export const useCustomers = (props: Props) => {
         setError(null);
         try {
             const data = await customerService.getCustomers(query);
-            setCustomers(data.customers);
-            setCount(data.count);
+            setCustomers(data.data.data.map((item: any) => item.customer));
+            setCount(data.data.pagination.count);
         } catch (err: any) {
             setError(err.message || 'Failed to fetch Medusa customers');
         } finally {

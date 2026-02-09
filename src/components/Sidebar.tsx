@@ -1,9 +1,11 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react';
+import React, { useRef, useState, useEffect, useMemo, Fragment } from 'react';
 import {
-  Home, Package, User, ShoppingBag, BookOpen, Tag, Ticket,
+  Home, Package, User, ShoppingBag, Tag, Ticket,
   ChevronDown, ChevronRight, Zap, Moon, Sun, ChevronLeft,
   MapPin,
-  Check
+  Check,
+  Wallet,
+  BookText
 } from 'lucide-react';
 import { UserRole } from '@/types/enum';
 import { ViewState } from '@/types/view-state';
@@ -27,8 +29,15 @@ interface SidebarProps {
 interface MenuItem {
   id: string;
   label: string;
-  icon: React.ElementType;
+  icon?: React.ElementType;
   view?: ViewState;
+  children?: SubMenuItem[];
+  category?: CategoryMenuItem[];
+}
+
+interface CategoryMenuItem {
+  id: string;
+  label: string;
   children?: SubMenuItem[];
 }
 
@@ -107,23 +116,42 @@ export const Sidebar: React.FC<SidebarProps> = ({
           id: 'warehouse',
           label: 'KHO HÀNG',
           icon: Package,
-          children: [
-            { id: 'product-list', label: 'DANH MỤC HÀNG', view: 'INVENTORY' },
-            { id: 'data-groups', label: 'PHÂN LOẠI', view: 'DATA_GROUPS' },
-            { id: 'category', label: 'LOẠI HÀNG', view: 'CATEGORY' },
-            { id: 'collection', label: 'BỘ SƯU TẬP', view: 'COLLECTION' },
-            { id: 'orders', label: 'ĐƠN HÀNG', view: 'CATALOG' },
-            { id: 'sales-channels', label: 'KÊNH BÁN HÀNG', view: 'SALES_CHANNELS' },
-            { id: 'product-tags', label: 'THẺ SẢN PHẨM', view: 'PRODUCT_TAGS' },
-            { id: 'stock-locations', label: 'VỊ TRÍ KHO', view: 'STOCK_LOCATIONS' },
-            { id: 'stock-check', label: 'KIỂM KHO', view: 'STOCK_CHECK' },
-            { id: 'export', label: 'XUẤT HỦY', view: 'STOCK_DISPOSAL' },
+          category: [
+            {
+              id: "products", label: "Quản lý hàng hóa", children: [
+                { id: 'product-list', label: 'Sản phẩm', view: 'PRODUCTS' },
+                { id: 'inventory', label: 'Danh mục tồn kho', view: 'INVENTORY' },
+              ]
+            },
+            {
+              id: "category", label: "Cấu trúc danh mục", children: [
+                { id: 'data-groups', label: 'Phân loại', view: 'DATA_GROUPS' },
+                { id: 'category', label: 'LOẠI HÀNG', view: 'CATEGORY' },
+                { id: 'collection', label: 'BỘ SƯU TẬP', view: 'COLLECTION' },
+              ]
+            },
+            {
+              id: "stock", label: "Nghiệp vụ kho", children: [
+                { id: 'stock-locations', label: 'VỊ TRÍ KHO', view: 'STOCK_LOCATIONS' },
+                { id: 'stock-check', label: 'KIỂM KHO', view: 'STOCK_CHECK' },
+                { id: 'export', label: 'XUẤT HỦY', view: 'STOCK_DISPOSAL' },
+              ]
+            }
           ],
+        },
+        {
+          id: "books",
+          label: "SỔ SÁCH",
+          icon: BookText,
+          children: [
+            { id: "stockup", label: "Phiếu nhập hàng", view: "STOCK_UP" },
+            { id: 'orders', label: 'Đơn hàng', view: 'CATALOG' }
+          ]
         },
         {
           id: 'notebook',
           label: 'SỔ QUỸ',
-          icon: BookOpen,
+          icon: Wallet,
           view: 'CASHBOOK',
         },
         {
@@ -231,135 +259,176 @@ export const Sidebar: React.FC<SidebarProps> = ({
       isCollapsed ? 'w-20 px-2' : 'w-64 px-4'
     )}>
       <div className={cn(
-        "flex items-center gap-3 py-6",
-        isCollapsed ? 'justify-center' : ''
+        "flex items-center gap-3 py-6 px-2",
+        isCollapsed ? 'justify-center flex-col' : 'justify-between'
       )}>
-        <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
-          <Zap size={20} className='text-white fill-white' />
-        </div>
-        {!isCollapsed && (
-          <div className="flex flex-col">
-            <span className="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight">SDRP</span>
-            <span className="text-xs font-bold text-emerald-400 tracking-widest -mt-1 uppercase">Platform</span>
+        <div className="flex gap-3">
+          <div className="w-9 h-9 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+            <Zap size={18} className='text-white fill-white' />
           </div>
-        )}
+          {!isCollapsed && (
+            <div className="flex flex-col">
+              <span className="text-lg font-extrabold text-slate-800 dark:text-white tracking-tight">SDRP</span>
+              <span className="text-xs font-bold text-emerald-400 tracking-widest -mt-1 uppercase">Platform</span>
+            </div>
+          )}
+        </div>
+        <button
+          onClick={toggleSidebar}
+          className="flex items-center justify-center p-2 rounded-lg text-slate-500 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors"
+          title={isCollapsed ? 'Mở rộng' : 'Thu gọn'}
+        >
+          {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+        </button>
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-hide scrollbar-track-transparent">
+      <nav className="flex-1 w-full overflow-y-auto scrollbar-hide  relative">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = isMenuActive(item);
           const isExpanded = expandedMenus.includes(item.id);
           const hasChildren = item.children && item.children.length > 0;
+          const hasCategory = item.category && item.category.length > 0;
 
           return (
-            <div key={item.id}>
-              <button
-                onClick={() => {
-                  if (hasChildren) {
-                    toggleMenu(item.id);
-                  } else if (item.view) {
-                    setView(item.view);
-                  }
-                }}
-                onMouseEnter={(e) => handleMouseEnter(e, item)}
-                onMouseLeave={() => setHoveredMenu(null)}
-                className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
-                  isActive
-                    ? "bg-emerald-50/80 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400"
-                    : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-800 dark:hover:text-slate-200",
-                  isCollapsed && "justify-center"
-                )}
-              >
-                <Icon
-                  size={20}
-                  className={cn(
-                    isActive ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400 group-hover:text-emerald-400"
-                  )}
-                />
-                {!isCollapsed && (
-                  <>
-                    <span className={cn(
-                      "flex-1 text-left text-xs font-bold tracking-wide",
-                      isActive ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400 group-hover:text-emerald-400"
-                    )}>
-                      {item.label}
-                    </span>
-                    {hasChildren && (
-                      isExpanded ? (
-                        <ChevronDown size={16} className="text-slate-500" />
-                      ) : (
-                        <ChevronRight size={16} className="text-slate-500" />
-                      )
-                    )}
-                  </>
-                )}
-              </button>
-
-              {hasChildren && isExpanded && !isCollapsed && (
-                <div className="ml-8 mt-1 space-y-0.5">
-                  {item.children?.map((child) => (
-                    <button
-                      key={child.id}
-                      onClick={() => setView(child.view)}
-                      className={cn(
-                        "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[11px] font-bold transition-all duration-200",
-                        isSubMenuActive(child.view)
-                          ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/10"
-                          : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-                      )}
-                    >
-                      <div className={cn(
-                        "w-1.5 h-1.5 rounded-full",
-                        isSubMenuActive(child.view) ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-slate-300"
-                      )} />
-                      {child.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {isCollapsed && hasChildren && hoveredMenu?.id === item.id && (
-                <div
-                  className="fixed left-[72px] w-[220px] bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.4)] overflow-hidden z-[999] animate-in fade-in slide-in-from-left-2 duration-200"
-                  style={{ top: hoveredMenu.top }}
-                  onMouseEnter={() => setHoveredMenu(hoveredMenu)}
+            <>
+              {item.id === "books" && <div className="border-t dark:border-slate-800/50 my-2"></div>}
+              <div key={item.id}>
+                <button
+                  onClick={() => {
+                    if (hasChildren || hasCategory) {
+                      toggleMenu(item.id);
+                    } else if (item.view) {
+                      setView(item.view);
+                    }
+                  }}
+                  onMouseEnter={(e) => handleMouseEnter(e, item)}
                   onMouseLeave={() => setHoveredMenu(null)}
+                  className={cn(
+                    "flex items-center transition-all duration-400 group rounded-xl overflow-hidden relative",
+                    isActive
+                      ? "bg-emerald-50/80 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400"
+                      : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-800 dark:hover:text-slate-200",
+                    isCollapsed ? "justify-center mx-auto mb-3 w-12 h-12" : "gap-4 p-3.5 px-4 mb-0 w-full",
+                  )}
                 >
-                  <div className="px-5 py-3 flex items-center justify-between border-b border-white/5 bg-slate-50/50 dark:bg-white/5">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{item.label}</span>
-                    <ChevronRight size={12} className="text-slate-600" />
+                  {Icon && <Icon
+                    size={20}
+                    className={cn(
+                      isActive ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400 group-hover:text-emerald-400"
+                    )}
+                  />}
+                  {!isCollapsed && (
+                    <>
+                      <span className={cn(
+                        "flex-1 text-left text-xs font-bold tracking-wide uppercase line-clamp-1",
+                        isActive ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400 group-hover:text-emerald-400"
+                      )}>
+                        {item.label}
+                      </span>
+                      {(hasChildren || hasCategory) && (
+                        isExpanded ? (
+                          <ChevronDown size={16} className="text-slate-500" />
+                        ) : (
+                          <ChevronRight size={16} className="text-slate-500" />
+                        )
+                      )}
+                    </>
+                  )}
+                </button>
+
+                {hasChildren && isExpanded && !isCollapsed && (
+                  <div className="ml-8 mt-1 space-y-0.5">
+                    {item.children?.map((child) => (
+                      <button
+                        key={child.id}
+                        onClick={() => setView(child.view)}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[11px] font-bold transition-all duration-200 uppercase",
+                          isSubMenuActive(child.view)
+                            ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/10"
+                            : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-1.5 h-1.5 rounded-full",
+                          isSubMenuActive(child.view) ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-slate-300"
+                        )} />
+                        {child.label}
+                      </button>
+                    ))}
                   </div>
-                  <div className="p-2 space-y-0.5">
-                    {item.children?.map(child => {
-                      const isSubActive = isSubMenuActive(child.view);
-                      return (
-                        <button
-                          key={child.id}
-                          onClick={() => {
-                            setView(child.view);
-                            setHoveredMenu(null);
-                          }}
-                          className={cn(
-                            "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-bold transition-all",
-                            isSubActive
-                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                              : "text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100"
-                          )}
-                        >
-                          <div className={cn(
-                            "w-1.5 h-1.5 rounded-full shrink-0 transition-all duration-300",
-                            isSubActive ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.6)]" : "bg-slate-700 group-hover:bg-slate-500"
-                          )} />
-                          <span className="uppercase tracking-tight whitespace-nowrap">{child.label}</span>
-                        </button>
-                      );
-                    })}
+                )}
+
+                {hasCategory && isExpanded && !isCollapsed && (
+                  <div className="flex flex-col">
+                    {item.category?.map((cate) => (
+                      <Fragment key={cate.id}>
+                        <div className="pl-12 px-3 py-2 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] border-t border-slate-50/50 dark:border-slate-800/50 first:border-t-0">{cate.label}</div>
+                        {cate?.children?.map((child) => (
+                          <button
+                            key={child.id}
+                            onClick={() => setView(child.view)}
+                            className={cn(
+                              "flex items-center gap-3 py-2 pl-12 pr-4 rounded-xl text-[11px] font-bold transition-all uppercase",
+                              isSubMenuActive(child.view)
+                                ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/10"
+                                : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                            )}
+                          >
+                            <div className={cn(
+                              "w-1.5 h-1.5 rounded-full",
+                              isSubMenuActive(child.view) ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-slate-300"
+                            )} />
+                            {child.label}
+                          </button>
+                        ))}
+                      </Fragment>
+                    ))}
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+
+                {isCollapsed && hasChildren && hoveredMenu?.id === item.id && (
+                  <div
+                    className="fixed left-[72px] w-[220px] bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.4)] overflow-hidden z-[999] animate-in fade-in slide-in-from-left-2 duration-200"
+                    style={{ top: hoveredMenu.top }}
+                    onMouseEnter={() => setHoveredMenu(hoveredMenu)}
+                    onMouseLeave={() => setHoveredMenu(null)}
+                  >
+                    <div className="px-5 py-3 flex items-center justify-between border-b border-white/5 bg-slate-50/50 dark:bg-white/5">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{item.label}</span>
+                      <ChevronRight size={12} className="text-slate-600" />
+                    </div>
+                    <div className="p-2 space-y-0.5">
+                      {item.children?.map(child => {
+                        const isSubActive = isSubMenuActive(child.view);
+                        return (
+                          <button
+                            key={child.id}
+                            onClick={() => {
+                              setView(child.view);
+                              setHoveredMenu(null);
+                            }}
+                            className={cn(
+                              "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-bold transition-all",
+                              isSubActive
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                : "text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100"
+                            )}
+                          >
+                            <div className={cn(
+                              "w-1.5 h-1.5 rounded-full shrink-0 transition-all duration-300",
+                              isSubActive ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.6)]" : "bg-slate-700 group-hover:bg-slate-500"
+                            )} />
+                            <span className="uppercase tracking-tight whitespace-nowrap">{child.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
           );
         })}
       </nav>
@@ -424,13 +493,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </button>
 
-        <button
-          onClick={toggleSidebar}
-          className="w-full flex items-center justify-center py-2 rounded-lg text-slate-500 hover:bg-slate-800/50 transition-colors"
-          title={isCollapsed ? 'Mở rộng' : 'Thu gọn'}
-        >
-          {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-        </button>
       </div>
     </div>
   );

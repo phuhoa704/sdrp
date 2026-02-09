@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Drawer } from '@/components/Drawer';
 import { Button } from '@/components/Button';
-import { inventoryService, InventoryLevel, InventoryItem } from '@/lib/api/medusa/inventoryService';
+import { inventoryService } from '@/lib/api/medusa/inventoryService';
 import { useToast } from '@/contexts/ToastContext';
+import { InventoryItem, InventoryLevel } from '@/types/inventory-item';
 
 interface UpdateStockDrawerProps {
   isOpen: boolean;

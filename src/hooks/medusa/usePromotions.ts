@@ -15,8 +15,8 @@ export const usePromotions = (query?: any) => {
         setError(null);
         try {
             const data = await promotionService.getPromotions(query);
-            setPromotions(data.promotions);
-            setCount(data.count);
+            setPromotions(data.data.data.map((item: any) => item.promotion));
+            setCount(data.data.pagination.count);
         } catch (err: any) {
             setError(err.message || 'Failed to fetch promotions');
         } finally {

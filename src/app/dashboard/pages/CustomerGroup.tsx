@@ -7,10 +7,12 @@ import { useCustomerGroups } from '@/hooks/medusa/useCustomerGroups';
 import { customerGroupService } from '@/lib/api/medusa/customerGroupService';
 import { formatDate } from '@/lib/utils';
 import type { CustomerGroup as CustomerGroupType } from '@/types/customer-group';
-import { Edit3, MoreHorizontal, Plus, Trash2, Users } from 'lucide-react'
+import { ChevronRight, Edit3, LayoutGrid, MoreHorizontal, Plus, Trash2, Users } from 'lucide-react'
 import React, { Fragment, useState } from 'react'
 
 import { CustomerGroupDetail } from '@/components/customer-group/CustomerGroupDetail';
+import { TableLoading } from '@/components/TableLoading';
+import { Empty } from '@/components/Empty';
 
 export const CustomerGroup = () => {
   const { showToast } = useToast();
@@ -102,10 +104,10 @@ export const CustomerGroup = () => {
               <Users size={12} className='text-amber-500 animate-pulse' />
             </div>
             <h1 className="text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-none">
-              Khách Hàng <span className="text-emerald-600 font-black">Thân Thiết</span>
+              QUẢN LÝ <span className="text-emerald-600 font-black">NHÓM KHÁCH HÀNG</span>
             </h1>
             <div className="flex items-center gap-2 text-slate-400 font-bold text-xs mt-1 uppercase tracking-widest">
-              Xây dựng niềm tin thông qua dữ liệu và chăm sóc cá nhân hóa
+              Phân loại tệp khách hàng để tối ưu hóa chăm sóc và bảng giá
             </div>
           </div>
 
@@ -122,7 +124,43 @@ export const CustomerGroup = () => {
             handleSearchChange={setSearchTerm}
           />
         </Card>
-        <TableView
+        {loading ? (
+          <TableLoading />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {customerGroups.length > 0 ? (
+              customerGroups.map((grp, idx) => (
+                <Card className='relative group' key={idx}>
+                  <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform duration-700">
+                    <Users size={120} />
+                  </div>
+                  <div className="relative z-10">
+                    <div className="flex justify-between items-start mb-6">
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600">
+                        <LayoutGrid size={24} />
+                      </div>
+                      <span className="text-[9px] font-black px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full uppercase tracking-widest border border-emerald-100">{formatDate(grp.created_at)}</span>
+                    </div>
+                    <h3 className="text-xl font-black text-slate-800 dark:text-white mb-2 group-hover:text-emerald-600 transition-colors uppercase tracking-tight">
+                      {grp.name}
+                    </h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium line-clamp-2 mb-8 leading-relaxed"></p>
+                    <div className="pt-6 border-t dark:border-slate-800 flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <Users size={14} className='text-slate-400' />
+                        <span className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-tighter">{grp?.customers?.length || 0} THÀNH VIÊN</span>
+                      </div>
+                      <ChevronRight size={18} className='text-slate-300 group-hover:translate-x-1 transition-transform' />
+                    </div>
+                  </div>
+                </Card>
+              ))
+            ) : (
+              <Empty title='Không tìm thấy nhóm khách hàng' description='Hãy thử thay đổi từ khóa tìm kiếm hoặc bộ lọc' />
+            )}
+          </div>
+        )}
+        {/* <TableView
           columns={[
             { title: 'Tên nhóm' },
             { title: 'Số lượng khách hàng' },
@@ -195,7 +233,7 @@ export const CustomerGroup = () => {
               </td>
             </tr>
           )}
-        />
+        /> */}
       </div>
       <ConfirmModal
         isOpen={isDeleteModalOpen}

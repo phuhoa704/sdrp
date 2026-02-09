@@ -1,6 +1,8 @@
 import { Customer } from "@/types/customer";
 import bridgeClient from "../bridgeClient";
 import axios from "axios";
+import { getVendorId } from "@/lib/utils";
+import { CustomGetResponse } from "@/types/custom-response";
 
 interface CreateCustomerData {
     email: string;
@@ -11,15 +13,21 @@ interface CreateCustomerData {
     metadata?: Record<string, any>;
 }
 
+interface CustomerData {
+    customer_id: string;
+    customer: Customer;
+}
+
 class CustomerService {
     async getCustomers(query?: {
         q?: string;
         limit?: number;
         offset?: number;
         [key: string]: unknown;
-    }): Promise<{ customers: Customer[], count: number, offset: number, limit: number }> {
+    }): Promise<CustomGetResponse<CustomerData>> {
         try {
-            const response = await bridgeClient.get('/admin/customers', { params: query });
+            const vendorId = getVendorId();
+            const response = await bridgeClient.get('/custom/admin/vendors/customers', { params: query, headers: { 'x-api-vendor': vendorId } });
             return response.data;
         } catch (error) {
             console.error('Failed to fetch Medusa customers:', error);
@@ -51,7 +59,8 @@ class CustomerService {
 
     async createCustomer(data: CreateCustomerData): Promise<{ customer: Customer }> {
         try {
-            const response = await bridgeClient.post('/admin/customers', data);
+            const vendorId = getVendorId();
+            const response = await bridgeClient.post('/admin/customers', { ...data, addition_data: { vendor_id: vendorId } });
             return response.data;
         } catch (error) {
             console.error('Failed to create Medusa customer:', error);

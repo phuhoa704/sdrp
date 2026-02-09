@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/Card';
 import { PenLine, ExternalLink, Filter, SlidersHorizontal, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/Button';
-import { inventoryService, InventoryItem, InventoryLevel } from '@/lib/api/medusa/inventoryService';
+import { inventoryService } from '@/lib/api/medusa/inventoryService';
 import { ManageLocationsDrawer } from './ManageLocationsDrawer';
 import { UpdateStockDrawer } from './UpdateStockDrawer';
+import { InventoryItem, InventoryLevel } from '@/types/inventory-item';
 
 interface InventoryItemDetailProps {
   inventoryItemId: string | null;

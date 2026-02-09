@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { cn } from '@/lib/utils';
+import { cn, formatRelativeTime, formatTime } from '@/lib/utils';
 import { usePromotions } from '@/hooks';
 import {
   Plus,
@@ -25,6 +25,8 @@ import { Button } from '@/components/Button';
 import { PromotionWizard } from '@/components/form/promotion/PromotionWizard';
 import { getPromotionUIData } from '@/lib/helpers';
 import { TableLoading } from '@/components/TableLoading';
+import { SearchFilter } from '@/components/filters/Search';
+import { useCampaigns } from '@/hooks/medusa/useCampaigns';
 
 
 export default function Promotions() {
@@ -36,12 +38,8 @@ export default function Promotions() {
     q: searchTerm || undefined
   });
 
-  const displayPromotions = (apiPromotions && apiPromotions.length > 0) ? apiPromotions : [];
-
-  const filtered = displayPromotions.filter(p => {
-    const ui = getPromotionUIData(p);
-    return ui.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (p.code && p.code.toLowerCase().includes(searchTerm.toLowerCase()));
+  const { campaigns: apiCampaigns, loading: campaignLoading, error: campaignError } = useCampaigns({
+    q: searchTerm || undefined
   });
 
   if (isWizardOpen) {
@@ -95,31 +93,23 @@ export default function Promotions() {
         </button>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 group">
-          <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors" size={20} />
-          <input
-            type="text"
-            placeholder="Tìm theo tên hoặc mã code..."
-            className="w-full bg-slate-900/40 border border-white/5 rounded-[24px] py-4 pl-14 pr-4 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/30 transition-all text-slate-200 placeholder:text-slate-600 shadow-inner-glow"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <button className="w-14 h-14 flex items-center justify-center bg-slate-900/40 border border-white/5 rounded-2xl text-slate-400 hover:text-white transition-all">
-          <Filter size={20} />
-        </button>
-      </div>
+      <Card className="flex items-center gap-4">
+        <SearchFilter
+          placeholder="Tìm theo tên hoặc mã code..."
+          searchTerm={searchTerm}
+          handleSearchChange={setSearchTerm}
+        />
+      </Card>
 
       {activeTab === 'promotions' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {loading ? <div className='col-span-full flex justify-center'><TableLoading /></div> : filtered.length === 0 ? (
+          {loading ? <div className='col-span-full flex justify-center'><TableLoading /></div> : apiPromotions.length === 0 ? (
             <div className="col-span-full py-20 text-center opacity-30">
               <SearchX size={48} className="mx-auto mb-4" />
               <p className="font-bold italic">Không tìm thấy khuyến mãi nào...</p>
             </div>
           ) : (
-            filtered.map((p: any) => {
+            apiPromotions.map((p: any) => {
               const ui = getPromotionUIData(p);
               const Icon = ui.icon;
               return (
@@ -160,33 +150,42 @@ export default function Promotions() {
         </div>
       ) : (
         <div className="space-y-4">
-          {/* {CAMPAIGNS.map(campaign => (
-            <Card key={campaign.id} className="p-4 bg-slate-900/40 border border-white/5 rounded-[24px] flex items-center justify-between group hover:bg-slate-800/40 transition-all">
-              <div className="flex items-center gap-6">
-                <div className="w-14 h-14 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-center text-blue-500 shadow-inner">
-                  <Calendar size={28} />
-                </div>
-                <div className="space-y-1">
-                  <h4 className="text-lg font-black text-white group-hover:text-blue-400 transition-colors tracking-tight">{(campaign as any).name || (campaign as any).title}</h4>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-3">
-                    <span>BẮT ĐẦU: {(campaign as any).starts_at || (campaign as any).startDate}</span>
-                    <span className="text-slate-700">•</span>
-                    <span>KẾT THÚC: {(campaign as any).ends_at || (campaign as any).endDate}</span>
-                  </p>
-                </div>
-              </div>
+          {campaignLoading ? <TableLoading /> : (
+            apiCampaigns.length > 0 ? (
+              apiCampaigns.map((camp) => (
+                <Card key={camp.id} className="p-4 bg-slate-900/40 border border-white/5 rounded-[24px] flex items-center justify-between group hover:bg-slate-800/40 transition-all">
+                  <div className="flex items-center gap-6">
+                    <div className="w-14 h-14 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-center text-blue-500 shadow-inner">
+                      <Calendar size={28} />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-lg font-black text-white group-hover:text-blue-400 transition-colors tracking-tight">{(camp as any).name || (camp as any).title}</h4>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-3">
+                        <span>BẮT ĐẦU: {formatRelativeTime(camp.starts_at)} {formatTime(camp.starts_at)}</span>
+                        <span className="text-slate-700">•</span>
+                        <span>KẾT THÚC: {formatRelativeTime(camp.ends_at)} {formatTime(camp.ends_at)}</span>
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="flex items-center gap-12 mr-4">
-                <div className="text-right">
-                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">NGÂN SÁCH DỰ KIẾN</p>
-                  <p className="text-xl font-black text-blue-500 tracking-tighter">{(campaign.budget || 0).toLocaleString()}đ</p>
-                </div>
-                <button className="px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black text-slate-400 uppercase tracking-widest hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-all">
-                  QUẢN LÝ CHIẾN DỊCH
-                </button>
+                  <div className="flex items-center gap-12 mr-4">
+                    <div className="text-right">
+                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">NGÂN SÁCH DỰ KIẾN</p>
+                      <p className="text-xl font-black text-blue-500 tracking-tighter">{(camp.budget.limit || 0).toLocaleString()} {camp.budget.currency_code}</p>
+                    </div>
+                    <button className="px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black text-slate-400 uppercase tracking-widest hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-all">
+                      QUẢN LÝ CHIẾN DỊCH
+                    </button>
+                  </div>
+                </Card>
+              ))
+            ) : (
+              <div className="col-span-full py-20 text-center opacity-30">
+                <SearchX size={48} className="mx-auto mb-4" />
+                <p className="font-bold italic">Không tìm thấy chiến dịch nào...</p>
               </div>
-            </Card>
-          ))} */}
+            )
+          )}
         </div>
       )}
     </div>

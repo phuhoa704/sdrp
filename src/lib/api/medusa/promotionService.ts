@@ -1,11 +1,17 @@
+import { getVendorId } from '@/lib/utils';
 import bridgeClient from '../bridgeClient';
 import { Promotion } from '@/types/promotion';
 import axios from 'axios';
+import { CustomGetResponse } from '@/types/custom-response';
 
 /**
  * Medusa Promotion Service
  * Handles promotion related interactions with Medusa Backend (v2)
  */
+interface PromotionData {
+    promotion_id: string;
+    promotion: Promotion;
+}
 
 class PromotionService {
     /**
@@ -17,9 +23,10 @@ class PromotionService {
         limit?: number;
         offset?: number;
         [key: string]: unknown;
-    }): Promise<{ promotions: Promotion[]; count: number; limit: number; offset: number }> {
+    }): Promise<CustomGetResponse<PromotionData>> {
         try {
-            const res = await bridgeClient.get('/admin/promotions', { params: query });
+            const vendorId = getVendorId();
+            const res = await bridgeClient.get('/custom/admin/vendors/promotions', { params: query, headers: { 'x-api-vendor': vendorId } });
             return res.data;
         } catch (error: unknown) {
             console.error('Failed to fetch Medusa promotions:', error);

@@ -44,6 +44,8 @@ import { ProductTags } from './pages/ProductTags';
 import { StockLocations } from './pages/StockLocations';
 import { CustomerGroup } from './pages/CustomerGroup';
 import { useToast } from '@/contexts/ToastContext';
+import { Inventory } from './pages/InventoryItems';
+import { StockUp } from './pages/StockUp';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -156,10 +158,14 @@ export default function DashboardPage() {
         return <ProductTypes />;
       case 'MARKETPLACE':
         return <OrderHistory onGoToWholesale={() => handleSetView('WHOLESALE_MARKETPLACE')} />;
-      case 'INVENTORY':
+      case 'PRODUCTS':
         return (
           <ProductCatalog />
         );
+      case 'INVENTORY':
+        return <Inventory />;
+      case 'STOCK_UP':
+        return <StockUp />;
       case 'CATEGORY':
         return <Category />;
       case 'COLLECTION':

@@ -80,7 +80,8 @@ class CustomerGroupService {
 
     async createCustomerGroup(customerGroup: CreateCustomerGroup): Promise<CustomResponse<CustomerGroup>> {
         try {
-            const response = await bridgeClient.post('/admin/customer-groups', customerGroup);
+            const vendorId = getVendorId();
+            const response = await bridgeClient.post('/custom/admin/vendors/customer-groups', customerGroup, { headers: { 'x-api-vendor': vendorId } });
             return response.data;
         } catch (error) {
             console.error('Failed to create Medusa customer group:', error);

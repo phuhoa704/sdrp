@@ -17,3 +17,12 @@ export interface CustomGetResponse<T> {
         };
     };
 }
+
+export interface CustomPostResponse<T> {
+    status: number;
+    data: {
+        data: T;
+        message: string;
+        status: string;
+    };
+}
