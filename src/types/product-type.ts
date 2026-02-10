@@ -17,6 +17,7 @@ export interface ProductType {
     value: string,
     metadata: Record<string, unknown>,
     translations: Translation[],
+    product_count: number,
     created_at: string,
     updated_at: string,
     deleted_at: string

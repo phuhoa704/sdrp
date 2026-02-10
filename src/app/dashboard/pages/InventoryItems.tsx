@@ -7,14 +7,32 @@ import { TableView } from '@/components/TableView';
 import { noImage } from '@/configs';
 import { InventoryItem } from '@/types/inventory-item';
 import { InventoryItemsDetail } from '@/components/inventory-items/InventoryItemsDetail';
+import { FormTypeModal } from '@/components/books/FormTypeModal';
+import { StockForm } from '@/components/books/StockForm';
+import { StockUpType } from '@/types/stock-up';
 
 export const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isTypeModalOpen, setIsTypeModalOpen] = useState(false);
+  const [isStockFormOpen, setIsStockFormOpen] = useState(false);
+  const [selectedStockType, setSelectedStockType] = useState<StockUpType>(StockUpType.INBOUND);
   const limit = 10;
   const offset = (currentPage - 1) * limit;
-  const { inventoryItems, loading, error, count } = useInventoryItems({ q: searchTerm, limit, offset });
+  const { inventoryItems, loading, error, count, refresh } = useInventoryItems({ q: searchTerm, limit, offset });
+
+  if (isStockFormOpen) return (
+    <StockForm
+      initialType={selectedStockType}
+      onBack={() => setIsStockFormOpen(false)}
+      onSuccess={() => {
+        setIsStockFormOpen(false)
+        refresh()
+      }}
+    />
+  )
+
   return (
     <Fragment>
       <div className="pb-32 animate-fade-in space-y-8 min-h-full relative">
@@ -33,7 +51,7 @@ export const Inventory = () => {
               <Boxes size={12} className='text-amber-500 animate-pulse' />
             </div>
             <h2 className="text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-none">
-              Quản Lý <span className="text-blue-600 font-black">Tồn Kho Biến Thể</span>
+              Quản Lý <span className="text-primary font-black">Tồn Kho Biến Thể</span>
             </h2>
             <p className="text-slate-500 dark:text-slate-400 font-medium text-lg">Theo dõi chi tiết theo từng mã SKU và vị trí kho thực tế</p>
           </div>
@@ -46,8 +64,8 @@ export const Inventory = () => {
             <Button
               className="h-12 rounded-2xl bg-white text-primary text-xs border-2 border-primary"
               icon={<Plus size={16} />}
-              onClick={() => { }}>
-              TẠO PHIẾU NHẬP HÀNG
+              onClick={() => setIsTypeModalOpen(true)}>
+              TẠO PHIẾU
             </Button>
           </div>
         </div>
@@ -66,7 +84,6 @@ export const Inventory = () => {
             { title: "Tồn kho", className: "text-center" },
             { title: "Thao tác", className: "text-right" }
           ]}
-          headerClassName='bg-blue-600 dark:bg-slate-800/50'
           data={inventoryItems}
           isLoading={loading}
           emptyMessage={{
@@ -87,7 +104,7 @@ export const Inventory = () => {
               className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer border-b border-slate-50 dark:border-slate-800/50 last:border-none"
             >
               <td className='py-5 px-4 pl-8'>
-                <span className="text-xs font-black text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-lg border border-blue-100 dark:border-blue-800/50 uppercase tracking-tighter">{item.sku}</span>
+                <span className="text-xs font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-3 py-1.5 rounded-lg border border-emerald-100 dark:border-emerald-800/50 uppercase tracking-tighter">{item.sku}</span>
               </td>
               <td className='py-5 px-4'>
                 <div className="flex items-center gap-4">
@@ -114,6 +131,14 @@ export const Inventory = () => {
       <InventoryItemsDetail
         item={selectedItem}
         onClose={() => setSelectedItem(null)}
+      />
+      <FormTypeModal
+        isOpen={isTypeModalOpen}
+        onClose={() => setIsTypeModalOpen(false)}
+        onSelect={(type) => {
+          setSelectedStockType(type)
+          setIsStockFormOpen(true)
+        }}
       />
     </Fragment>
   )

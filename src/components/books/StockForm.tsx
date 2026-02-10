@@ -1,5 +1,5 @@
-import { ArrowLeft, Building2, CheckCircle2, ChevronDown, ChevronUp, Plus, Receipt } from 'lucide-react'
-import React, { useState } from 'react'
+import { ArrowLeft, Building2, CheckCircle2, ChevronDown, ChevronUp, Info, Plus, Receipt } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
 import { Card } from '../Card'
 import { StockUpType } from '@/types/stock-up'
 import { Button } from '../Button'
@@ -12,7 +12,7 @@ import { useToast } from '@/contexts/ToastContext'
 import { booksService } from '@/lib/api/medusa/booksService'
 import { noImage } from '@/configs'
 
-export const StockForm = ({ onBack, onSuccess }: { onBack?: () => void, onSuccess?: () => void }) => {
+export const StockForm = ({ onBack, onSuccess, initialType }: { onBack?: () => void, onSuccess?: () => void, initialType?: StockUpType }) => {
   const { showToast } = useToast()
   const [isTypeOpen, setIsTypeOpen] = useState(false)
   const [isVendorOpen, setIsVendorOpen] = useState(false)
@@ -20,11 +20,21 @@ export const StockForm = ({ onBack, onSuccess }: { onBack?: () => void, onSucces
   const [searchTerm, setSearchTerm] = useState("")
   const [findBy, setFindBy] = useState<'product' | 'sku'>('product')
   const [formValues, setFormValues] = useState({
-    type: StockUpType.INBOUND,
+    type: initialType || StockUpType.INBOUND,
     vendor: "NPP Trung Tâm",
     code: "",
-    title: "Phiếu nhập hàng mới"
+    title: "Phiếu nghiệp vụ mới"
   })
+
+  useEffect(() => {
+    if (initialType) {
+      setFormValues(prev => ({
+        ...prev,
+        type: initialType,
+        title: initialType === StockUpType.INBOUND ? "Phiếu nhập hàng mới" : "Phiếu xuất hủy mới"
+      }))
+    }
+  }, [initialType])
 
   const [itemInputs, setItemInputs] = useState<Record<string, {
     quantity: number,
@@ -225,6 +235,14 @@ export const StockForm = ({ onBack, onSuccess }: { onBack?: () => void, onSucces
               Xác nhận nhập kho
             </Button>
           </Card>
+          <div className="p-6 bg-blue-50 dark:bg-blue-900/10 border-2 border-dashed border-blue-200 dark:border-blue-800/50 rounded-[32px] flex items-center gap-5">
+            <div className="w-12 h-12 bg-blue-600 text-white rounded-2xl flex items-center justify-center shrink-0 shadow-lg">
+              <Info size={24} />
+            </div>
+            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 italic leading-relaxed">
+              * Phiếu này sẽ tự động cập nhật tồn kho SKU tương ứng và lưu vết vào nhật ký nghiệp vụ kho vùng.
+            </p>
+          </div>
         </div>
         <div className="lg:col-span-8 space-y-8">
           <div className="p-8 bg-white dark:bg-slate-900 rounded-[40px] space-y-6 shadow-xl relative z-[50]">

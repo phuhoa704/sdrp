@@ -128,6 +128,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 { id: 'data-groups', label: 'Phân loại', view: 'DATA_GROUPS' },
                 { id: 'category', label: 'LOẠI HÀNG', view: 'CATEGORY' },
                 { id: 'collection', label: 'BỘ SƯU TẬP', view: 'COLLECTION' },
+                { id: 'sales-channels', label: 'KÊNH BÁN HÀNG', view: 'SALES_CHANNELS' },
               ]
             },
             {
@@ -144,7 +145,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           label: "SỔ SÁCH",
           icon: BookText,
           children: [
-            { id: "stockup", label: "Phiếu nhập hàng", view: "STOCK_UP" },
+            { id: "stockup", label: "Phiếu xuất/nhập hàng", view: "STOCK_UP" },
             { id: 'orders', label: 'Đơn hàng', view: 'CATALOG' }
           ]
         },
@@ -283,7 +284,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <nav className="flex-1 w-full overflow-y-auto scrollbar-hide  relative">
-        {menuItems.map((item) => {
+        {menuItems.map((item, idx) => {
           const Icon = item.icon;
           const isActive = isMenuActive(item);
           const isExpanded = expandedMenus.includes(item.id);
@@ -291,7 +292,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           const hasCategory = item.category && item.category.length > 0;
 
           return (
-            <>
+            <Fragment key={idx}>
               {item.id === "books" && <div className="border-t dark:border-slate-800/50 my-2"></div>}
               <div key={item.id}>
                 <button
@@ -428,7 +429,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </div>
                 )}
               </div>
-            </>
+            </Fragment>
           );
         })}
       </nav>

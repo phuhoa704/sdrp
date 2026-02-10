@@ -4,7 +4,13 @@ import { Customer } from "@/types/customer";
 
 interface Props {
     autoFetch?: boolean;
-    query?: any;
+    query?: {
+        limit?: number;
+        offset?: number;
+        q?: string;
+        created_at?: string;
+        groups?: string[];
+    };
 }
 
 export const useCustomers = (props: Props) => {

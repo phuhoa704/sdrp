@@ -44,7 +44,7 @@ export const CustomerGroupDetail = ({ id, onBack }: Props) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([])
   const { customers: allCustomers, loading: customersLoading } = useCustomers({ query: { limit: 100, q: searchQuery } })
-  const { customers: groupCustomers, loading: groupCustomersLoading, refresh: refreshGroupCustomers } = useCustomers({ query: { limit: 100, q: searchQuery, groups: id } })
+  const { customers: groupCustomers, loading: groupCustomersLoading, refresh: refreshGroupCustomers } = useCustomers({ query: { limit: 100, q: searchQuery, groups: [id] } })
 
   const fetchDetail = async () => {
     setLoading(true)

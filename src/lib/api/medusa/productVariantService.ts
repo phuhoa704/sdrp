@@ -1,3 +1,4 @@
+import { CustomResponse } from '@/types/custom-response';
 import bridgeClient from '../bridgeClient';
 import { Product } from '@/types/product';
 import axios from 'axios';
@@ -6,6 +7,10 @@ import axios from 'axios';
  * Medusa Product Variant Service
  * Handles interaction with product variants in Medusa Backend
  */
+interface ProductByVariant {
+    product_id: string;
+    product: Product;
+}
 class ProductVariantService {
     /**
      * Create a new product variant
@@ -67,6 +72,22 @@ class ProductVariantService {
                     : error instanceof Error
                         ? error.message
                         : 'Failed to delete variant'
+            );
+        }
+    }
+
+    async getProductByVariantId(variantId: string): Promise<CustomResponse<ProductByVariant>> {
+        try {
+            const res = await bridgeClient.get<CustomResponse<ProductByVariant>>(`/custom/admin/products/variant/${variantId}`);
+            return res.data;
+        } catch (error: unknown) {
+            console.error(`Failed to get product by variant ID ${variantId}:`, error);
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to get product by variant ID'
             );
         }
     }

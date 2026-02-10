@@ -24,7 +24,8 @@ export interface StockUp {
     id: string;
     title: string;
     code: string;
-    type: string;
+    type: StockUpType;
+    created_at: string;
     created_by: string;
     variant_id: string;
     metadata: Record<string, unknown>;
@@ -44,8 +45,14 @@ export interface StockUpCreateResponse {
     goods_receipt_id: string;
 }
 
+export interface StockUpFilters {
+    type: StockUpType[];
+}
+
 export interface StockUpQuery {
     q?: string;
     limit?: number;
     page?: number;
+    fields?: string;
+    filters?: StockUpFilters;
 }

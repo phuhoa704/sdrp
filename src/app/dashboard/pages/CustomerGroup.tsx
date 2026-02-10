@@ -156,84 +156,12 @@ export const CustomerGroup = () => {
                 </Card>
               ))
             ) : (
-              <Empty title='Không tìm thấy nhóm khách hàng' description='Hãy thử thay đổi từ khóa tìm kiếm hoặc bộ lọc' />
+              <div className="col-span-full">
+                <Empty title='Không tìm thấy nhóm khách hàng' description='Hãy thử thay đổi từ khóa tìm kiếm hoặc bộ lọc' />
+              </div>
             )}
           </div>
         )}
-        {/* <TableView
-          columns={[
-            { title: 'Tên nhóm' },
-            { title: 'Số lượng khách hàng' },
-            { title: 'Ngày tạo' },
-            { title: 'Hành động', className: "text-right" },
-          ]}
-          data={customerGroups}
-          emptyMessage={{
-            title: "Không tìm thấy nhóm khách hàng",
-            description: "Hãy thử thay đổi từ khóa tìm kiếm hoặc bộ lọc"
-          }}
-          isLoading={loading}
-          pagination={{
-            currentPage,
-            totalPages: Math.ceil(count / limit),
-            totalItems: count,
-            onPageChange: setCurrentPage,
-            itemsPerPage: limit
-          }}
-          renderRow={(grp, idx) => (
-            <tr key={idx} onClick={() => setSelectedGroupId(grp.id)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-              <td className='py-5 px-4 pl-8 text-slate-800 dark:text-white'>{grp.name}</td>
-              <td className='py-5 px-4 text-slate-800 dark:text-white'>{grp?.customers?.length || 0}</td>
-              <td className='py-5 px-4 text-slate-800 dark:text-white'>{formatDate(grp.created_at)}</td>
-              <td className='py-5 px-4 pr-8 text-right'>
-                <div className="relative inline-block">
-                  <button onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveMenuId(activeMenuId === grp.id ? null : grp.id);
-                  }} className="p-2 text-slate-500  dark:hover:text-white rounded-lg hover:bg-white/5 transition-all">
-                    <MoreHorizontal size={18} />
-                  </button>
-                  {activeMenuId === grp.id && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-10"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveMenuId(null);
-                        }}
-                      />
-                      <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xl z-20 overflow-hidden animate-in fade-in zoom-in duration-200">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(grp);
-                            setActiveMenuId(null);
-                          }}
-                          className="w-full px-4 py-3 text-left text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors"
-                        >
-                          <Edit3 size={16} className="text-blue-500" />
-                          Chỉnh sửa
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setCustomerGroupToDelete(grp);
-                            setIsDeleteModalOpen(true);
-                            setActiveMenuId(null);
-                          }}
-                          className="w-full px-4 py-3 text-left text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 flex items-center gap-3 transition-colors border-t border-slate-50 dark:border-slate-800/50"
-                        >
-                          <Trash2 size={16} />
-                          Xóa nhóm khách hàng
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </td>
-            </tr>
-          )}
-        /> */}
       </div>
       <ConfirmModal
         isOpen={isDeleteModalOpen}

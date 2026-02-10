@@ -5,18 +5,8 @@ import { cn, formatRelativeTime, formatTime } from '@/lib/utils';
 import { usePromotions } from '@/hooks';
 import {
   Plus,
-  Search,
-  Filter,
-  Percent,
-  Truck,
-  Zap,
   ArrowUpRight,
   SearchX,
-  PackagePlus,
-  CreditCard as CreditCardIcon,
-  Gift,
-  Ticket,
-  Clock,
   Calendar
 } from 'lucide-react';
 import { Breadcrumb } from '@/components/Breadcrumb';
@@ -27,6 +17,7 @@ import { getPromotionUIData } from '@/lib/helpers';
 import { TableLoading } from '@/components/TableLoading';
 import { SearchFilter } from '@/components/filters/Search';
 import { useCampaigns } from '@/hooks/medusa/useCampaigns';
+import { Empty } from '@/components/Empty';
 
 
 export default function Promotions() {
@@ -64,7 +55,7 @@ export default function Promotions() {
         </div>
 
         <Button onClick={() => setIsWizardOpen(true)} className="h-14 rounded-2xl bg-emerald-500 text-white shadow-xl shadow-emerald-500/20 font-black text-xs px-6 uppercase tracking-wider" icon={<Plus size={20} />}>
-          TẠO KHUYẾN MÃI MỚI
+          {activeTab === "promotions" ? "TẠO KHUYẾN MÃI MỚI" : "TẠO CHIẾN DỊCH MỚI"}
         </Button>
       </div>
 
@@ -104,7 +95,7 @@ export default function Promotions() {
       {activeTab === 'promotions' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {loading ? <div className='col-span-full flex justify-center'><TableLoading /></div> : apiPromotions.length === 0 ? (
-            <div className="col-span-full py-20 text-center opacity-30">
+            <div className="col-span-full py-20 text-center">
               <SearchX size={48} className="mx-auto mb-4" />
               <p className="font-bold italic">Không tìm thấy khuyến mãi nào...</p>
             </div>

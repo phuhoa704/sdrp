@@ -23,7 +23,10 @@ import {
   History,
   Edit3,
   Trash2,
-  User2
+  User2,
+  Filter,
+  ArrowUpDown,
+  Download
 } from 'lucide-react';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { Card } from '@/components/Card';
@@ -38,6 +41,7 @@ import { TableLoading } from '@/components/TableLoading';
 import { CustomerForm } from '@/components/form/customer/CustomerForm';
 import { ConfirmModal } from '@/components';
 import { useToast } from '@/contexts/ToastContext';
+import { CustomerFilterModal } from '@/components/customer/CustomerFilterModal';
 
 function TabButton({ label, active, onClick }: any) {
   return (
@@ -72,20 +76,26 @@ export default function Customers() {
   const [activeTab, setActiveTab] = useState<'info' | 'address' | 'debt'>('info');
   const [customerDetails, setCustomerDetails] = useState<Customer | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [sort, setSort] = useState<'DESC' | 'ASC'>('DESC');
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<Customer | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const limit = 10;
+
   const { customers, count, loading, error, refresh, deleteCustomer } = useCustomers({
     query: {
       limit,
       offset: (currentPage - 1) * limit,
       q: searchTerm,
+      created_at: sort,
+      groups: selectedGroups.length > 0 ? selectedGroups : undefined
     }
   });
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<Customer | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // Fetch customer details when expanded
   useEffect(() => {
@@ -219,6 +229,36 @@ export default function Customers() {
           searchTerm={searchTerm}
           handleSearchChange={setSearchTerm}
         />
+        <div className="flex gap-2 w-full md:w-auto overflow-x-auto no-scrollbar pb-1 md:pb-0">
+          <button
+            onClick={() => setIsFilterModalOpen(true)}
+            className={cn(
+              "h-12 px-5 rounded-xl flex items-center gap-2 text-xs font-bold border transition-all",
+              selectedGroups.length > 0
+                ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+                : "bg-slate-50 dark:bg-slate-800 text-slate-500 border-transparent hover:border-primary/30"
+            )}
+          >
+            <Filter size={16} />
+            Bộ lọc {selectedGroups.length > 0 && `(${selectedGroups.length})`}
+          </button>
+          <button
+            onClick={() => setSort(prev => prev === 'DESC' ? 'ASC' : 'DESC')}
+            className={cn(
+              "h-12 px-5 rounded-xl flex items-center gap-2 text-xs font-bold border transition-all",
+              sort === 'ASC'
+                ? "bg-blue-500 border-blue-500 text-white shadow-lg shadow-blue-500/20"
+                : "bg-slate-50 dark:bg-slate-800 text-slate-500 border-transparent hover:border-primary/30"
+            )}
+          >
+            <ArrowUpDown size={16} className={cn("transition-transform", sort === 'ASC' && "rotate-180")} />
+            Sắp xếp {sort === 'ASC' ? '(Cũ nhất)' : '(Mới nhất)'}
+          </button>
+          <div className="w-[1px] h-8 bg-slate-100 dark:bg-slate-800 self-center mx-1"></div>
+          <button className="p-3 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all">
+            <Download size={20} />
+          </button>
+        </div>
       </Card>
 
       <TableView
@@ -514,6 +554,16 @@ export default function Customers() {
           <ChevronRight className="ml-auto text-emerald-500/30 group-hover:text-emerald-500 transition-all" size={24} />
         </Card>
       </div>
+
+      <CustomerFilterModal
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        selectedGroups={selectedGroups}
+        onApply={(groups) => {
+          setSelectedGroups(groups);
+          setCurrentPage(1);
+        }}
+      />
 
       <ConfirmModal
         isOpen={isDeleteModalOpen}

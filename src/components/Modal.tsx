@@ -17,6 +17,7 @@ interface ModalProps {
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl';
   maxHeight?: string;
   showCloseButton?: boolean;
+  wrapperClassName?: string;
 }
 
 export function Modal({
@@ -31,6 +32,7 @@ export function Modal({
   maxWidth = 'lg',
   maxHeight,
   showCloseButton = true,
+  wrapperClassName,
 }: ModalProps) {
   useEffect(() => {
     if (isOpen) {
@@ -85,7 +87,7 @@ export function Modal({
         aria-hidden="true"
       />
 
-      <div className="fixed inset-0 z-[100] flex items-start justify-center pt-20 px-4 pointer-events-none">
+      <div className={cn("fixed inset-0 z-[100] flex items-start justify-center pt-20 px-4 pointer-events-none", wrapperClassName)}>
         <div
           className={`w-full ${maxWidthClasses[maxWidth]} bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 animate-slide-down pointer-events-auto overflow-hidden`}
           onClick={(e) => e.stopPropagation()}

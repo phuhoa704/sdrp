@@ -121,14 +121,14 @@ export const formatTime = (dateString: string) => {
 /* 
 * Format date
  */
-// export const formatDate = (dateString: string) => {
-//     try {
-//         const date = new Date(dateString);
-//         return format(date, 'dd/MM/yyyy', { locale: vi });
-//     } catch {
-//         return dateString;
-//     }
-// }
+export const formatDateByFormat = (dateString: string, form: string) => {
+    try {
+        const date = new Date(dateString);
+        return format(date, form, { locale: vi });
+    } catch {
+        return dateString;
+    }
+}
 
 /**
  * Helper to get vendor ID from persisted Redux state

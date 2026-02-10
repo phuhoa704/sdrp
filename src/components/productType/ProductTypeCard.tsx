@@ -30,7 +30,7 @@ export const ProductTypeCard = ({ productType, onClick }: Props) => {
         <div className="pt-6 border-t dark:border-slate-800 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Package size={14} className='text-slate-400' />
-            <span className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-tighter">45 sản phẩm</span>
+            <span className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-tighter">{productType.product_count} sản phẩm</span>
           </div>
           <ChevronRight size={18} className='text-slate-300 group-hover:translate-x-1 transition-transform' />
         </div>

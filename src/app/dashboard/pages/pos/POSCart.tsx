@@ -134,6 +134,7 @@ export const POSCart: React.FC<POSCartProps> = ({
     if (!activeTab?.id || !promo.code) return;
 
     try {
+      // await draftOrderService.createDraftOrderEdit(activeTab.id)
       setPromotionLoading(true)
       const res = await draftOrderService.addPromotionToDraftOrder(activeTab.id, promo.code);
 
@@ -141,6 +142,7 @@ export const POSCart: React.FC<POSCartProps> = ({
       setShowPromoModal(false);
       setIsPromoExpanded(false);
       onUpdateDiscount(res.draft_order_preview.discount_total);
+      // await draftOrderService.confirmDraftOrderEdit(activeTab.id)
     } catch (err) {
       console.error('Failed to apply promotion:', err);
     } finally {

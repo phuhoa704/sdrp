@@ -215,11 +215,11 @@ export const ProductVariantsModal: React.FC<ProductVariantsModalProps> = ({
                         <tr
                           key={item.id}
                           className="dark:hover:bg-slate-800/50 hover:bg-slate-200/50 transition-colors cursor-pointer group"
-                          onClick={() => {
-                            if (item.inventory?.id) {
-                              setSelectedInventoryItemId(item.inventory.id);
-                            }
-                          }}
+                        // onClick={() => {
+                        //   if (item.inventory?.id) {
+                        //     setSelectedInventoryItemId(item.inventory.id);
+                        //   }
+                        // }}
                         >
                           <td className="px-4 py-3 font-medium dark:text-slate-300 text-slate-800 group-hover:text-indigo-400 transition-colors">{item.inventory?.title || selectedVariant.title}</td>
                           <td className="px-4 py-3 dark:text-slate-400 text-slate-800">{item.inventory?.sku || '-'}</td>

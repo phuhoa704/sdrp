@@ -9,6 +9,7 @@ import { TableLoading } from '../TableLoading';
 import { TableView } from '../TableView';
 import { Button } from '../Button';
 import { Empty } from '../Empty';
+import { Product } from '@/types/product';
 
 interface Props {
   item: InventoryItem | null;
@@ -18,6 +19,7 @@ interface Props {
 export const InventoryItemsDetail = ({ item, onClose }: Props) => {
   const [loading, setLoading] = useState(false);
   const [inventoryItem, setInventoryItem] = useState<InventoryItem | null>(null);
+  const [product, setProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     if (item) {
@@ -37,6 +39,7 @@ export const InventoryItemsDetail = ({ item, onClose }: Props) => {
       setLoading(false);
     }
   };
+
   return (
     <Modal
       isOpen={!!item}
@@ -46,7 +49,7 @@ export const InventoryItemsDetail = ({ item, onClose }: Props) => {
       maxHeight='85vh'
     >
       {loading ? (
-        <TableLoading />
+        <div className='py-4'><TableLoading /></div>
       ) : (inventoryItem ?
         <div className="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl animate-slide-up flex flex-col border dark:border-slate-800">
           <div className="p-8 bg-blue-600 text-white flex justify-between items-center shrink-0">

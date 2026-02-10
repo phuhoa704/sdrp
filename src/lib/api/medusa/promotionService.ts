@@ -1,6 +1,6 @@
 import { getVendorId } from '@/lib/utils';
 import bridgeClient from '../bridgeClient';
-import { Promotion } from '@/types/promotion';
+import { ApplicationMethodTargetType, GetRuleAttributeOptionsParams, GetRuleAttributeOptionsResponse, GetRuleValuesOptionsResponse, Promotion, RuleType } from '@/types/promotion';
 import axios from 'axios';
 import { CustomGetResponse } from '@/types/custom-response';
 
@@ -117,6 +117,39 @@ class PromotionService {
                     : error instanceof Error
                         ? error.message
                         : 'Failed to delete promotion'
+            );
+        }
+    }
+
+
+    async getAttributeOptions(ruleType: RuleType, params: GetRuleAttributeOptionsParams): Promise<GetRuleAttributeOptionsResponse> {
+        try {
+            const res = await bridgeClient.get(`/admin/promotions/rule-attribute-options/${ruleType}`, { params });
+            return res.data;
+        } catch (error: unknown) {
+            console.error(`Failed to get attribute options for rule type ${ruleType}:`, error);
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to get attribute options'
+            );
+        }
+    }
+
+    async getRuleValuesOptions(ruleType: RuleType, ruleAttributeId: string, params?: { application_method_target_type: ApplicationMethodTargetType }): Promise<GetRuleValuesOptionsResponse> {
+        try {
+            const res = await bridgeClient.get(`/admin/promotions/rule-value-options/${ruleType}/${ruleAttributeId}`, { params });
+            return res.data;
+        } catch (error: unknown) {
+            console.error(`Failed to get rule values options for rule type ${ruleType} and rule attribute id ${ruleAttributeId}:`, error);
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to get rule values options'
             );
         }
     }
