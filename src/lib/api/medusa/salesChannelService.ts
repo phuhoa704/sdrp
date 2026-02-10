@@ -8,6 +8,11 @@ import axios from 'axios';
  * Medusa Sales Channel Service
  * Handles sales channel related interactions with Medusa Backend (Admin API)
  */
+
+interface ManageProductPayload {
+    add?: string[];
+    remove?: string[];
+}
 class SalesChannelService {
     /**
      * Get list of sales channels
@@ -117,6 +122,22 @@ class SalesChannelService {
                     : error instanceof Error
                         ? error.message
                         : 'Failed to delete sales channel'
+            );
+        }
+    }
+
+    async manageSalesChannelProducts(id: string, payload: ManageProductPayload): Promise<{ sales_channel: SalesChannel }> {
+        try {
+            const res = await bridgeClient.post(`/admin/sales-channels/${id}/products`, payload);
+            return res.data;
+        } catch (error: unknown) {
+            console.error(`Failed to manage Medusa sales channel products ${id}:`, error);
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to manage sales channel products'
             );
         }
     }

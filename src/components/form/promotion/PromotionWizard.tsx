@@ -64,7 +64,8 @@ export const PromotionWizard: React.FC<PromotionWizardProps> = ({ onCancel, onSa
   const fetchRuleValues = async (ruleType: 'rules' | 'target-rules', attributeId: string, idx: number) => {
     try {
       const res = await promotionService.getRuleValuesOptions(ruleType, attributeId, {
-        application_method_target_type: (currentType?.target_type || 'items') as any
+        application_method_target_type: (currentType?.target_type || 'items') as any,
+        limit: 1000
       });
 
       if (ruleType === 'rules') {

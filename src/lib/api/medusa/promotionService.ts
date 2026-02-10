@@ -1,6 +1,6 @@
 import { getVendorId } from '@/lib/utils';
 import bridgeClient from '../bridgeClient';
-import { ApplicationMethodTargetType, GetRuleAttributeOptionsParams, GetRuleAttributeOptionsResponse, GetRuleValuesOptionsResponse, Promotion, RuleType } from '@/types/promotion';
+import { ApplicationMethodTargetType, GetRuleAttributeOptionsParams, GetRuleAttributeOptionsResponse, GetRuleValuesOptionsResponse, Promotion, PromotionRule, RuleType } from '@/types/promotion';
 import axios from 'axios';
 import { CustomGetResponse } from '@/types/custom-response';
 
@@ -56,6 +56,38 @@ class PromotionService {
                     : error instanceof Error
                         ? error.message
                         : 'Failed to fetch promotion'
+            );
+        }
+    }
+
+    async getPromotionRules(promotionId: string): Promise<{ rules: PromotionRule[] }> {
+        try {
+            const res = await bridgeClient.get(`/admin/promotions/${promotionId}/rules`);
+            return res.data;
+        } catch (error: unknown) {
+            console.error(`Failed to fetch Medusa promotion rules ${promotionId}:`, error);
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to fetch promotion rules'
+            );
+        }
+    }
+
+    async getPromotionTargetRules(promotionId: string): Promise<{ target_rules: PromotionRule[] }> {
+        try {
+            const res = await bridgeClient.get(`/admin/promotions/${promotionId}/target-rules`);
+            return res.data;
+        } catch (error: unknown) {
+            console.error(`Failed to fetch Medusa promotion target rules ${promotionId}:`, error);
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to fetch promotion target rules'
             );
         }
     }
@@ -138,7 +170,7 @@ class PromotionService {
         }
     }
 
-    async getRuleValuesOptions(ruleType: RuleType, ruleAttributeId: string, params?: { application_method_target_type: ApplicationMethodTargetType }): Promise<GetRuleValuesOptionsResponse> {
+    async getRuleValuesOptions(ruleType: RuleType, ruleAttributeId: string, params?: { application_method_target_type?: ApplicationMethodTargetType, limit?: number, offset?: number }): Promise<GetRuleValuesOptionsResponse> {
         try {
             const res = await bridgeClient.get(`/admin/promotions/rule-value-options/${ruleType}/${ruleAttributeId}`, { params });
             return res.data;

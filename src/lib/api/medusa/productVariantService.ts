@@ -76,18 +76,18 @@ class ProductVariantService {
         }
     }
 
-    async getProductByVariantId(variantId: string): Promise<CustomResponse<ProductByVariant>> {
+    async getProductByInventoryItemId(inventoryItemId: string): Promise<CustomResponse<ProductByVariant[]>> {
         try {
-            const res = await bridgeClient.get<CustomResponse<ProductByVariant>>(`/custom/admin/products/variant/${variantId}`);
+            const res = await bridgeClient.get<CustomResponse<ProductByVariant[]>>(`/custom/admin/products/variant/${inventoryItemId}`);
             return res.data;
         } catch (error: unknown) {
-            console.error(`Failed to get product by variant ID ${variantId}:`, error);
+            console.error(`Failed to get product by inventory item ID ${inventoryItemId}:`, error);
             throw new Error(
                 axios.isAxiosError(error)
                     ? (error.response?.data as { message?: string } | undefined)?.message || error.message
                     : error instanceof Error
                         ? error.message
-                        : 'Failed to get product by variant ID'
+                        : 'Failed to get product by inventory item ID'
             );
         }
     }

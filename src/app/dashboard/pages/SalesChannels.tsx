@@ -1,7 +1,7 @@
 import { Breadcrumb, Button, ConfirmModal } from '@/components'
 import { InputSearch } from '@/components/Search'
-import { Edit3, MoreHorizontal, Plus, Trash2, Zap } from 'lucide-react'
-import React, { Fragment, useState } from 'react'
+import { Edit3, MoreHorizontal, Plus, Trash2, Zap, ChevronLeft, Search, Filter, Info, Package, Database, Code, ArrowUpRight } from 'lucide-react'
+import React, { Fragment, useState, useCallback } from 'react'
 import { useSalesChannels } from '@/hooks/medusa/useSalesChannels'
 import { Error } from '@/components/Error'
 import { TableView } from '@/components/TableView'
@@ -11,19 +11,21 @@ import { salesChannelService } from '@/lib/api/medusa/salesChannelService'
 import { useAppDispatch } from '@/store/hooks'
 import { refreshSalesChannels } from '@/store/slices/uiSlice'
 import { useToast } from '@/contexts/ToastContext';
+import { SalesChannelDetail } from '@/components/sales-channel/SalesChannelDetail';
 
 export const SalesChannels = () => {
   const { showToast } = useToast();
   const dispatch = useAppDispatch();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSalesChannel, setSelectedSalesChannel] = useState<SalesChannel | null>(null);
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [view, setView] = useState<'list' | 'form' | 'detail'>('list');
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [currentPage, setCurrentPage] = useState(1)
   const limit = 10;
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [salesChannelToDelete, setSalesChannelToDelete] = useState<SalesChannel | null>(null);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
 
   const { salesChannels, loading, error, refresh, pagination, deleteSalesChannel } = useSalesChannels({
     offset: (currentPage - 1) * limit,
@@ -32,12 +34,25 @@ export const SalesChannels = () => {
 
   const handleCreate = () => {
     setSelectedSalesChannel(null);
-    setIsFormOpen(true);
+    setView('form');
   }
 
   const handleEdit = (channel: SalesChannel) => {
     setSelectedSalesChannel(channel);
-    setIsFormOpen(true);
+    setView('form');
+  }
+
+  const handleRowClick = async (channel: SalesChannel) => {
+    setIsDetailLoading(true);
+    try {
+      const { sales_channel } = await salesChannelService.getSalesChannel(channel.id);
+      setSelectedSalesChannel(sales_channel);
+      setView('detail');
+    } catch (err: any) {
+      showToast(err.message || 'Không thể lấy thông tin chi tiết kênh', 'error');
+    } finally {
+      setIsDetailLoading(false);
+    }
   }
 
   const handleSave = async (data: any) => {
@@ -48,7 +63,7 @@ export const SalesChannels = () => {
       } else {
         await salesChannelService.createSalesChannel(data);
       }
-      setIsFormOpen(false);
+      setView('list');
       setSelectedSalesChannel(null);
       showToast(selectedSalesChannel?.id ? 'Cập nhật kênh bán hàng thành công' : 'Tạo kênh bán hàng thành công', 'success');
       refresh();
@@ -61,17 +76,40 @@ export const SalesChannels = () => {
     }
   }
 
-  if (isFormOpen) {
+  if (view === 'form') {
     return (
       <SalesChannelForm
         onCancel={() => {
-          setIsFormOpen(false);
+          setView('list');
           setSelectedSalesChannel(null);
         }}
         onSave={handleSave}
         initialData={selectedSalesChannel}
         loading={isSaving}
       />
+    );
+  }
+
+  if (view === 'detail' && selectedSalesChannel) {
+    return (
+      <div className="pb-32 px-1">
+        <SalesChannelDetail
+          salesChannel={selectedSalesChannel}
+          onBack={() => {
+            setView('list');
+            setSelectedSalesChannel(null);
+          }}
+          onEdit={handleEdit}
+          onDelete={(channel) => {
+            setSalesChannelToDelete(channel);
+            setIsDeleteModalOpen(true);
+          }}
+          onRefresh={() => {
+            refresh();
+            handleRowClick(selectedSalesChannel);
+          }}
+        />
+      </div>
     );
   }
 
@@ -127,7 +165,7 @@ export const SalesChannels = () => {
             title: "Không có kênh bán hàng nào",
             description: "Hãy tạo kênh bán hàng mới để bắt đầu"
           }}
-          isLoading={loading}
+          isLoading={loading || isDetailLoading}
           pagination={{
             currentPage,
             totalPages: pagination?.count ? Math.ceil(pagination.count / limit) : 0,
@@ -136,7 +174,11 @@ export const SalesChannels = () => {
             totalItems: pagination?.count || 0
           }}
           renderRow={(item, index) => (
-            <tr key={item.id} onClick={() => handleEdit(item)} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+            <tr
+              key={item.id}
+              onClick={() => handleRowClick(item)}
+              className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer group"
+            >
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="text-sm font-medium text-gray-900 dark:text-white">{item.name}</div>
               </td>

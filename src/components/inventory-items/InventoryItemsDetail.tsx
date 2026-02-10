@@ -10,6 +10,7 @@ import { TableView } from '../TableView';
 import { Button } from '../Button';
 import { Empty } from '../Empty';
 import { Product } from '@/types/product';
+import { productVariantService } from '@/lib/api/medusa/productVariantService';
 
 interface Props {
   item: InventoryItem | null;
@@ -33,6 +34,8 @@ export const InventoryItemsDetail = ({ item, onClose }: Props) => {
     try {
       const response = await inventoryService.getInventoryItem(item.id);
       setInventoryItem(response.inventory_item);
+      const productResponse = await productVariantService.getProductByInventoryItemId(item.id);
+      setProduct(productResponse.data[0].product);
     } catch (error) {
       console.error('Failed to fetch inventory item:', error);
     } finally {
@@ -72,12 +75,18 @@ export const InventoryItemsDetail = ({ item, onClose }: Props) => {
                 <img src={inventoryItem?.thumbnail || noImage} alt="" className='w-20 h-20 rounded-2xl object-cover border dark:border-slate-700' />
                 <div>
                   <h4 className="text-[10px] font-black text-slate-400 uppercase mb-1">Sản phẩm gốc</h4>
-                  <p className="text-lg font-black text-slate-800 dark:text-white leading-tight uppercase">{""}</p>
+                  <p className="text-base font-black text-slate-800 dark:text-white uppercase line-clamp-1">{product?.title}</p>
                   <p className="text-sm font-bold text-blue-600 mt-1">{inventoryItem?.title}</p>
                 </div>
               </Card>
               <Card className='flex flex-col justify-between'>
                 <h4 className="text-[10px] font-black text-slate-400 uppercase mb-4">Hoạt chất & Phân loại</h4>
+                <div className="flex gap-2">
+                  {product?.material && (
+                    <span className="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-tighter">{product?.material}</span>
+                  )}
+                  <span className="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-slate-500 rounded-xl text-[10px] font-black uppercase tracking-tighter">{product?.type?.value}</span>
+                </div>
               </Card>
             </div>
             <div className="space-y-4">

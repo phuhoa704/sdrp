@@ -12,8 +12,10 @@ export interface PromotionRule {
     id: string;
     description?: string;
     attribute: string;
+    attribute_label: string;
     operator: string[];
-    values: string;
+    value: string;
+    values: { label: string; value: string }[];
 }
 
 export interface PromotionCampaign {

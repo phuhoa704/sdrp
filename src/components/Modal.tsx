@@ -77,8 +77,6 @@ export function Modal({
     '7xl': 'max-w-7xl',
   };
 
-  const maxHeightClass = maxHeight ? `max-h-${maxHeight}` : 'max-h-[60vh]';
-
   const modalContent = (
     <>
       <div
@@ -119,7 +117,7 @@ export function Modal({
             </div>
           )}
 
-          <div className={cn("overflow-y-auto scrollbar-hide", maxHeightClass)}>
+          <div className={cn("overflow-y-auto scrollbar-hide", maxHeight ? `max-h-[${maxHeight}]` : 'max-h-[60vh]')}>
             {children}
           </div>
           {footer && (

@@ -5,6 +5,8 @@ import { cn, formatRelativeTime, formatTime } from '@/lib/utils';
 import { usePromotions } from '@/hooks';
 import {
   Plus,
+  CheckCircle2, Clock, Info as InfoIcon,
+  ChevronRight, Gift, Zap,
   ArrowUpRight,
   SearchX,
   Calendar
@@ -18,15 +20,20 @@ import { TableLoading } from '@/components/TableLoading';
 import { SearchFilter } from '@/components/filters/Search';
 import { useCampaigns } from '@/hooks/medusa/useCampaigns';
 import { Empty } from '@/components/Empty';
+import { PromotionDetailModal } from '@/components/promotion/PromotionDetailModal';
+import { Promotion } from '@/types/promotion';
 
 
 export default function Promotions() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'promotions' | 'campaigns'>('promotions');
   const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [selectedPromotionId, setSelectedPromotionId] = useState<string | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   const { promotions: apiPromotions, loading, error } = usePromotions({
-    q: searchTerm || undefined
+    q: searchTerm || undefined,
+    fields: ""
   });
 
   const { campaigns: apiCampaigns, loading: campaignLoading, error: campaignError } = useCampaigns({
@@ -104,7 +111,14 @@ export default function Promotions() {
               const ui = getPromotionUIData(p);
               const Icon = ui.icon;
               return (
-                <Card key={p.id} className="p-6 bg-white dark:bg-slate-900 hover:shadow-xl transition-all border border-transparent hover:border-blue-500/30 group">
+                <Card
+                  key={p.id}
+                  className="p-6 bg-white dark:bg-slate-900 hover:shadow-xl transition-all border border-transparent hover:border-blue-500/30 group cursor-pointer"
+                  onClick={() => {
+                    setSelectedPromotionId(p.id);
+                    setIsDetailModalOpen(true);
+                  }}
+                >
                   <div className="flex justify-between items-start mb-6">
                     <div className={cn("p-4 rounded-2xl", ui.bgColor, ui.color)}>
                       <Icon size={24} />
@@ -143,7 +157,7 @@ export default function Promotions() {
         <div className="space-y-4">
           {campaignLoading ? <TableLoading /> : (
             apiCampaigns.length > 0 ? (
-              apiCampaigns.map((camp) => (
+              apiCampaigns.map((camp: any) => (
                 <Card key={camp.id} className="p-4 bg-slate-900/40 border border-white/5 rounded-[24px] flex items-center justify-between group hover:bg-slate-800/40 transition-all">
                   <div className="flex items-center gap-6">
                     <div className="w-14 h-14 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-center text-blue-500 shadow-inner">
@@ -179,6 +193,12 @@ export default function Promotions() {
           )}
         </div>
       )}
+
+      <PromotionDetailModal
+        id={selectedPromotionId}
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+      />
     </div>
   );
 }

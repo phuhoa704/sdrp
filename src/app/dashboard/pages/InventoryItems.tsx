@@ -80,7 +80,7 @@ export const Inventory = () => {
           columns={[
             { title: "Mã SKU" },
             { title: "Tên sản phẩm" },
-            { title: "Quy cách" },
+            { title: "Reservation", className: "text-center" },
             { title: "Tồn kho", className: "text-center" },
             { title: "Thao tác", className: "text-right" }
           ]}
@@ -115,7 +115,11 @@ export const Inventory = () => {
                   </div>
                 </div>
               </td>
-              <td className='py-5 px-4'>{""}</td>
+              <td className='py-5 px-4 text-center'>
+                <span className="text-xs font-black text-slate-800 dark:text-slate-100">
+                  {item.reserved_quantity}
+                </span>
+              </td>
               <td className='py-5 px-4 text-center'>
                 <span className="text-xs font-black text-slate-800 dark:text-slate-100">{item.stocked_quantity}</span>
               </td>
