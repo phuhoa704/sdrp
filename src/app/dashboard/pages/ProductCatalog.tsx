@@ -3,7 +3,6 @@
 import { Fragment, useMemo, useState, useEffect } from 'react';
 import {
   Package,
-  Search,
   Plus,
   ShoppingCart,
   ChevronDown,
@@ -33,12 +32,12 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setPagination } from '@/store/slices/productsSlice';
 import { addToCart } from '@/store/slices/cartSlice';
 import { cn, formatCurrency } from '@/lib/utils';
-import { selectSelectedSalesChannelId } from '@/store/selectors';
 import { matchProductStatus, matchProductStatusColor } from '@/lib/helpers';
 import { TableView } from '@/components/TableView';
 import { useToast } from '@/contexts/ToastContext';
 import { noImage } from '@/configs';
 import { SearchFilter } from '@/components/filters/Search';
+import { SalesChannelsFilter } from '@/components/filters/SalesChannels';
 
 
 export default function ProductCatalog() {
@@ -63,6 +62,8 @@ export default function ProductCatalog() {
   const [isVariantsModalOpen, setIsVariantsModalOpen] = useState(false);
   const [variantsList, setVariantsList] = useState<ProductVariant[]>([]);
   const [selectedVariantProduct, setSelectedVariantProduct] = useState<Product | null>(null);
+
+  const [salesChannelId, setSalesChannelId] = useState<string>("all")
 
   const [isFetchingDetail, setIsFetchingDetail] = useState(false);
 
@@ -194,7 +195,6 @@ export default function ProductCatalog() {
     }
   };
 
-  const selectedSalesChannelId = useAppSelector(selectSelectedSalesChannelId);
 
   // hooks
   const {
@@ -208,7 +208,7 @@ export default function ProductCatalog() {
     q: debouncedSearch,
     category_id: selectedCategory || undefined,
     tags: selectedTag || undefined,
-    sales_channel_id: selectedSalesChannelId || undefined,
+    sales_channel_id: salesChannelId === "all" ? undefined : salesChannelId,
     limit: limit,
     offset: offset,
     autoFetch: true
@@ -434,6 +434,10 @@ export default function ProductCatalog() {
               searchTerm={searchTerm}
               handleSearchChange={setSearchTerm}
               placeholder='Tìm kiếm sản phẩm...'
+            />
+            <SalesChannelsFilter
+              handleChannelSelect={(id) => setSalesChannelId(id)}
+              selectedChannelId={salesChannelId}
             />
             <div className="flex flex-wrap gap-2 w-full xl:w-auto">
               <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-2xl items-center gap-1 shadow-inner">

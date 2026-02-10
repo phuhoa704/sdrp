@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SalesChannel } from '@/types/sales-channel';
-import { Breadcrumb, Button, Card } from '@/components';
+import { Breadcrumb, Button, Card, ConfirmModal } from '@/components';
 import {
   Plus, Search, Filter, MoreHorizontal,
   ChevronLeft, Info, Package, Database, Code,
@@ -32,12 +32,15 @@ export const SalesChannelDetail: React.FC<SalesChannelDetailProps> = ({
   const [isSelectModalOpen, setIsSelectModalOpen] = useState(false);
   const [isManaging, setIsManaging] = useState(false);
   const [productPage, setProductPage] = useState(1);
+  const [isRemoving, setIsRemoving] = useState(false);
+  const [productToRemove, setProductToRemove] = useState<string | null>(null);
   const productLimit = 10;
 
   const { products, count, loading, refresh: refreshProducts } = useProducts({
     sales_channel_id: salesChannel.id,
     limit: productLimit,
     offset: (productPage - 1) * productLimit,
+    fields: "*categories,*sales_channels,*variants"
   });
 
   const handleAddProducts = async (productIds: string[]) => {
@@ -51,6 +54,25 @@ export const SalesChannelDetail: React.FC<SalesChannelDetailProps> = ({
       refreshProducts();
     } catch (err: any) {
       showToast(err.message || 'Không thể thêm sản phẩm', 'error');
+    } finally {
+      setIsManaging(false);
+    }
+  };
+
+  const handleRemoveProduct = async () => {
+    if (!productToRemove) return;
+
+    setIsManaging(true);
+    try {
+      await salesChannelService.manageSalesChannelProducts(salesChannel.id, {
+        remove: [productToRemove]
+      });
+      showToast('Đã xóa sản phẩm khỏi kênh', 'success');
+      setIsRemoving(false);
+      setProductToRemove(null);
+      refreshProducts();
+    } catch (err: any) {
+      showToast(err.message || 'Không thể xóa sản phẩm', 'error');
     } finally {
       setIsManaging(false);
     }
@@ -217,8 +239,17 @@ export const SalesChannelDetail: React.FC<SalesChannelDetailProps> = ({
                   </span>
                 </td>
                 <td className="py-5 px-4 text-right">
-                  <button className="p-2.5 hover:bg-white dark:hover:bg-slate-700 rounded-xl transition-all text-slate-400 hover:text-emerald-500 shadow-sm">
-                    <MoreHorizontal size={18} />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setProductToRemove(product.id);
+                      setIsRemoving(true);
+                    }}
+                    disabled={isManaging}
+                    className="p-2.5 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-xl transition-all text-slate-400 hover:text-rose-500 shadow-sm disabled:opacity-50"
+                    title="Xóa khỏi kênh"
+                  >
+                    <Trash2 size={18} />
                   </button>
                 </td>
               </tr>
@@ -271,6 +302,19 @@ export const SalesChannelDetail: React.FC<SalesChannelDetailProps> = ({
         onClose={() => setIsSelectModalOpen(false)}
         onSelect={handleAddProducts}
         alreadySelectedIds={products.map(p => p.id)}
+        isLoading={isManaging}
+      />
+
+      <ConfirmModal
+        isOpen={isRemoving}
+        onClose={() => {
+          setIsRemoving(false);
+          setProductToRemove(null);
+        }}
+        onConfirm={handleRemoveProduct}
+        variant="danger"
+        title="Xác nhận xóa sản phẩm"
+        message="Bạn có chắc chắn muốn xóa sản phẩm này khỏi kênh bán hàng? Hành động này không thể hoàn tác."
         isLoading={isManaging}
       />
     </div>

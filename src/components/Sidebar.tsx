@@ -1,9 +1,7 @@
-import React, { useRef, useState, useEffect, useMemo, Fragment } from 'react';
+import React, { useState, useEffect, useMemo, Fragment } from 'react';
 import {
   Home, Package, User, ShoppingBag, Tag, Ticket,
   ChevronDown, ChevronRight, Zap, Moon, Sun, ChevronLeft,
-  MapPin,
-  Check,
   Wallet,
   BookText
 } from 'lucide-react';
@@ -58,8 +56,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onBrandChange
 }) => {
   const dispatch = useAppDispatch();
-  const [isBrandMenuOpen, setIsBrandMenuOpen] = useState(false);
-  const brandMenuRef = useRef<HTMLDivElement>(null);
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['marketplace', 'warehouse']);
   const [hoveredMenu, setHoveredMenu] = useState<{ id: string, top: number } | null>(null);
 
@@ -70,8 +66,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     salesChannels.find(sc => sc.id === selectedSalesChannelId) || salesChannels[0],
     [salesChannels, selectedSalesChannelId]
   );
-
-  const selectedBrand = selectedChannel?.name || "Chi nhánh...";
 
   useEffect(() => {
     if (salesChannels.length > 0 && !selectedSalesChannelId) {
@@ -146,7 +140,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           icon: BookText,
           children: [
             { id: "stockup", label: "Phiếu xuất/nhập hàng", view: "STOCK_UP" },
-            { id: 'orders', label: 'Đơn hàng', view: 'CATALOG' }
+            { id: 'orders', label: 'Đơn hàng POS', view: 'CATALOG' }
           ]
         },
         {
@@ -435,46 +429,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       <div className="pt-4 border-t dark:border-slate-800 border-slate-200 space-y-2">
-        {role === UserRole.RETAILER && (
-          <div className={`relative ${isCollapsed ? 'flex justify-center' : 'px-1'}`} ref={brandMenuRef}>
-            <button
-              onClick={() => !isCollapsed && setIsBrandMenuOpen(!isBrandMenuOpen)}
-              className={`h-11 transition-all rounded-xl border dark:border-slate-700 flex items-center group shadow-sm overflow-hidden ${isCollapsed ? 'justify-center w-12 h-12 bg-emerald-50/50 border-emerald-200/50' : 'w-full gap-2 px-3 bg-slate-50 dark:bg-slate-800/40 hover:bg-white'}`}
-            >
-              <MapPin size={isCollapsed ? 20 : 14} className="shrink-0 text-emerald-500" />
-              {!isCollapsed && (
-                <>
-                  <p className="text-[10px] font-extrabold text-slate-700 dark:text-slate-200 truncate flex-1 uppercase tracking-tighter">{selectedBrand}</p>
-                  <ChevronDown size={12} className={`text-slate-400 transition-transform duration-300 ${isBrandMenuOpen ? 'rotate-180 text-emerald-500' : ''}`} />
-                </>
-              )}
-            </button>
-            {isBrandMenuOpen && !isCollapsed && (
-              <div className="absolute bottom-full left-0 right-0 mb-3 glass-panel rounded-2xl shadow-2xl border border-white/20 overflow-hidden animate-slide-up z-[60] backdrop-blur-sm">
-                <div className="p-1.5 max-h-48 overflow-y-auto no-scrollbar">
-                  {salesChannels.length > 0 ? salesChannels.map(channel => (
-                    <button
-                      key={channel.id}
-                      onClick={() => {
-                        dispatch(setSelectedSalesChannelId(channel.id));
-                        onBrandChange?.(channel.name);
-                        setIsBrandMenuOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between p-3 rounded-xl text-[11px] font-bold tracking-wide transition-all ${selectedSalesChannelId === channel.id ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-600 dark:text-slate-300 hover:bg-emerald-50'}`}
-                    >
-                      <span className="truncate pr-2">{channel.name}</span>
-                      {selectedSalesChannelId === channel.id && <Check size={14} className="shrink-0" />}
-                    </button>
-                  )) : (
-                    <div className="flex items-center justify-center p-3 text-slate-400 text-sm">
-                      Không có chi nhánh
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
         <button
           onClick={toggleTheme}
           className={cn(
