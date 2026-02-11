@@ -38,7 +38,7 @@ export interface StockUp {
 export interface StockUpCreate {
     title: string;
     type: string;
-    summary: StockUpSummary[];
+    summary: StockUpSummary;
 }
 
 export interface StockUpCreateResponse {

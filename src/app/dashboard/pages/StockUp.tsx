@@ -107,6 +107,7 @@ export const StockUp = () => {
                         ? "bg-emerald-500 border-emerald-500 text-white shadow-lg"
                         : "bg-slate-50 dark:bg-slate-800 text-slate-500 border-transparent hover:border-blue-500/30"
                     )}
+                    key={type.id}
                     onClick={() => setSelectedType(type.id)}
                   >
                     {type.label}

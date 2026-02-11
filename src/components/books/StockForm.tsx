@@ -217,10 +217,10 @@ export const StockForm = ({ onBack, onSuccess, initialType }: { onBack?: () => v
                   await booksService.createStockup({
                     title: formValues.title || `Nhập hàng ${new Date().toLocaleDateString()}`,
                     type: formValues.type,
-                    summary: [{
+                    summary: {
                       items: selected,
                       total: selected.reduce((acc, curr) => acc + (curr.quantity * curr.price), 0)
-                    }]
+                    }
                   })
                   showToast('Lập phiếu nhập hàng thành công', 'success')
                   onSuccess?.()
