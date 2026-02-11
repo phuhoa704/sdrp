@@ -1,3 +1,4 @@
+import { getVendorId } from '@/lib/utils';
 import bridgeClient from '../bridgeClient';
 import { Product, ProductVariant } from '@/types/product';
 import axios from 'axios';
@@ -87,7 +88,8 @@ class ProductService {
      */
     async createProduct(payload: Record<string, unknown>): Promise<{ product: Product }> {
         try {
-            const res = await bridgeClient.post('/admin/products', payload);
+            const vendorId = getVendorId()
+            const res = await bridgeClient.post('/admin/products', { ...payload, additional_data: { vendor_id: vendorId } });
             return res.data as { product: Product };
         } catch (error: unknown) {
             console.error('Failed to create Medusa product:', error);

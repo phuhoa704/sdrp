@@ -43,7 +43,7 @@ class CustomerService {
 
     async getCustomer(id: string): Promise<{ customer: Customer }> {
         try {
-            const response = await bridgeClient.get(`/admin/customers/${id}`);
+            const response = await bridgeClient.get(`/admin/customers/${id}`, { params: { fields: "*addresses,*groups" } });
             return response.data;
         } catch (error) {
             console.error('Failed to fetch Medusa customer:', error);

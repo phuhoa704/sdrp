@@ -17,7 +17,7 @@ class OrderService {
         limit?: number;
         offset?: number;
         [key: string]: unknown;
-    }): Promise<{ message: string, status: string, data: { orders: any[]; count: number; limit: number; offset: number } }> {
+    }): Promise<{ orders: any[]; count: number; limit: number; offset: number }> {
         try {
             // const vendorId = getVendorId();
             const res = await bridgeClient.get('/admin/orders', { params: query });

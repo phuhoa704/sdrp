@@ -1,12 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { cn, formatRelativeTime, formatTime } from '@/lib/utils';
+import { cn, formatDateByFormat, formatRelativeTime, formatTime } from '@/lib/utils';
 import { usePromotions } from '@/hooks';
 import {
   Plus,
-  CheckCircle2, Clock, Info as InfoIcon,
-  ChevronRight, Gift, Zap,
   ArrowUpRight,
   SearchX,
   Calendar
@@ -15,33 +13,46 @@ import { Breadcrumb } from '@/components/Breadcrumb';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { PromotionWizard } from '@/components/form/promotion/PromotionWizard';
+import { CampaignForm } from '@/components/form/promotion/CampaignForm';
 import { getPromotionUIData } from '@/lib/helpers';
+import { PromotionDetail } from '@/components/promotion/PromotionDetail';
+import { CampaignDetail } from '@/components/promotion/CampaignDetail';
 import { TableLoading } from '@/components/TableLoading';
 import { SearchFilter } from '@/components/filters/Search';
 import { useCampaigns } from '@/hooks/medusa/useCampaigns';
-import { Empty } from '@/components/Empty';
-import { PromotionDetailModal } from '@/components/promotion/PromotionDetailModal';
-import { Promotion } from '@/types/promotion';
 
 
 export default function Promotions() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'promotions' | 'campaigns'>('promotions');
   const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [isCampaignFormOpen, setIsCampaignFormOpen] = useState(false);
   const [selectedPromotionId, setSelectedPromotionId] = useState<string | null>(null);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
 
-  const { promotions: apiPromotions, loading, error } = usePromotions({
+  const { promotions: apiPromotions, loading, error, refresh } = usePromotions({
     q: searchTerm || undefined,
-    fields: ""
+    fields: "application_method"
   });
 
-  const { campaigns: apiCampaigns, loading: campaignLoading, error: campaignError } = useCampaigns({
+  const { campaigns: apiCampaigns, loading: campaignLoading, error: campaignError, refresh: refreshCampaigns } = useCampaigns({
     q: searchTerm || undefined
   });
 
   if (isWizardOpen) {
-    return <PromotionWizard onCancel={() => setIsWizardOpen(false)} onSave={() => setIsWizardOpen(false)} />;
+    return <PromotionWizard onCancel={() => setIsWizardOpen(false)} onSave={() => { refresh(); setIsWizardOpen(false) }} />;
+  }
+
+  if (isCampaignFormOpen) {
+    return <CampaignForm onCancel={() => setIsCampaignFormOpen(false)} onSave={() => { refreshCampaigns(); setIsCampaignFormOpen(false) }} />;
+  }
+
+  if (selectedPromotionId) {
+    return <PromotionDetail id={selectedPromotionId} onBack={() => setSelectedPromotionId(null)} />;
+  }
+
+  if (selectedCampaignId) {
+    return <CampaignDetail id={selectedCampaignId} onBack={() => setSelectedCampaignId(null)} />;
   }
 
   return (
@@ -61,7 +72,11 @@ export default function Promotions() {
           <p className="text-slate-400 font-bold text-xs uppercase tracking-tight">Tăng doanh số qua các kịch bản giảm giá và chương trình ưu đãi thông minh.</p>
         </div>
 
-        <Button onClick={() => setIsWizardOpen(true)} className="h-14 rounded-2xl bg-emerald-500 text-white shadow-xl shadow-emerald-500/20 font-black text-xs px-6 uppercase tracking-wider" icon={<Plus size={20} />}>
+        <Button
+          onClick={() => activeTab === 'promotions' ? setIsWizardOpen(true) : setIsCampaignFormOpen(true)}
+          className="h-14 rounded-2xl bg-emerald-500 text-white shadow-xl shadow-emerald-500/20 font-black text-xs px-6 uppercase tracking-wider"
+          icon={<Plus size={20} />}
+        >
           {activeTab === "promotions" ? "TẠO KHUYẾN MÃI MỚI" : "TẠO CHIẾN DỊCH MỚI"}
         </Button>
       </div>
@@ -116,7 +131,6 @@ export default function Promotions() {
                   className="p-6 bg-white dark:bg-slate-900 hover:shadow-xl transition-all border border-transparent hover:border-blue-500/30 group cursor-pointer"
                   onClick={() => {
                     setSelectedPromotionId(p.id);
-                    setIsDetailModalOpen(true);
                   }}
                 >
                   <div className="flex justify-between items-start mb-6">
@@ -157,25 +171,29 @@ export default function Promotions() {
         <div className="space-y-4">
           {campaignLoading ? <TableLoading /> : (
             apiCampaigns.length > 0 ? (
-              apiCampaigns.map((camp: any) => (
-                <Card key={camp.id} className="p-4 bg-slate-900/40 border border-white/5 rounded-[24px] flex items-center justify-between group hover:bg-slate-800/40 transition-all">
+              apiCampaigns.map((camp) => (
+                <Card
+                  key={camp.id}
+                  onClick={() => setSelectedCampaignId(camp.id)}
+                  className="p-4 bg-slate-900/40 border border-white/5 rounded-[24px] flex items-center justify-between group hover:bg-primary/10 dark:hover:bg-slate-800/40 transition-all cursor-pointer"
+                >
                   <div className="flex items-center gap-6">
                     <div className="w-14 h-14 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-center text-blue-500 shadow-inner">
                       <Calendar size={28} />
                     </div>
                     <div className="space-y-1">
-                      <h4 className="text-lg font-black text-white group-hover:text-blue-400 transition-colors tracking-tight">{(camp as any).name || (camp as any).title}</h4>
+                      <h4 className="text-lg font-black dark:text-white text-slate-800 group-hover:text-blue-400 transition-colors tracking-tight">{(camp as any).name || (camp as any).title}</h4>
                       <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-3">
-                        <span>BẮT ĐẦU: {formatRelativeTime(camp.starts_at)} {formatTime(camp.starts_at)}</span>
+                        <span>BẮT ĐẦU: {camp.starts_at ? formatDateByFormat(camp.starts_at, "dd/MM/yyyy") : ""}</span>
                         <span className="text-slate-700">•</span>
-                        <span>KẾT THÚC: {formatRelativeTime(camp.ends_at)} {formatTime(camp.ends_at)}</span>
+                        <span>KẾT THÚC: {camp.ends_at ? formatDateByFormat(camp.ends_at, "dd/MM/yyyy") : ""}</span>
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-12 mr-4">
                     <div className="text-right">
-                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">NGÂN SÁCH DỰ KIẾN</p>
+                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">{camp.budget.currency_code ? "NGÂN SÁCH DỰ KIẾN" : "HẠN MỨC (SỐ LẦN)"}</p>
                       <p className="text-xl font-black text-blue-500 tracking-tighter">{(camp.budget.limit || 0).toLocaleString()} {camp.budget.currency_code}</p>
                     </div>
                     <button className="px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black text-slate-400 uppercase tracking-widest hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-all">
@@ -185,7 +203,7 @@ export default function Promotions() {
                 </Card>
               ))
             ) : (
-              <div className="col-span-full py-20 text-center opacity-30">
+              <div className="col-span-full py-20 text-center">
                 <SearchX size={48} className="mx-auto mb-4" />
                 <p className="font-bold italic">Không tìm thấy chiến dịch nào...</p>
               </div>
@@ -194,11 +212,6 @@ export default function Promotions() {
         </div>
       )}
 
-      <PromotionDetailModal
-        id={selectedPromotionId}
-        isOpen={isDetailModalOpen}
-        onClose={() => setIsDetailModalOpen(false)}
-      />
     </div>
   );
 }

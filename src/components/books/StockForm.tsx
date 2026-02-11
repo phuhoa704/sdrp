@@ -11,6 +11,7 @@ import { useInventoryItems } from '@/hooks/medusa/useInventory'
 import { useToast } from '@/contexts/ToastContext'
 import { booksService } from '@/lib/api/medusa/booksService'
 import { noImage } from '@/configs'
+import { useStockLocations } from '@/hooks'
 
 export const StockForm = ({ onBack, onSuccess, initialType }: { onBack?: () => void, onSuccess?: () => void, initialType?: StockUpType }) => {
   const { showToast } = useToast()
@@ -47,6 +48,7 @@ export const StockForm = ({ onBack, onSuccess, initialType }: { onBack?: () => v
   }>>({})
 
   const { inventoryItems, loading } = useInventoryItems({ q: searchTerm, limit: 100 })
+  const { locations, loading: stockLocationsLoading } = useStockLocations({ limit: 100, fields: "id,name,-address" });
   const typeOpts = [
     { id: StockUpType.INBOUND, label: "Nhập hàng (Inbound)" },
     { id: StockUpType.DISPOSAL, label: "Xuất hủy (Disposal)" },
@@ -275,8 +277,8 @@ export const StockForm = ({ onBack, onSuccess, initialType }: { onBack?: () => v
             columns={[
               { title: "SKU/ Quy cách" },
               { title: "Kho nhập" },
-              { title: "Số lượng", className: "w-24" },
-              { title: "Đơn giá nhập", className: "w-40" },
+              { title: "Số lượng", className: "w-32 text-right" },
+              { title: "Đơn giá nhập", className: "w-40 text-right" },
               { title: "Thành tiền", className: "text-right pr-8" }
             ]}
             data={inventoryItems}
@@ -328,11 +330,14 @@ export const StockForm = ({ onBack, onSuccess, initialType }: { onBack?: () => v
                       }}
                       className="bg-transparent text-[10px] font-bold text-slate-600 dark:text-slate-400 outline-none uppercase border-b border-dashed border-slate-300 dark:border-slate-700 pb-0.5"
                     >
-                      {item.location_levels?.map(lvl => (
-                        <option key={lvl.id} value={lvl.location_id}>
-                          {lvl.location_id.slice(-8).toUpperCase()} (Tồn: {lvl.stocked_quantity})
-                        </option>
-                      ))}
+                      {item.location_levels?.map(lvl => {
+                        const location = locations.find(l => l.id === lvl.location_id)
+                        return (
+                          <option key={lvl.id} value={lvl.location_id}>
+                            {location?.name || lvl.location_id.slice(-8).toUpperCase()} (Tồn: {lvl.stocked_quantity})
+                          </option>
+                        )
+                      })}
                     </select>
                   </td>
                   <td className="py-4 px-4">

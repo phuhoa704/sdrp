@@ -13,7 +13,11 @@ import { StockLocationDetail } from '@/components/stock-location/StockLocationDe
 
 export const StockLocations = () => {
   const [searchTerm, setSearchTerm] = useState('')
-  const { locations, loading, error, refresh, count, deleteStockLocation } = useStockLocations();
+  const { locations, loading, error, refresh, count, deleteStockLocation } = useStockLocations({
+    limit: 10,
+    offset: 0,
+    q: searchTerm
+  });
   const [currentPage, setCurrentPage] = useState(1)
   const { showToast } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);

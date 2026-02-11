@@ -6,10 +6,11 @@ import {
 } from 'lucide-react';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
-import { PromotionType, ApplicationMethodType, ApplicationMethodTargetType, RuleAttributeOption, RuleAttributeOperator, PromotionRule } from '@/types/promotion';
+import { RuleAttributeOption } from '@/types/promotion';
 import { useRuleAttrOptions } from '@/hooks/medusa/useRuleAttrOptions';
 import { useToast } from '@/contexts/ToastContext';
 import { promotionService } from '@/lib/api/medusa/promotionService';
+import { formatDisplayNumber, parseDisplayNumber } from '@/lib/utils';
 
 interface PromotionWizardProps {
   onCancel: () => void;
@@ -44,7 +45,7 @@ export const PromotionWizard: React.FC<PromotionWizardProps> = ({ onCancel, onSa
     'percentage_off_product': { promotion_type: 'standard', method_type: 'percentage', target_type: 'items' },
     'percentage_off_order': { promotion_type: 'standard', method_type: 'percentage', target_type: 'order' },
     'buy_x_get_y': { promotion_type: 'buyget', method_type: 'fixed', target_type: 'items' },
-    'free_shipping': { promotion_type: 'standard', method_type: 'fixed', target_type: 'shipping_methods' },
+    'free_shipping': { promotion_type: 'standard', method_type: 'percentage', target_type: 'shipping_methods' },
   } as Record<string, { promotion_type: string, method_type: string, target_type: string }>), []);
 
   const currentType = selectedType ? typeMapping[selectedType] : null;
@@ -94,16 +95,23 @@ export const PromotionWizard: React.FC<PromotionWizardProps> = ({ onCancel, onSa
     return rules.some(r => (r.attribute === 'currency_code' || r.value === 'currency_code') && r.values);
   }, [rules]);
 
-  // Default rule: currency_code
   useEffect(() => {
-    if (step === 2 && rules.length === 0 && customerOptions.length > 0) {
+    if (step === 2 && rules.length === 0 && customerOptions.length > 0 &&
+      selectedType !== 'percentage_off_product' && selectedType !== 'percentage_off_order' && selectedType !== 'free_shipping') {
       const currencyOpt = customerOptions.find(o => o.value === 'currency_code');
       if (currencyOpt) {
         setRules([{ ...currencyOpt, attribute: 'currency_code', value: 'currency_code', operator: currencyOpt.operators?.[0] ? [currencyOpt.operators[0].value] : ['eq'], values: '' }]);
         fetchRuleValues('rules', currencyOpt.id, 0);
       }
     }
-  }, [step, customerOptions, rules.length]);
+  }, [step, customerOptions, rules.length, selectedType]);
+
+  // Auto set allocation for amount_off_order
+  useEffect(() => {
+    if (selectedType === 'amount_off_order' || selectedType === 'percentage_off_order' || selectedType === 'free_shipping') {
+      setAllocation('across');
+    }
+  }, [selectedType]);
 
   const steps = [
     { id: 1, label: 'Loại KM', icon: <Tag size={18} /> },
@@ -273,27 +281,36 @@ export const PromotionWizard: React.FC<PromotionWizardProps> = ({ onCancel, onSa
                   className={`${inputStyle} h-14 font-black uppercase text-blue-600 dark:text-blue-400 tracking-widest shadow-inner`}
                 />
               </div>
-              <div className="space-y-2">
-                <label className={labelStyle}>Giá trị khuyến mãi</label>
-                <div className="relative group/promo">
-                  <input
-                    type="number"
-                    value={promoValue}
-                    onChange={(e) => setPromoValue(Number(e.target.value))}
-                    disabled={!isCurrencySelected}
-                    title={!isCurrencySelected ? "Vui lòng chọn Mã tiền tệ (currency_code) trước" : ""}
-                    className={`${inputStyle} h-14 pr-16 font-black text-lg shadow-inner ${!isCurrencySelected ? 'opacity-40 cursor-not-allowed grayscale' : ''}`}
-                  />
-                  <span className={`absolute right-4 top-1/2 -translate-y-1/2 font-black text-xs transition-colors ${!isCurrencySelected ? 'text-slate-300' : 'text-slate-400'}`}>
-                    {currentType?.method_type === 'percentage' ? '%' : 'VNĐ'}
-                  </span>
-                  {!isCurrencySelected && (
-                    <div className="absolute -bottom-6 left-1 text-[9px] font-bold text-rose-500 uppercase tracking-tighter opacity-0 group-hover/promo:opacity-100 transition-opacity">
-                      * Yêu cầu chọn Mã tiền tệ tại mục Đối tượng áp dụng
-                    </div>
-                  )}
+              {selectedType !== 'free_shipping' && (
+                <div className="space-y-2">
+                  <label className={labelStyle}>Giá trị khuyến mãi</label>
+                  <div className="relative group/promo">
+                    <input
+                      type="text"
+                      value={formatDisplayNumber(promoValue)}
+                      onChange={(e) => {
+                        let val = parseDisplayNumber(e.target.value);
+                        if (currentType?.method_type === 'percentage') {
+                          if (val < 0) val = 0;
+                          if (val > 100) val = 100;
+                        }
+                        setPromoValue(val);
+                      }}
+                      disabled={!isCurrencySelected && currentType?.method_type !== 'percentage'}
+                      title={!isCurrencySelected && currentType?.method_type !== 'percentage' ? "Vui lòng chọn Mã tiền tệ (currency_code) trước" : ""}
+                      className={`${inputStyle} h-14 pr-16 font-black text-lg shadow-inner ${(!isCurrencySelected && currentType?.method_type !== 'percentage') ? 'opacity-40 cursor-not-allowed grayscale' : ''}`}
+                    />
+                    <span className={`absolute right-4 top-1/2 -translate-y-1/2 font-black text-xs transition-colors ${(!isCurrencySelected && currentType?.method_type !== 'percentage') ? 'text-slate-300' : 'text-slate-400'}`}>
+                      {currentType?.method_type === 'percentage' ? '%' : 'VNĐ'}
+                    </span>
+                    {!isCurrencySelected && currentType?.method_type !== 'percentage' && (
+                      <div className="absolute -bottom-6 left-1 text-[9px] font-bold text-rose-500 uppercase tracking-tighter opacity-0 group-hover/promo:opacity-100 transition-opacity">
+                        * Yêu cầu chọn Mã tiền tệ tại mục Đối tượng áp dụng
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
               <div className="space-y-2">
                 <label className={labelStyle}>Giới hạn sử dụng (Tổng)</label>
                 <div className="relative">
@@ -306,21 +323,67 @@ export const PromotionWizard: React.FC<PromotionWizardProps> = ({ onCancel, onSa
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <label className={labelStyle}>Sản phẩm tối đa / đơn hàng</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={maxQuantity || ''}
-                    onChange={(e) => setMaxQuantity(e.target.value ? Number(e.target.value) : undefined)}
-                    placeholder="Không giới hạn"
-                    className={`${inputStyle} h-14 shadow-inner`}
-                  />
+              {selectedType !== 'amount_off_order' && selectedType !== 'percentage_off_order' && selectedType !== 'free_shipping' && (
+                <div className="space-y-2">
+                  <label className={labelStyle}>Sản phẩm tối đa / đơn hàng</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={maxQuantity || ''}
+                      onChange={(e) => setMaxQuantity(e.target.value ? Number(e.target.value) : undefined)}
+                      placeholder="Không giới hạn"
+                      className={`${inputStyle} h-14 shadow-inner`}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
             </section>
 
             <hr className="dark:border-slate-800 opacity-50" />
+
+            {selectedType !== 'amount_off_order' && selectedType !== 'percentage_off_order' && selectedType !== 'free_shipping' && (
+              <>
+                <section className="space-y-6">
+                  <div className="flex items-center gap-2">
+                    <label className={labelStyle}>Allocation</label>
+                    <div className="group relative">
+                      <Info size={14} className="text-slate-400 mb-1 cursor-help" />
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl">
+                        Xác định cách áp dụng giảm giá: từng sản phẩm hay một lần toàn bộ.
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div
+                      onClick={() => setAllocation('each')}
+                      className={`p-6 rounded-3xl border-2 cursor-pointer transition-all flex gap-5 ${allocation === 'each' ? 'bg-blue-50/10 border-blue-500 shadow-lg ring-4 ring-blue-500/5' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}
+                    >
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 ${allocation === 'each' ? 'border-blue-500' : 'border-slate-300'}`}>
+                        {allocation === 'each' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
+                      </div>
+                      <div>
+                        <h4 className="font-black text-sm text-slate-800 dark:text-white">Each</h4>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-medium italic">Applies value on each item</p>
+                      </div>
+                    </div>
+                    <div
+                      onClick={() => setAllocation('across')}
+                      className={`p-6 rounded-3xl border-2 cursor-pointer transition-all flex gap-5 ${allocation === 'across' ? 'bg-blue-50/10 border-blue-500 shadow-lg ring-4 ring-blue-500/5' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}
+                    >
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 ${allocation === 'across' ? 'border-blue-500' : 'border-slate-300'}`}>
+                        {allocation === 'across' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
+                      </div>
+                      <div>
+                        <h4 className="font-black text-sm text-slate-800 dark:text-white">Once</h4>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-medium italic">Applies value to a limited number of items</p>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <hr className="dark:border-slate-800 opacity-50" />
+              </>
+            )}
 
             {/* Quy tắc Rules */}
             <section className="space-y-6">
@@ -348,7 +411,7 @@ export const PromotionWizard: React.FC<PromotionWizardProps> = ({ onCancel, onSa
                         <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Thuộc tính</label>
                         <select
                           value={rule.id || rule.attribute}
-                          disabled={idx === 0}
+                          disabled={idx === 0 && selectedType !== 'percentage_off_product' && selectedType !== 'percentage_off_order' && selectedType !== 'free_shipping'}
                           onChange={(e) => {
                             const opt = customerOptions.find(o => o.id === e.target.value);
                             const newRules = [...rules];
@@ -456,95 +519,118 @@ export const PromotionWizard: React.FC<PromotionWizardProps> = ({ onCancel, onSa
             <hr className="dark:border-slate-800 opacity-50" />
 
             {/* Target Rules (Applied Items) */}
-            <section className="space-y-6">
-              <div className="flex justify-between items-end">
-                <div>
-                  <h4 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">Điều kiện áp dụng</h4>
-                  <p className={subLabelStyle}>Xác định điều kiện tham gia khuyến mãi.</p>
+            {selectedType !== 'amount_off_order' && selectedType !== 'percentage_off_order' && (
+              <section className="space-y-6">
+                <div className="flex justify-between items-end">
+                  <div>
+                    <h4 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">Điều kiện áp dụng</h4>
+                    <p className={subLabelStyle}>Xác định điều kiện tham gia khuyến mãi.</p>
+                  </div>
+                  <Button
+                    variant="soft"
+                    size="sm"
+                    className="mb-4 rounded-xl text-[10px] font-black h-10 px-4"
+                    icon={<Plus size={14} />}
+                    onClick={() => setTargetRules([...targetRules, { attribute: '', value: '', operator: ['in'], values: '' }])}
+                  >
+                    THÊM ĐIỀU KIỆN
+                  </Button>
                 </div>
-                <Button
-                  variant="soft"
-                  size="sm"
-                  className="mb-4 rounded-xl text-[10px] font-black h-10 px-4"
-                  icon={<Plus size={14} />}
-                  onClick={() => setTargetRules([...targetRules, { attribute: '', value: '', operator: ['in'], values: '' }])}
-                >
-                  THÊM ĐIỀU KIỆN
-                </Button>
-              </div>
 
-              {targetRules.length > 0 ? (
-                <Card noPadding className="p-8 bg-slate-50 dark:bg-slate-900/40 border dark:border-slate-800 rounded-[32px] space-y-8">
-                  {targetRules.map((rule, idx) => (
-                    <div key={idx} className="relative group animate-fade-in">
-                      {idx > 0 && (
-                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-10">
-                          <span className="px-3 py-1 bg-slate-200 dark:bg-slate-800 rounded-lg text-[9px] font-black text-slate-500 uppercase tracking-widest border dark:border-slate-700">AND</span>
-                        </div>
-                      )}
-                      <div className="space-y-4 p-6 bg-white dark:bg-slate-900 rounded-3xl border dark:border-slate-800 shadow-[0_4px_25px_rgba(0,0,0,0.03)] group-hover:border-blue-500/30 transition-all">
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="flex-1">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Thuộc tính đối tượng</label>
-                            <div className="relative">
-                              <select
-                                value={rule.id || rule.attribute}
-                                onChange={(e) => {
-                                  const opt = targetOptions.find(o => o.id === e.target.value);
-                                  const newRules = [...targetRules];
-                                  newRules[idx] = { ...opt, attribute: opt?.value || e.target.value, operator: opt?.operators?.[0] ? [opt.operators[0].value] : ['in'], values: '' };
-                                  setTargetRules(newRules);
-                                  if (e.target.value && (opt?.field_type === 'select' || opt?.field_type === 'multiselect')) {
-                                    fetchRuleValues('target-rules', e.target.value, idx);
-                                  }
-                                }}
-                                className={`${inputStyle} h-12 border-none shadow-sm appearance-none bg-slate-50 dark:bg-slate-800 pr-10`}
-                              >
-                                <option value="">Chọn loại thuộc tính (Sản phẩm, Bộ sưu tập...)</option>
-                                {targetOptions.map(opt => <option key={opt.id} value={opt.id}>{opt.label}</option>)}
-                              </select>
-                              <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                            </div>
+                {targetRules.length > 0 ? (
+                  <Card noPadding className="p-8 bg-slate-50 dark:bg-slate-900/40 border dark:border-slate-800 rounded-[32px] space-y-8">
+                    {targetRules.map((rule, idx) => (
+                      <div key={idx} className="relative group animate-fade-in">
+                        {idx > 0 && (
+                          <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-10">
+                            <span className="px-3 py-1 bg-slate-200 dark:bg-slate-800 rounded-lg text-[9px] font-black text-slate-500 uppercase tracking-widest border dark:border-slate-700">AND</span>
                           </div>
-                          <button
-                            onClick={() => setTargetRules(targetRules.filter((_, i) => i !== idx))}
-                            className="p-3 text-slate-300 hover:text-rose-500 transition-colors mt-6"
-                          >
-                            <Trash2 size={20} />
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-12 gap-4">
-                          <div className="col-span-4 lg:col-span-3">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Phép toán</label>
-                            <div className="relative">
-                              <select
-                                value={rule.operator?.[0] || 'in'}
-                                onChange={(e) => {
-                                  const newRules = [...targetRules];
-                                  newRules[idx].operator = [e.target.value];
-                                  setTargetRules(newRules);
-                                }}
-                                className={`${inputStyle} h-12 border-none shadow-sm appearance-none bg-slate-50 dark:bg-slate-800 pr-10`}
-                              >
-                                {rule.operators?.length ? (
-                                  rule.operators.map(op => (
-                                    <option key={op.id} value={op.value}>{op.label}</option>
-                                  ))
-                                ) : (
-                                  <>
-                                    <option value="in">Nằm trong</option>
-                                    <option value="eq">Bằng</option>
-                                    <option value="nin">Không thuộc</option>
-                                  </>
-                                )}
-                              </select>
-                              <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                            </div>
-                          </div>
-                          <div className="col-span-8 lg:col-span-9">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Danh sách giá trị (ID/Mã)</label>
-                            {rule.field_type === 'select' || rule.field_type === 'multiselect' ? (
+                        )}
+                        <div className="space-y-4 p-6 bg-white dark:bg-slate-900 rounded-3xl border dark:border-slate-800 shadow-[0_4px_25px_rgba(0,0,0,0.03)] group-hover:border-blue-500/30 transition-all">
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex-1">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Thuộc tính đối tượng</label>
                               <div className="relative">
+                                <select
+                                  value={rule.id || rule.attribute}
+                                  onChange={(e) => {
+                                    const opt = targetOptions.find(o => o.id === e.target.value);
+                                    const newRules = [...targetRules];
+                                    newRules[idx] = { ...opt, attribute: opt?.value || e.target.value, operator: opt?.operators?.[0] ? [opt.operators[0].value] : ['in'], values: '' };
+                                    setTargetRules(newRules);
+                                    if (e.target.value && (opt?.field_type === 'select' || opt?.field_type === 'multiselect')) {
+                                      fetchRuleValues('target-rules', e.target.value, idx);
+                                    }
+                                  }}
+                                  className={`${inputStyle} h-12 border-none shadow-sm appearance-none bg-slate-50 dark:bg-slate-800 pr-10`}
+                                >
+                                  <option value="">Chọn loại thuộc tính (Sản phẩm, Bộ sưu tập...)</option>
+                                  {targetOptions.map(opt => <option key={opt.id} value={opt.id}>{opt.label}</option>)}
+                                </select>
+                                <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => setTargetRules(targetRules.filter((_, i) => i !== idx))}
+                              className="p-3 text-slate-300 hover:text-rose-500 transition-colors mt-6"
+                            >
+                              <Trash2 size={20} />
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-12 gap-4">
+                            <div className="col-span-4 lg:col-span-3">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Phép toán</label>
+                              <div className="relative">
+                                <select
+                                  value={rule.operator?.[0] || 'in'}
+                                  onChange={(e) => {
+                                    const newRules = [...targetRules];
+                                    newRules[idx].operator = [e.target.value];
+                                    setTargetRules(newRules);
+                                  }}
+                                  className={`${inputStyle} h-12 border-none shadow-sm appearance-none bg-slate-50 dark:bg-slate-800 pr-10`}
+                                >
+                                  {rule.operators?.length ? (
+                                    rule.operators.map(op => (
+                                      <option key={op.id} value={op.value}>{op.label}</option>
+                                    ))
+                                  ) : (
+                                    <>
+                                      <option value="in">Nằm trong</option>
+                                      <option value="eq">Bằng</option>
+                                      <option value="nin">Không thuộc</option>
+                                    </>
+                                  )}
+                                </select>
+                                <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                              </div>
+                            </div>
+                            <div className="col-span-8 lg:col-span-9">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Danh sách giá trị (ID/Mã)</label>
+                              {rule.field_type === 'select' || rule.field_type === 'multiselect' ? (
+                                <div className="relative">
+                                  <select
+                                    value={rule.values || ''}
+                                    onChange={(e) => {
+                                      const newRules = [...targetRules];
+                                      newRules[idx].values = e.target.value;
+                                      setTargetRules(newRules);
+                                    }}
+                                    className={`${inputStyle} h-12 border-none shadow-sm appearance-none bg-slate-50 dark:bg-slate-800 pr-10`}
+                                  >
+                                    <option value="">Chọn giá trị...</option>
+                                    {rule.options?.map((opt: any) => (
+                                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                    ))}
+                                  </select>
+                                  {(!rule.options || rule.options.length === 0) && (
+                                    <div className="absolute right-10 top-1/2 -translate-y-1/2">
+                                      <Loader2 size={14} className="animate-spin text-blue-500" />
+                                    </div>
+                                  )}
+                                  <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                </div>
+                              ) : rule.field_type === 'boolean' ? (
                                 <select
                                   value={rule.values || ''}
                                   onChange={(e) => {
@@ -552,71 +638,50 @@ export const PromotionWizard: React.FC<PromotionWizardProps> = ({ onCancel, onSa
                                     newRules[idx].values = e.target.value;
                                     setTargetRules(newRules);
                                   }}
-                                  className={`${inputStyle} h-12 border-none shadow-sm appearance-none bg-slate-50 dark:bg-slate-800 pr-10`}
+                                  className={`${inputStyle} h-12 border-none shadow-sm appearance-none bg-slate-50 dark:bg-slate-800`}
                                 >
-                                  <option value="">Chọn giá trị...</option>
-                                  {rule.options?.map((opt: any) => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                  ))}
+                                  <option value="">Chọn...</option>
+                                  <option value="true">Đúng (True)</option>
+                                  <option value="false">Sai (False)</option>
                                 </select>
-                                {(!rule.options || rule.options.length === 0) && (
-                                  <div className="absolute right-10 top-1/2 -translate-y-1/2">
-                                    <Loader2 size={14} className="animate-spin text-blue-500" />
-                                  </div>
-                                )}
-                                <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                              </div>
-                            ) : rule.field_type === 'boolean' ? (
-                              <select
-                                value={rule.values || ''}
-                                onChange={(e) => {
-                                  const newRules = [...targetRules];
-                                  newRules[idx].values = e.target.value;
-                                  setTargetRules(newRules);
-                                }}
-                                className={`${inputStyle} h-12 border-none shadow-sm appearance-none bg-slate-50 dark:bg-slate-800`}
-                              >
-                                <option value="">Chọn...</option>
-                                <option value="true">Đúng (True)</option>
-                                <option value="false">Sai (False)</option>
-                              </select>
-                            ) : (
-                              <input
-                                type={rule.field_type === 'number' ? 'number' : 'text'}
-                                placeholder={rule.field_type === 'number' ? "Nhập số..." : "Nhập giá trị..."}
-                                className={`${inputStyle} h-12 border-none shadow-sm bg-slate-50 dark:bg-slate-800`}
-                                value={rule.values || ''}
-                                onChange={(e) => {
-                                  const newRules = [...targetRules];
-                                  newRules[idx].values = e.target.value;
-                                  setTargetRules(newRules);
-                                }}
-                              />
-                            )}
+                              ) : (
+                                <input
+                                  type={rule.field_type === 'number' ? 'number' : 'text'}
+                                  placeholder={rule.field_type === 'number' ? "Nhập số..." : "Nhập giá trị..."}
+                                  className={`${inputStyle} h-12 border-none shadow-sm bg-slate-50 dark:bg-slate-800`}
+                                  value={rule.values || ''}
+                                  onChange={(e) => {
+                                    const newRules = [...targetRules];
+                                    newRules[idx].values = e.target.value;
+                                    setTargetRules(newRules);
+                                  }}
+                                />
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
+                    ))}
+                    <div className="pt-2 text-center">
+                      <button
+                        onClick={() => setTargetRules([])}
+                        className="text-[10px] font-black text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 uppercase tracking-widest"
+                      >
+                        XÓA TẤT CẢ ĐIỀU KIỆN
+                      </button>
                     </div>
-                  ))}
-                  <div className="pt-2 text-center">
-                    <button
-                      onClick={() => setTargetRules([])}
-                      className="text-[10px] font-black text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 uppercase tracking-widest"
-                    >
-                      XÓA TẤT CẢ ĐIỀU KIỆN
-                    </button>
+                  </Card>
+                ) : (
+                  <div onClick={() => setTargetRules([{ attribute: '', value: '', operator: ['in'], values: '' }])} className="p-12 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[32px] flex flex-col items-center justify-center text-slate-400 hover:text-blue-500 hover:border-blue-500/50 hover:bg-blue-50/5 cursor-pointer transition-all group">
+                    <div className="w-16 h-16 bg-slate-100 dark:bg-slate-900 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                      <Plus size={32} />
+                    </div>
+                    <p className="font-bold text-sm uppercase tracking-tight">Chưa có điều kiện áp dụng sản phẩm</p>
+                    <p className="text-xs font-medium mt-1">Nhấp để thiết lập danh sách sản phẩm được hưởng KM</p>
                   </div>
-                </Card>
-              ) : (
-                <div onClick={() => setTargetRules([{ attribute: '', value: '', operator: ['in'], values: '' }])} className="p-12 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[32px] flex flex-col items-center justify-center text-slate-400 hover:text-blue-500 hover:border-blue-500/50 hover:bg-blue-50/5 cursor-pointer transition-all group">
-                  <div className="w-16 h-16 bg-slate-100 dark:bg-slate-900 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                    <Plus size={32} />
-                  </div>
-                  <p className="font-bold text-sm uppercase tracking-tight">Chưa có điều kiện áp dụng sản phẩm</p>
-                  <p className="text-xs font-medium mt-1">Nhấp để thiết lập danh sách sản phẩm được hưởng KM</p>
-                </div>
-              )}
-            </section>
+                )}
+              </section>
+            )}
           </div>
         )}
 
@@ -731,8 +796,8 @@ export const PromotionWizard: React.FC<PromotionWizardProps> = ({ onCancel, onSa
             }
 
             // Validation basics
-            if (!code || !selectedType || !promoValue) {
-              showToast('Vui lòng điền đầy đủ Mã và Giá trị KM', 'error');
+            if (!code || !selectedType || (selectedType !== 'free_shipping' && !promoValue)) {
+              showToast(`Vui lòng điền đầy đủ Mã ${selectedType !== 'free_shipping' ? 'và Giá trị KM' : ''}`, 'error');
               return;
             }
 
@@ -747,19 +812,19 @@ export const PromotionWizard: React.FC<PromotionWizardProps> = ({ onCancel, onSa
                 limit: usageLimit,
                 rules: rules.filter(r => (r.attribute || r.value) && r.values?.length).map(r => ({
                   attribute: r.value || r.attribute || '',
-                  operator: r.operator || ['in'],
+                  operator: r.operator?.[0] || 'in',
                   values: r.values || ''
                 })),
                 application_method: {
                   allocation: allocation,
-                  value: promoValue,
+                  value: selectedType === 'free_shipping' ? 100 : promoValue,
                   currency_code: 'vnd',
                   max_quantity: maxQuantity,
                   type: currentType?.method_type || 'fixed',
                   target_type: currentType?.target_type || 'items',
                   target_rules: targetRules.filter(r => (r.attribute || r.value) && r.values?.length).map(r => ({
                     attribute: r.value || r.attribute || '',
-                    operator: r.operator || ['in'],
+                    operator: r.operator?.[0] || 'in',
                     values: r.values || ''
                   })),
                   buy_rules: []

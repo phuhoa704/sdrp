@@ -23,7 +23,7 @@ export const OrderDetail = ({ order, onClose, isDetailLoading }: OrderDetailProp
       maxWidth='5xl'
       maxHeight='85vh'
     >
-      <div className="relative w-full max-w-5xl h-[90vh] bg-white dark:bg-slate-900 overflow-hidden shadow-2xl animate-slide-up flex flex-col border dark:border-slate-800">
+      <div className="relative w-full max-w-5xl h-[85vh] bg-white dark:bg-slate-900 overflow-hidden shadow-2xl animate-slide-up flex flex-col border dark:border-slate-800">
         <div className="p-8 bg-slate-900 text-white flex justify-between items-center shrink-0">
           <div className="flex items-center gap-6">
             <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center border border-white/10">

@@ -19,6 +19,14 @@ export type CustomerAddress = {
     updated_at: string;
 };
 
+export type CustomerGroup = {
+    id: string;
+    name: string;
+    metadata: Record<string, any>;
+    created_at: string;
+    updated_at: string;
+};
+
 export type Customer = {
     id: string;
     has_account: boolean;
@@ -30,5 +38,8 @@ export type Customer = {
     last_name: string;
     addresses: CustomerAddress[];
     phone: string;
+    groups: CustomerGroup[];
     metadata: Record<string, any> | null;
+    created_at: string;
+    updated_at: string;
 };

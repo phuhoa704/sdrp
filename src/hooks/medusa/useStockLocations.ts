@@ -1,12 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { stockLocationService } from '@/lib/api/medusa/stockLocationService';
-import { StockLocation } from '@/types/stock';
+import { GetStockLocationsQuery, StockLocation } from '@/types/stock';
 
-/**
- * Hook to fetch and manage Medusa stock locations
- * @param autoFetch Whether to fetch locations on mount
- */
-export const useStockLocations = (autoFetch = true) => {
+
+export const useStockLocations = ({ autoFetch = true, ...params }: GetStockLocationsQuery) => {
     const [locations, setLocations] = useState<StockLocation[]>([]);
     const [count, setCount] = useState(0);
     const [loading, setLoading] = useState<boolean>(false);
@@ -16,7 +13,7 @@ export const useStockLocations = (autoFetch = true) => {
         setLoading(true);
         setError(null);
         try {
-            const data = await stockLocationService.getStockLocations();
+            const data = await stockLocationService.getStockLocations(params);
             setLocations(data.data.data.map((item) => item.stock_location));
             setCount(data.data.pagination.count);
         } catch (err: any) {

@@ -1,8 +1,9 @@
 import { getVendorId } from '@/lib/utils';
 import bridgeClient from '../bridgeClient';
-import { ApplicationMethodTargetType, GetRuleAttributeOptionsParams, GetRuleAttributeOptionsResponse, GetRuleValuesOptionsResponse, Promotion, PromotionRule, RuleType } from '@/types/promotion';
+import { ApplicationMethodTargetType, GetRuleAttributeOptionsParams, GetRuleAttributeOptionsResponse, GetRuleValuesOptionsResponse, Promotion, PromotionRule, RuleType, UpdatePromotionPayload } from '@/types/promotion';
 import axios from 'axios';
 import { CustomGetResponse } from '@/types/custom-response';
+import { CommonQuery, CommonResponse } from '@/types/common';
 
 /**
  * Medusa Promotion Service
@@ -40,13 +41,29 @@ class PromotionService {
         }
     }
 
+    async getMedusaPromotions(query?: CommonQuery): Promise<CommonResponse & { promotions: Promotion[] }> {
+        try {
+            const res = await bridgeClient.get('/admin/promotions', { params: query });
+            return res.data;
+        } catch (error: unknown) {
+            console.error('Failed to fetch Medusa promotions:', error);
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to fetch promotions'
+            );
+        }
+    }
+
     /**
      * Get a single promotion by ID
      * @param id ID of the promotion
      */
-    async getPromotion(id: string): Promise<{ promotion: Promotion }> {
+    async getPromotion(id: string, query?: CommonQuery): Promise<{ promotion: Promotion }> {
         try {
-            const res = await bridgeClient.get(`/admin/promotions/${id}`);
+            const res = await bridgeClient.get(`/admin/promotions/${id}`, { params: query });
             return res.data;
         } catch (error: unknown) {
             console.error(`Failed to fetch Medusa promotion ${id}:`, error);
@@ -76,7 +93,7 @@ class PromotionService {
         }
     }
 
-    async getPromotionTargetRules(promotionId: string): Promise<{ target_rules: PromotionRule[] }> {
+    async getPromotionTargetRules(promotionId: string): Promise<{ rules: PromotionRule[] }> {
         try {
             const res = await bridgeClient.get(`/admin/promotions/${promotionId}/target-rules`);
             return res.data;
@@ -98,7 +115,8 @@ class PromotionService {
      */
     async createPromotion(payload: any): Promise<{ promotion: Promotion }> {
         try {
-            const res = await bridgeClient.post('/admin/promotions', payload);
+            const vendorId = getVendorId();
+            const res = await bridgeClient.post('/admin/promotions', { ...payload, additional_data: { vendor_id: vendorId } });
             return res.data;
         } catch (error: unknown) {
             console.error('Failed to create Medusa promotion:', error);
@@ -117,7 +135,7 @@ class PromotionService {
      * @param id ID of the promotion to update
      * @param payload Promotion update data
      */
-    async updatePromotion(id: string, payload: any): Promise<{ promotion: Promotion }> {
+    async updatePromotion(id: string, payload: UpdatePromotionPayload): Promise<{ promotion: Promotion }> {
         try {
             const res = await bridgeClient.post(`/admin/promotions/${id}`, payload);
             return res.data;

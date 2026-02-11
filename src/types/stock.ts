@@ -1,3 +1,5 @@
+import { SalesChannel } from "./sales-channel";
+
 export interface StockDisposalItem {
     productId: string;
     productName: string;
@@ -60,7 +62,6 @@ export interface StockLocationAddress {
     metadata: Record<string, unknown> | null;
 }
 
-import { SalesChannel } from "./sales-channel";
 
 export interface StockLocation {
     id: string;
@@ -72,4 +73,12 @@ export interface StockLocation {
     updated_at: string;
     deleted_at: string | null;
     sales_channels?: SalesChannel[];
+}
+
+export interface GetStockLocationsQuery {
+    autoFetch?: boolean;
+    q?: string;
+    limit?: number;
+    offset?: number;
+    fields?: string;
 }

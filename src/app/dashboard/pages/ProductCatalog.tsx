@@ -18,7 +18,6 @@ import {
   MapPin,
   ChevronLeft,
   ChevronRight,
-  Tag
 } from 'lucide-react';
 import { Breadcrumb, Card, Button, ConfirmModal, AlertModal } from '@/components';
 import { ProductModal } from '@/components/product/ProductModal';
@@ -27,7 +26,7 @@ import { ProductVariantsModal } from '@/components/product/ProductVariantsModal'
 import { Product, ProductVariant } from '@/types/product';
 import { productService } from '@/lib/api/medusa/productService';
 import { uploadService } from '@/lib/api/medusa/uploadService';
-import { useCategories, useMedusaProducts, useProductTags } from '@/hooks';
+import { useCategories, useMedusaProducts } from '@/hooks';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setPagination } from '@/store/slices/productsSlice';
 import { addToCart } from '@/store/slices/cartSlice';
@@ -37,7 +36,7 @@ import { TableView } from '@/components/TableView';
 import { useToast } from '@/contexts/ToastContext';
 import { noImage } from '@/configs';
 import { SearchFilter } from '@/components/filters/Search';
-import { SalesChannelsFilter } from '@/components/filters/SalesChannels';
+import { selectSelectedSalesChannelId } from '@/store/selectors';
 
 
 export default function ProductCatalog() {
@@ -51,7 +50,6 @@ export default function ProductCatalog() {
   const [loadingVariants, setLoadingVariants] = useState<Record<string, boolean>>({});
 
   const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [selectedTag, setSelectedTag] = useState<string>("");
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
@@ -62,8 +60,6 @@ export default function ProductCatalog() {
   const [isVariantsModalOpen, setIsVariantsModalOpen] = useState(false);
   const [variantsList, setVariantsList] = useState<ProductVariant[]>([]);
   const [selectedVariantProduct, setSelectedVariantProduct] = useState<Product | null>(null);
-
-  const [salesChannelId, setSalesChannelId] = useState<string>("all")
 
   const [isFetchingDetail, setIsFetchingDetail] = useState(false);
 
@@ -93,8 +89,9 @@ export default function ProductCatalog() {
 
   useEffect(() => {
     dispatch(setPagination({ offset: 0 }));
-  }, [searchTerm, selectedCategory, selectedTag, dispatch]);
+  }, [searchTerm, selectedCategory, dispatch]);
   const { pagination, currencyCode } = useAppSelector(state => state.products);
+  const selectedSalesChannelId = useAppSelector(selectSelectedSalesChannelId);
   const { limit, offset } = pagination;
 
   const getVariantPrice = (variant: any) => {
@@ -207,14 +204,12 @@ export default function ProductCatalog() {
   } = useMedusaProducts({
     q: debouncedSearch,
     category_id: selectedCategory || undefined,
-    tags: selectedTag || undefined,
-    sales_channel_id: salesChannelId === "all" ? undefined : salesChannelId,
     limit: limit,
     offset: offset,
-    autoFetch: true
+    autoFetch: true,
+    sales_channel_id: selectedSalesChannelId || undefined,
   });
   const [isSaving, setIsSaving] = useState(false);
-  const { tags } = useProductTags();
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
 
   const processedProducts = useMemo(() => {
@@ -435,40 +430,6 @@ export default function ProductCatalog() {
               handleSearchChange={setSearchTerm}
               placeholder='Tìm kiếm sản phẩm...'
             />
-            <SalesChannelsFilter
-              handleChannelSelect={(id) => setSalesChannelId(id)}
-              selectedChannelId={salesChannelId}
-            />
-            <div className="flex flex-wrap gap-2 w-full xl:w-auto">
-              <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-2xl items-center gap-1 shadow-inner">
-                <span className="text-[10px] font-black text-slate-400 uppercase px-3 hidden xl:block">NHÃN:</span>
-
-                <button
-                  onClick={() => setSelectedTag("")}
-                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 transition-all ${selectedTag === ""
-                    ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-sm shadow-emerald-500/10'
-                    : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                >
-                  <Layers size={14} className={selectedTag === "" ? 'text-emerald-500' : 'text-slate-400'} />
-                  <span>Tất cả nhãn</span>
-                </button>
-
-                {tags.map((tag) => (
-                  <button
-                    key={tag.id}
-                    onClick={() => setSelectedTag(tag.id)}
-                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 transition-all ${selectedTag === tag.id
-                      ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-sm shadow-emerald-500/10'
-                      : 'text-slate-400 hover:text-slate-200'
-                      }`}
-                  >
-                    <Tag size={14} className={selectedTag === tag.id ? 'text-emerald-500' : 'text-slate-400'} />
-                    <span>{tag.value}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
           </Card>
 
           {medusaError && (
@@ -595,16 +556,6 @@ export default function ProductCatalog() {
                                 <p className="text-base font-black dark:text-white text-slate-800">{p.sales_channels?.map((sc: any) => sc.name).join(', ') || 'Global'}</p>
                               </div>
                             </Card>
-                            <div className="ml-auto">
-                              <Button
-                                className="h-14 rounded-2xl bg-blue-600 text-white shadow-xl shadow-blue-500/20"
-                                icon={<ShoppingCart size={20} />}
-                                onClick={(e) => { e.stopPropagation(); handleRestock(p); }}
-                                disabled={isFetchingDetail}
-                              >
-                                {isFetchingDetail ? 'ĐANG TẢI...' : 'NHẬP THÊM HÀNG SỈ'}
-                              </Button>
-                            </div>
                           </div>
 
                           <div className="space-y-4">

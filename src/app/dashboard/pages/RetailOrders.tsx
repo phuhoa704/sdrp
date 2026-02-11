@@ -56,6 +56,7 @@ export default function RetailOrders() {
   }), [searchTerm, currentPage, selectedChannelId]);
 
   const { orders: medusaOrders, loading, count } = useOrders(orderQuery);
+  console.log(medusaOrders);
 
   const b2cHistory: (B2COrder & { rawId?: string })[] = useMemo(() => {
     return medusaOrders.length > 0 ? medusaOrders.map((order: any) => ({

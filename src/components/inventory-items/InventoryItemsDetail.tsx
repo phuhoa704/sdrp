@@ -101,7 +101,7 @@ export const InventoryItemsDetail = ({ item, onClose }: Props) => {
                     { title: "Tên kho" },
                     { title: "Reservation", className: "text-center" },
                     { title: "Tồn thực tế", className: "text-center" },
-                    { title: "Available", className: "text-right" }
+                    { title: "Có sẵn", className: "text-right" }
                   ]}
                   data={inventoryItem?.location_levels || []}
                   renderRow={(lcl, idx) => (

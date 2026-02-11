@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useMemo, Fragment } from 'react';
+import React, { useState, useEffect, useMemo, Fragment, useRef } from 'react';
 import {
   Home, Package, User, ShoppingBag, Tag, Ticket,
   ChevronDown, ChevronRight, Zap, Moon, Sun, ChevronLeft,
   Wallet,
-  BookText
+  BookText,
+  MapPin,
+  Check
 } from 'lucide-react';
 import { UserRole } from '@/types/enum';
 import { ViewState } from '@/types/view-state';
@@ -56,6 +58,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onBrandChange
 }) => {
   const dispatch = useAppDispatch();
+  const [isBrandMenuOpen, setIsBrandMenuOpen] = useState(false);
+  const brandMenuRef = useRef<HTMLDivElement>(null);
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['marketplace', 'warehouse']);
   const [hoveredMenu, setHoveredMenu] = useState<{ id: string, top: number } | null>(null);
 
@@ -427,6 +431,58 @@ export const Sidebar: React.FC<SidebarProps> = ({
           );
         })}
       </nav>
+
+      <div className="relative mb-2" ref={brandMenuRef}>
+        <button
+          onClick={() => setIsBrandMenuOpen(!isBrandMenuOpen)}
+          className={cn(
+            "w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-300",
+            "bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50",
+            isCollapsed && "justify-center"
+          )}
+        >
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+            <MapPin size={16} className="text-emerald-500" />
+          </div>
+          {!isCollapsed && (
+            <div className="flex-1 text-left">
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Chi nhánh</p>
+              <p className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">{selectedChannel?.name || 'Đang tải...'}</p>
+            </div>
+          )}
+          {!isCollapsed && <ChevronDown size={14} className={cn("text-slate-400 transition-transform", isBrandMenuOpen && "rotate-180")} />}
+        </button>
+
+        {isBrandMenuOpen && (
+          <div className={cn(
+            "absolute bottom-full left-0 w-full mb-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl z-[110] overflow-hidden animate-in slide-in-from-bottom-2 duration-200",
+            isCollapsed && "left-0 w-64"
+          )}>
+            <div className="p-2 space-y-1">
+              {salesChannels.map((channel) => (
+                <button
+                  key={channel.id}
+                  onClick={() => {
+                    dispatch(setSelectedSalesChannelId(channel.id));
+                    setIsBrandMenuOpen(false);
+                    if (onBrandChange) onBrandChange(channel.name);
+                  }}
+                  className={cn(
+                    "w-full flex items-center gap-3 p-3 rounded-xl transition-all text-xs font-bold",
+                    selectedSalesChannelId === channel.id
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200"
+                  )}
+                >
+                  <MapPin size={14} />
+                  <span className="flex-1 text-left">{channel.name}</span>
+                  {selectedSalesChannelId === channel.id && <Check size={14} />}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="pt-4 border-t dark:border-slate-800 border-slate-200 space-y-2">
         <button

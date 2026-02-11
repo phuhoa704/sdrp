@@ -36,12 +36,12 @@ const PROMOTION_UI_MAP: Record<string, { label: string; description: string; ico
         color: "text-purple-500",
         bgColor: "bg-purple-500/10"
     },
-    free_shipping: {
+    shipping_methods: {
         label: "Miễn phí vận chuyển",
         description: "Hỗ trợ phí giao hàng để kích khích khách hàng chốt đơn nhanh.",
         icon: Truck,
-        color: "text-sky-500",
-        bgColor: "bg-sky-500/10"
+        color: "text-cyan-500",
+        bgColor: "bg-cyan-500/10"
     },
     unknown: {
         label: "Khuyến mãi",
@@ -57,7 +57,7 @@ export const getPromotionUIData = (p: any) => {
     const am = p.application_method;
     if (!am) return PROMOTION_UI_MAP.unknown;
 
-    if (am.target_type === 'shipping') return PROMOTION_UI_MAP.free_shipping;
+    if (am.target_type === 'shipping_methods') return PROMOTION_UI_MAP.shipping_methods;
 
     if (am.target_type === 'items') {
         return am.type === 'percentage' ? PROMOTION_UI_MAP.percentage_off_product : PROMOTION_UI_MAP.amount_off_products;

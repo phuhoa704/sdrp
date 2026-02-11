@@ -1,6 +1,6 @@
 import { getVendorId } from '@/lib/utils';
 import bridgeClient from '../bridgeClient';
-import { StockLocation } from '@/types/stock';
+import { GetStockLocationsQuery, StockLocation } from '@/types/stock';
 import axios from 'axios';
 import { CustomGetResponse } from '@/types/custom-response';
 
@@ -24,7 +24,7 @@ class StockLocationService {
      * Get list of stock locations from Medusa
      * @param query Query parameters for filtering and pagination
      */
-    async getStockLocations(query?: Record<string, unknown>): Promise<CustomGetResponse<StockLocationData>> {
+    async getStockLocations(query?: GetStockLocationsQuery): Promise<CustomGetResponse<StockLocationData>> {
         try {
             const vendorId = getVendorId();
             const res = await bridgeClient.get('/custom/admin/vendors/stock-location', { params: query, headers: { 'x-api-vendor': vendorId } });

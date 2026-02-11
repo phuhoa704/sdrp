@@ -31,7 +31,7 @@ import {
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
-import { cn } from '@/lib/utils';
+import { cn, formatDateByFormat } from '@/lib/utils';
 import { SearchFilter } from '@/components/filters/Search';
 import { useCustomers } from '@/hooks/medusa/useCustomer';
 import { TableView } from '@/components/TableView';
@@ -311,7 +311,7 @@ export default function Customers() {
               </td>
               <td className="px-6 py-6">
                 <span className="px-3 py-1 dark:bg-slate-800 bg-slate-100 text-slate-400 rounded-full text-[9px] font-black uppercase tracking-tighter border border-white/5 group-hover:border-emerald-500/30 transition-colors">
-                  {'Chưa nhóm'}
+                  {c.groups.length > 0 ? c.groups.map((g: any) => g.name).join(', ') : 'Chưa nhóm'}
                 </span>
               </td>
               <td className="px-6 py-6 text-right font-black">
@@ -431,7 +431,7 @@ export default function Customers() {
                                   <Card className="p-6 bg-white dark:bg-slate-800 shadow-sm border-slate-100 dark:border-slate-700 rounded-[28px] space-y-4">
                                     <div className="flex justify-between items-center">
                                       <span className="text-[11px] font-bold text-slate-400 uppercase">Ngày gia nhập</span>
-                                      <span className="text-sm font-black text-slate-800 dark:text-white">{""}</span>
+                                      <span className="text-sm font-black text-slate-800 dark:text-white">{formatDateByFormat(c.created_at, 'dd/MM/yyyy')}</span>
                                     </div>
                                     <div className="flex justify-between items-center">
                                       <span className="text-[11px] font-bold text-slate-400 uppercase">Sinh nhật</span>

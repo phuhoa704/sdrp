@@ -109,3 +109,20 @@ export interface GetRuleValuesOptionsResponse {
     limit: number;
     offset: number;
 }
+
+export interface UpdatePromotionPayload {
+    campaign_id?: string;
+    code?: string;
+    is_automatic?: boolean;
+    type?: PromotionType;
+    application_method?: {
+        type: ApplicationMethodType;
+        target_type: ApplicationMethodTargetType;
+        allocation: ApplicationMethodAllocation;
+        currency_code: string;
+        max_quantity?: number;
+        buy_rules_min_quantity?: number;
+        apply_to_quantity?: number;
+        target_rules?: PromotionRule[];
+    }
+}
