@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { logout, logoutFromMedusa } from "./authSlice";
 
 export interface POSItem {
     id: string;
@@ -55,8 +56,25 @@ const posSlice = createSlice({
         removeTab: (state, action: PayloadAction<string>) => {
             state.tabs = state.tabs.filter(tab => tab.id !== action.payload);
         },
+        resetPOS: (state) => {
+            state.activeTabId = "";
+            state.activeTab = null;
+            state.tabs = [];
+        },
+    },
+    extraReducers: (builder) => {
+        builder.addCase(logout, (state) => {
+            state.activeTabId = "";
+            state.activeTab = null;
+            state.tabs = [];
+        });
+        builder.addCase(logoutFromMedusa.fulfilled, (state) => {
+            state.activeTabId = "";
+            state.activeTab = null;
+            state.tabs = [];
+        });
     }
 })
 
-export const { setActiveTabId, setActiveTab, setTabs, addTab, removeTab } = posSlice.actions;
+export const { setActiveTabId, setActiveTab, setTabs, addTab, removeTab, resetPOS } = posSlice.actions;
 export default posSlice.reducer;

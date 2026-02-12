@@ -38,7 +38,7 @@ export const useDraftOrders = (options: UseDraftOrdersOptions = {}) => {
         } finally {
             setLoading(false);
         }
-    }, [q, limit, offset]);
+    }, [q, limit, offset, selectedSalesChannelId]);
 
     useEffect(() => {
         if (autoFetch) {

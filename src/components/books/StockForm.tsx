@@ -19,7 +19,12 @@ export const StockForm = ({ onBack, onSuccess, initialType }: { onBack?: () => v
   const [isVendorOpen, setIsVendorOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
   const [findBy, setFindBy] = useState<'product' | 'sku'>('product')
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
   const [formValues, setFormValues] = useState({
     type: initialType || StockUpType.INBOUND,
     vendor: "NPP Trung Tâm",
@@ -47,7 +52,12 @@ export const StockForm = ({ onBack, onSuccess, initialType }: { onBack?: () => v
     thumbnail: string
   }>>({})
 
-  const { inventoryItems, loading } = useInventoryItems({ q: searchTerm, limit: 100 })
+  const itemsPerPage = 10;
+  const { inventoryItems, loading, count } = useInventoryItems({
+    q: searchTerm,
+    limit: itemsPerPage,
+    offset: (currentPage - 1) * itemsPerPage
+  })
   const { locations, loading: stockLocationsLoading } = useStockLocations({ limit: 100, fields: "id,name,-address" });
   const typeOpts = [
     { id: StockUpType.INBOUND, label: "Nhập hàng (Inbound)" },
@@ -283,6 +293,13 @@ export const StockForm = ({ onBack, onSuccess, initialType }: { onBack?: () => v
             ]}
             data={inventoryItems}
             isLoading={loading}
+            pagination={{
+              currentPage,
+              totalPages: Math.ceil(count / itemsPerPage),
+              onPageChange: (page) => setCurrentPage(page),
+              totalItems: count,
+              itemsPerPage
+            }}
             renderRow={(item, index) => {
               const input = itemInputs[item.id] || {
                 quantity: 0,

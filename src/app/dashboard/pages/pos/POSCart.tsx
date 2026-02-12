@@ -13,6 +13,7 @@ import { usePromotions } from '@/hooks';
 import { getPromotionUIData } from '@/lib/helpers';
 import { TableLoading } from '@/components/TableLoading';
 import { draftOrderService } from '@/lib/api/medusa/draftOrderService';
+import { formatDisplayNumber, parseDisplayNumber } from '@/lib/utils';
 
 const CartItem = ({ item, onRemoveItem, onUpdateQty }: any) => {
   const [qty, setQty] = useState(item.quantity);
@@ -417,15 +418,15 @@ export const POSCart: React.FC<POSCartProps> = ({
         )}
       </div>
 
-      <div className="shrink-0 p-5 border-t dark:border-slate-800 space-y-4 shadow-2xl">
+      <div className="shrink-0 p-5 bg-emerald-600 dark:bg-slate-950 border-t dark:border-slate-800 space-y-4 shadow-2xl">
         <div className="grid grid-cols-2 gap-2">
-          <div className={`rounded-xl border transition-all overflow-hidden ${isPromoApplied ? 'bg-amber-50/10 border-amber-500/50' : 'dark:bg-slate-900 bg-slate-50 dark:border-slate-800'}`}>
+          <div className={`rounded-xl border transition-all overflow-hidden ${isPromoApplied ? 'bg-amber-50/10 border-amber-500/50' : 'bg-emerald-700 dark:bg-slate-900 border-emerald-500/50 dark:border-slate-800'}`}>
             <button onClick={() => setIsPromoExpanded(!isPromoExpanded)} className="w-full px-3 h-10 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Ticket size={14} className={isPromoApplied ? 'text-amber-500' : 'text-slate-500'} />
-                <span className={`text-[10px] font-black uppercase tracking-tight ${isPromoApplied ? 'text-amber-500' : 'text-slate-500'}`}>Voucher</span>
+                <Ticket size={14} className={isPromoApplied ? 'text-amber-500' : 'text-emerald-100 dark:text-slate-500'} />
+                <span className={`text-[10px] font-black uppercase tracking-tight ${isPromoApplied ? 'text-amber-500' : 'text-emerald-100 dark:text-slate-500'}`}>Voucher</span>
               </div>
-              <ChevronDown size={14} className={`text-slate-500 transition-transform ${isPromoExpanded ? 'rotate-180' : ''}`} />
+              <ChevronDown size={14} className={`text-emerald-100 dark:text-slate-500 transition-transform ${isPromoExpanded ? 'rotate-180' : ''}`} />
             </button>
             {isPromoExpanded && (
               <div className="px-3 pb-3 space-y-2 animate-fade-in">
@@ -460,26 +461,29 @@ export const POSCart: React.FC<POSCartProps> = ({
             )}
           </div>
 
-          <div className={`rounded-xl border transition-all overflow-hidden ${isDiscountApplied ? 'bg-emerald-50/10 border-emerald-500/50' : 'dark:bg-slate-900 bg-slate-50 dark:border-slate-800'}`}>
+          <div className={`rounded-xl border transition-all overflow-hidden ${isDiscountApplied ? 'bg-emerald-50/10 border-emerald-500/50' : 'bg-emerald-700 dark:bg-slate-900 border-emerald-500/50 dark:border-slate-800'}`}>
             <button onClick={() => setIsManualDiscountExpanded(!isManualDiscountExpanded)} className="w-full px-3 h-10 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Percent size={14} className={isDiscountApplied ? 'text-emerald-500' : 'text-slate-500'} />
-                <span className={`text-[10px] font-black uppercase tracking-tight ${isDiscountApplied ? 'text-emerald-500' : 'text-slate-500'}`}>Giảm trực tiếp</span>
+                <Percent size={14} className={isDiscountApplied ? 'text-white dark:text-emerald-500' : 'text-emerald-100 dark:text-slate-500'} />
+                <span className={`text-[10px] font-black uppercase tracking-tight ${isDiscountApplied ? 'text-white dark:text-emerald-500' : 'text-emerald-100 dark:text-slate-500'}`}>Giảm trực tiếp</span>
               </div>
-              <ChevronDown size={14} className={`text-slate-500 transition-transform ${isManualDiscountExpanded ? 'rotate-180' : ''}`} />
+              <ChevronDown size={14} className={`text-emerald-100 dark:text-slate-500 transition-transform ${isManualDiscountExpanded ? 'rotate-180' : ''}`} />
             </button>
             {isManualDiscountExpanded && (
               <div className="px-3 pb-3 space-y-2 animate-fade-in">
-                <div className="flex p-0.5 bg-slate-800 rounded-lg border border-slate-700">
+                <div className="flex p-0.5 bg-emerald-800 dark:bg-slate-800 rounded-lg border border-emerald-700 dark:border-slate-700">
                   <button onClick={() => setDiscountType('amount')} className={`flex-1 py-1 text-[9px] font-black rounded ${discountType === 'amount' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-400'}`}>VNĐ</button>
                   <button onClick={() => setDiscountType('percent')} className={`flex-1 py-1 text-[9px] font-black rounded ${discountType === 'percent' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-400'}`}>%</button>
                 </div>
                 <input
-                  type="number"
-                  value={discountValue || ''}
-                  onChange={(e) => handleManualDiscountChange(parseInt(e.target.value) || 0)}
+                  type="text"
+                  value={formatDisplayNumber(discountValue || '')}
+                  onChange={(e) => {
+                    const val = parseDisplayNumber(e.target.value)
+                    handleManualDiscountChange(val)
+                  }}
                   placeholder="Mức giảm..."
-                  className="w-full h-8 px-3 bg-slate-800 border border-slate-700 text-white rounded-lg text-xs font-black outline-none"
+                  className="w-full h-8 px-3 bg-white/10 dark:bg-slate-800 border border-white/20 dark:border-slate-700 placeholder:text-emerald-100/50 rounded-lg text-xs font-black outline-none"
                 />
               </div>
             )}
@@ -489,13 +493,13 @@ export const POSCart: React.FC<POSCartProps> = ({
         <div className="flex gap-2">
           <button
             onClick={() => setPaymentMethod('cash')}
-            className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-xl border-2 transition-all font-black text-[10px] uppercase tracking-tighter ${paymentMethod === 'cash' ? 'bg-emerald-500/10 border-emerald-500 text-emerald-500' : 'dark:bg-slate-900 bg-slate-50 dark:border-slate-800 text-slate-500'}`}
+            className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-xl border-2 transition-all font-black text-[10px] uppercase tracking-tighter ${paymentMethod === 'cash' ? 'bg-white text-emerald-600 border-white' : 'bg-emerald-700 border-emerald-500/50 dark:bg-slate-900 dark:border-slate-800 text-emerald-100 dark:text-slate-500'}`}
           >
             <Banknote size={14} /> TIỀN MẶT
           </button>
           <button
             onClick={() => setPaymentMethod('qr')}
-            className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-xl border-2 transition-all font-black text-[10px] uppercase tracking-tighter ${paymentMethod === 'qr' ? 'bg-indigo-500/10 border-indigo-500 text-indigo-500' : 'dark:bg-slate-900 bg-slate-50 dark:border-slate-800 text-slate-500'}`}
+            className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-xl border-2 transition-all font-black text-[10px] uppercase tracking-tighter ${paymentMethod === 'qr' ? 'bg-white border-white text-indigo-500' : 'bg-emerald-700 border-emerald-500/50 dark:bg-slate-900 dark:border-slate-800 text-emerald-100 dark:text-slate-500'}`}
           >
             <QrCode size={14} /> QR BANKING
           </button>
@@ -503,12 +507,12 @@ export const POSCart: React.FC<POSCartProps> = ({
 
         <div className="space-y-2">
           {activeTab.fulfillment === 'delivery' && (
-            <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase">
+            <div className="flex justify-between text-[10px] font-bold text-emerald-100 dark:text-slate-500 uppercase">
               <span>Vận chuyển ({activeTab.shippingPartner || 'GHTK'})</span>
               <span className="text-blue-400">+{activeTab.shippingFee.toLocaleString()}đ</span>
             </div>
           )}
-          <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase">
+          <div className="flex justify-between text-[10px] font-bold text-emerald-100 dark:text-slate-500 uppercase">
             <span>Khuyến mãi / Giảm giá</span>
             <span className={activeTab.discount > 0 ? 'text-rose-400' : 'text-white'}>
               {activeTab.discount > 0 ? `-${activeTab.discount.toLocaleString()}đ` : '0đ'}
@@ -516,10 +520,10 @@ export const POSCart: React.FC<POSCartProps> = ({
           </div>
           <div className="flex justify-between items-end pt-2 border-t border-white/10">
             <div className="flex flex-col">
-              <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">TỔNG THANH TOÁN</span>
-              <span className="text-[8px] text-emerald-500 font-black uppercase italic">Đã gồm VAT 8%</span>
+              <span className="text-[9px] font-black text-emerald-100 dark:text-slate-500 uppercase tracking-widest leading-none mb-1">TỔNG THANH TOÁN</span>
+              <span className="text-[8px] text-emerald-200 dark:text-emerald-500 font-black uppercase italic">Đã gồm VAT 8%</span>
             </div>
-            <span className="text-3xl font-black text-emerald-400 leading-none tracking-tighter">
+            <span className="text-3xl font-black text-white leading-none tracking-tighter">
               {totalAmount.toLocaleString()}
               <span className="text-sm ml-1 font-bold">đ</span>
             </span>

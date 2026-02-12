@@ -12,6 +12,7 @@ import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { useCategories, useSalesChannels, useProductTags, useCollections } from '@/hooks';
 import { cn, formatDisplayNumber, parseDisplayNumber } from '@/lib/utils';
+import { RichTextEditor } from '@/components';
 
 interface ProductFormProps {
   onCancel: () => void;
@@ -301,11 +302,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
                   </div>
                   <div>
                     <label className={labelClass}>Mô tả chi tiết</label>
-                    <textarea
+                    <RichTextEditor
                       value={formData.description}
-                      onChange={e => setFormData({ ...formData, description: e.target.value })}
+                      onChange={val => setFormData({ ...formData, description: val })}
                       placeholder="Mô tả công dụng, liều lượng, hướng dẫn..."
-                      className={cn(inputClass, "h-32 py-4 resize-none")}
                     />
                   </div>
                 </div>

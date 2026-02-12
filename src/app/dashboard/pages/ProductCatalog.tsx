@@ -19,10 +19,11 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
-import { Breadcrumb, Card, Button, ConfirmModal, AlertModal } from '@/components';
+import { Breadcrumb, Card, Button, ConfirmModal, AlertModal, Drawer } from '@/components';
 import { ProductModal } from '@/components/product/ProductModal';
 import { ProductForm } from '@/components/form/product/ProductForm';
 import { ProductVariantsModal } from '@/components/product/ProductVariantsModal';
+import { ProductVariantUpdateForm } from '@/components/form/product/ProductVariantUpdateForm';
 import { Product, ProductVariant } from '@/types/product';
 import { productService } from '@/lib/api/medusa/productService';
 import { uploadService } from '@/lib/api/medusa/uploadService';
@@ -60,6 +61,9 @@ export default function ProductCatalog() {
   const [isVariantsModalOpen, setIsVariantsModalOpen] = useState(false);
   const [variantsList, setVariantsList] = useState<ProductVariant[]>([]);
   const [selectedVariantProduct, setSelectedVariantProduct] = useState<Product | null>(null);
+  const [isVariantDrawerOpen, setIsVariantDrawerOpen] = useState(false);
+  const [selectedVariantToUpdate, setSelectedVariantToUpdate] = useState<{ productId: string, variant: ProductVariant } | null>(null);
+  const [isUpdatingVariant, setIsUpdatingVariant] = useState(false);
 
   const [isFetchingDetail, setIsFetchingDetail] = useState(false);
 
@@ -237,21 +241,42 @@ export default function ProductCatalog() {
 
       // Only fetch if we haven't loaded variants for this product yet
       if (!productVariants[id]) {
-        setLoadingVariants(prev => ({ ...prev, [id]: true }));
-        try {
-          const response = await productService.getVariants(id, {
-            order: 'variant_rank',
-            limit: 100,
-            fields: 'title,sku,*options,*prices'
-          });
-          setProductVariants(prev => ({ ...prev, [id]: response.variants || [] }));
-        } catch (error) {
-          console.error(`Failed to fetch variants for product ${id}:`, error);
-          setProductVariants(prev => ({ ...prev, [id]: [] }));
-        } finally {
-          setLoadingVariants(prev => ({ ...prev, [id]: false }));
-        }
+        fetchProductVariants(id);
       }
+    }
+  };
+
+  const fetchProductVariants = async (id: string) => {
+    setLoadingVariants(prev => ({ ...prev, [id]: true }));
+    try {
+      const response = await productService.getVariants(id, {
+        order: 'variant_rank',
+        limit: 100,
+        fields: 'title,sku,*options,*prices'
+      });
+      setProductVariants(prev => ({ ...prev, [id]: response.variants || [] }));
+    } catch (error) {
+      console.error(`Failed to fetch variants for product ${id}:`, error);
+      setProductVariants(prev => ({ ...prev, [id]: [] }));
+    } finally {
+      setLoadingVariants(prev => ({ ...prev, [id]: false }));
+    }
+  };
+
+  const handleUpdateVariant = async (payload: any) => {
+    if (!selectedVariantToUpdate) return;
+    setIsUpdatingVariant(true);
+    try {
+      await productService.updateVariant(selectedVariantToUpdate.productId, selectedVariantToUpdate.variant.id, payload);
+      showToast('Cập nhật biến thể thành công', 'success');
+      setIsVariantDrawerOpen(false);
+      setSelectedVariantToUpdate(null);
+      // Reload the expanded product's variants
+      fetchProductVariants(selectedVariantToUpdate.productId);
+    } catch (err: any) {
+      showToast(err.message || 'Không thể cập nhật biến thể', 'error');
+    } finally {
+      setIsUpdatingVariant(false);
     }
   };
 
@@ -325,8 +350,14 @@ export default function ProductCatalog() {
       };
 
       if (editingProduct?.id) {
-        await productService.updateProduct(editingProduct.id, payload);
+        const productId = editingProduct.id;
+        await productService.updateProduct(productId, payload);
         showToast('Cập nhật sản phẩm thành công', 'success');
+
+        // Reload current expanded product variants if needed
+        if (expandedProducts.includes(productId)) {
+          fetchProductVariants(productId);
+        }
       } else {
         await productService.createProduct(payload);
         showToast('Thêm sản phẩm mới thành công', 'success');
@@ -335,6 +366,7 @@ export default function ProductCatalog() {
       setIsProductFormOpen(false);
       setEditingProduct(null);
       refresh();
+      console.log("payload", payload)
     } catch (err: any) {
       console.error("Failed to save product:", err);
       setAlertConfig({
@@ -576,7 +608,8 @@ export default function ProductCatalog() {
                                       <th className="px-6 py-4">SKU</th>
                                       <th className="px-6 py-4">Biến thể / Quy cách</th>
                                       <th className="px-6 py-4">Thông tin chi tiết (Dynamic Specs)</th>
-                                      <th className="px-6 py-4 text-right pr-10">Đơn giá bán</th>
+                                      <th className="px-6 py-4 text-right">Đơn giá bán</th>
+                                      <th className="px-6 py-4 text-right pr-10"></th>
                                     </tr>
                                   </thead>
                                   <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
@@ -595,8 +628,20 @@ export default function ProductCatalog() {
                                             ))}
                                           </div>
                                         </td>
-                                        <td className="px-6 py-4 text-right pr-10">
+                                        <td className="px-6 py-4 text-right">
                                           <p className="text-sm font-black text-primary">{formatCurrency(getVariantPrice(v), currencyCode)}</p>
+                                        </td>
+                                        <td className="px-6 py-4 text-right pr-10">
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setSelectedVariantToUpdate({ productId: p.id, variant: v });
+                                              setIsVariantDrawerOpen(true);
+                                            }}
+                                            className="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-blue-500 disabled:opacity-50"
+                                          >
+                                            <Edit3 size={16} />
+                                          </button>
                                         </td>
                                       </tr>
                                     ))}
@@ -723,6 +768,38 @@ export default function ProductCatalog() {
           variants={variantsList}
           onUpdate={handleUpdateVariants}
         />
+      )}
+
+      {isVariantDrawerOpen && selectedVariantToUpdate && (
+        <Drawer
+          isOpen={isVariantDrawerOpen}
+          onClose={() => {
+            setIsVariantDrawerOpen(false);
+            setSelectedVariantToUpdate(null);
+          }}
+          title="Cập nhật Biến thể"
+          icon={Layers3}
+          width="md"
+        >
+          <div className="space-y-6">
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Sản phẩm</p>
+              <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                {medusaProducts.find(p => p.id === selectedVariantToUpdate.productId)?.title}
+              </p>
+              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Quy cách</p>
+                <p className="text-xs font-black text-primary uppercase">{selectedVariantToUpdate.variant.title}</p>
+              </div>
+            </div>
+
+            <ProductVariantUpdateForm
+              variant={selectedVariantToUpdate.variant}
+              onSave={handleUpdateVariant}
+              loading={isUpdatingVariant}
+            />
+          </div>
+        </Drawer>
       )}
 
       <AlertModal

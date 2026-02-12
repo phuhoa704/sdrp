@@ -4,6 +4,9 @@ import { Search, BrainCircuit, BookOpen, Info, ChevronRight, ShieldCheck, Layout
 import { Card } from '@/components/Card';
 import { Product } from '@/types/product';
 import { MOCK_DISEASE_DATA } from '../../../../../mocks/disease';
+import { noImage } from '@/configs';
+import { useAppSelector } from '@/store/hooks';
+import { selectCurrencyCode } from '@/store/selectors';
 
 interface POSCatalogProps {
   searchQuery: string;
@@ -25,6 +28,7 @@ export const POSCatalog: React.FC<POSCatalogProps> = ({
   loading
 }) => {
   const [showResults, setShowResults] = useState(false);
+  const currencyCode = useAppSelector(selectCurrencyCode);
 
   const matchedDiseases = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
@@ -189,7 +193,12 @@ export const POSCatalog: React.FC<POSCatalogProps> = ({
               </Card>
             ))
           ) : enhancedProducts.map((p: any) => {
-            const price = p.variants?.[0]?.prices?.[0]?.amount || 0;
+            const listPrice = p?.variants?.map((variant: any) => {
+              const price = variant?.prices?.find((pr: any) => pr.currency_code === currencyCode)
+              if (price) return price.amount
+            })
+            const maxPrice = Math.max(...listPrice)
+            const minPrice = Math.min(...listPrice)
 
             return (
               <Card
@@ -199,15 +208,7 @@ export const POSCatalog: React.FC<POSCatalogProps> = ({
                 className={`flex flex-col group active:scale-95 transition-all bg-white dark:bg-slate-900 h-full overflow-hidden border-2 ${p.isWikiMatch ? 'border-green-400 dark:border-green-600 shadow-lg shadow-green-500/5' : 'border-transparent'}`}
               >
                 <div className="relative aspect-square overflow-hidden bg-slate-50 dark:bg-slate-800">
-                  {p.thumbnail ? (
-                    <img src={p.thumbnail} alt={p.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                  ) : (
-                    <div className='h-full w-full transition-transform duration-500 flex justify-center items-center bg-white dark:bg-slate-800'>
-                      <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                        <Zap size={20} className='text-white fill-white' />
-                      </div>
-                    </div>
-                  )}
+                  <img src={p.thumbnail || noImage} alt={p.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                   {p.isWikiMatch && (
                     <div className="absolute top-2 right-2 bg-green-500 text-white text-[8px] font-black px-2 py-1 rounded shadow-lg flex items-center gap-1">
                       <ShieldCheck size={10} /> ĐỀ XUẤT WIKI
@@ -218,7 +219,7 @@ export const POSCatalog: React.FC<POSCatalogProps> = ({
                   <h4 className="font-bold text-[13px] text-slate-800 dark:text-slate-100 line-clamp-1 leading-tight">{p.title}</h4>
                   <p className="text-[10px] text-slate-400 font-medium truncate">{p.activeIngredient}</p>
                   <div className="flex items-center justify-between mt-2">
-                    <p className="text-primary font-black text-base">{price.toLocaleString()}đ</p>
+                    <p className="text-primary font-black text-base">{minPrice.toLocaleString()}đ - {maxPrice.toLocaleString()}đ</p>
                     {p.isWikiMatch && (
                       <span className="text-[8px] font-bold text-green-600 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded border border-green-100 dark:border-green-800/50">Đặc trị</span>
                     )}

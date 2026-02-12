@@ -7,7 +7,10 @@ import { useBooks } from '@/hooks/medusa/useBooks'
 import { TableView } from '@/components/TableView'
 import { StockForm } from '@/components/books/StockForm'
 import { FormTypeModal } from '@/components/books/FormTypeModal'
+import { StockDetail } from '@/components/books/StockDetail'
 import { StockUpType } from '@/types/stock-up'
+import type { StockUp as StockUpData } from '@/types/stock-up'
+import { booksService } from '@/lib/api/medusa/booksService'
 
 export const StockUp = () => {
   const [searchTerm, setSearchTerm] = useState('')
@@ -36,6 +39,25 @@ export const StockUp = () => {
   const [isStockFormOpen, setIsStockFormOpen] = useState(false)
   const [isTypeModalOpen, setIsTypeModalOpen] = useState(false)
   const [selectedTypeForm, setSelectedTypeForm] = useState<StockUpType>(StockUpType.INBOUND)
+  const [selectedBookDetail, setSelectedBookDetail] = useState<StockUpData | null>(null)
+  const [isDetailOpen, setIsDetailOpen] = useState(false)
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false)
+
+  const handleRowClick = async (book: StockUpData) => {
+    setSelectedBookDetail(book)
+    setIsDetailOpen(true)
+    setIsLoadingDetail(true)
+    try {
+      const response = await booksService.getStockupById(book.id)
+      if (response.data?.data) {
+        setSelectedBookDetail(response.data.data)
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch stockup detail:', err)
+    } finally {
+      setIsLoadingDetail(false)
+    }
+  }
 
   if (isStockFormOpen) return (
     <StockForm
@@ -153,13 +175,14 @@ export const StockUp = () => {
             pagination={{
               currentPage,
               totalPages: Math.ceil(count / 10),
-              onPageChange: (page) => setCurrentPage(page),
+              onPageChange: (page: number) => setCurrentPage(page),
               totalItems: count,
               itemsPerPage: 10
             }}
-            renderRow={(book, index) => (
+            renderRow={(book: StockUpData, index: number) => (
               <tr
                 key={index}
+                onClick={() => handleRowClick(book)}
                 className='group hover:bg-blue-50/20 dark:hover:bg-blue-900/10 transition-all cursor-pointer'
               >
                 <td className='px-8 py-6'>
@@ -204,7 +227,7 @@ export const StockUp = () => {
                 </td>
                 <td className="px-6 py-6 text-right">
                   <span className="text-base font-black text-emerald-500">
-                    {book.summary?.reduce((acc, item) => acc + item.total, 0) || 0}
+                    {0}
                   </span>
                 </td>
                 <td className="px-6 py-6 text-center">
@@ -230,10 +253,19 @@ export const StockUp = () => {
       <FormTypeModal
         isOpen={isTypeModalOpen}
         onClose={() => setIsTypeModalOpen(false)}
-        onSelect={(type) => {
+        onSelect={(type: StockUpType) => {
           setSelectedTypeForm(type)
           setIsStockFormOpen(true)
         }}
+      />
+      <StockDetail
+        isOpen={isDetailOpen}
+        onClose={() => {
+          setIsDetailOpen(false)
+          setSelectedBookDetail(null)
+        }}
+        data={selectedBookDetail}
+        loading={isLoadingDetail}
       />
     </Fragment>
   )

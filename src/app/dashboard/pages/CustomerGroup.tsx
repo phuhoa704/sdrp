@@ -1,13 +1,12 @@
 import { Breadcrumb, Button, Card, ConfirmModal } from '@/components'
 import { SearchFilter } from '@/components/filters/Search';
 import { CustomerGroupForm } from '@/components/form/customer-group/CustomerGroupForm';
-import { TableView } from '@/components/TableView';
 import { useToast } from '@/contexts/ToastContext';
 import { useCustomerGroups } from '@/hooks/medusa/useCustomerGroups';
 import { customerGroupService } from '@/lib/api/medusa/customerGroupService';
 import { formatDate } from '@/lib/utils';
 import type { CustomerGroup as CustomerGroupType } from '@/types/customer-group';
-import { ChevronRight, Edit3, LayoutGrid, MoreHorizontal, Plus, Trash2, Users } from 'lucide-react'
+import { ChevronRight, LayoutGrid, Plus, Users } from 'lucide-react'
 import React, { Fragment, useState } from 'react'
 
 import { CustomerGroupDetail } from '@/components/customer-group/CustomerGroupDetail';
@@ -19,7 +18,6 @@ export const CustomerGroup = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<CustomerGroupType | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -37,10 +35,6 @@ export const CustomerGroup = () => {
   const handleCreate = () => {
     setIsFormOpen(true);
     setSelectedGroup(null);
-  }
-  const handleEdit = (grp: CustomerGroupType) => {
-    setSelectedGroup(grp);
-    setIsFormOpen(true);
   }
   const handleSave = async (data: any) => {
     setIsSaving(true);
@@ -130,7 +124,7 @@ export const CustomerGroup = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {customerGroups.length > 0 ? (
               customerGroups.map((grp, idx) => (
-                <Card className='relative group' key={idx}>
+                <Card className='relative group' key={idx} onClick={() => setSelectedGroupId(grp.id)}>
                   <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform duration-700">
                     <Users size={120} />
                   </div>

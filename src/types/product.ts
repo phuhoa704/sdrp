@@ -101,6 +101,35 @@ export interface MoneyAmount {
     deleted_at: ISODateString | null;
 }
 
+export interface ProductInventoryLocationLevel {
+    id: string;
+    location_id: string;
+    metadata: Metadata | null;
+    inventory_item_id: string;
+    created_at: ISODateString;
+    updated_at: ISODateString;
+    deleted_at: ISODateString | null;
+    available_quantity: number;
+    stocked_quantity: number;
+    reserved_quantity: number;
+    incoming_quantity: number;
+}
+
+export interface ProductInventory {
+    id: string;
+    title: string;
+    description: string | null;
+    location_levels: ProductInventoryLocationLevel[];
+}
+
+export interface ProductInventoryItem {
+    id: string;
+    required_quantity: number;
+    variant_id: string;
+    inventory_item_id: string;
+    inventory: ProductInventory;
+}
+
 export interface ProductVariant {
     id: string
     title: string
@@ -136,16 +165,7 @@ export interface ProductVariant {
     prices: MoneyAmount[]
 
     inventory_quantity?: number | null
-    inventory_items?: {
-        inventory: {
-            location_levels: {
-                id: string
-                location_id: string
-                available_quantity: number
-                stocked_quantity: number
-            }[]
-        }
-    }[]
+    inventory_items?: ProductInventoryItem[];
 }
 
 export interface ProductTag {
@@ -200,4 +220,26 @@ export interface Product {
     variants: ProductVariant[]
 
     status: ProductStatus
+}
+
+export interface ProductVariantUpdatePayload {
+    title?: string
+    sku?: string | null
+    barcode?: string | null
+    ean?: string | null
+    upc?: string | null
+    allow_backorder?: boolean
+    manage_inventory?: boolean
+    hs_code?: string | null
+    origin_country?: string | null
+    mid_code?: string | null
+    material?: string | null
+    weight?: number | null
+    length?: number | null
+    height?: number | null
+    width?: number | null
+    metadata?: Metadata | null
+    thumbnail?: string | null
+    options?: VariantOption
+    prices?: MoneyAmount[]
 }

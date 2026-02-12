@@ -1,7 +1,9 @@
 import { getVendorId } from '@/lib/utils';
 import bridgeClient from '../bridgeClient';
-import { Product, ProductVariant } from '@/types/product';
+import { Product, ProductOption, ProductVariant, ProductVariantUpdatePayload } from '@/types/product';
 import axios from 'axios';
+import { CommonResponse } from '@/types/common';
+import { CustomResponse } from '@/types/custom-response';
 
 /**
  * Medusa Product Service
@@ -209,6 +211,22 @@ class ProductService {
         }
     }
 
+    async updateVariant(productId: string, variantId: string, payload: ProductVariantUpdatePayload): Promise<{ variant: ProductVariant }> {
+        try {
+            const res = await bridgeClient.post(`/admin/products/${productId}/variants/${variantId}`, payload);
+            return res.data as { variant: ProductVariant };
+        } catch (error: unknown) {
+            console.error(`Failed to update variant ${variantId} for product ${productId}:`, error);
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to update variant'
+            );
+        }
+    }
+
     /**
      * Update a product option
      * @param productId product id
@@ -269,6 +287,43 @@ class ProductService {
                     : error instanceof Error
                         ? error.message
                         : 'Failed to delete product option'
+            );
+        }
+    }
+
+    async getListOptions(productId: string): Promise<CommonResponse & { product_options: ProductOption[] }> {
+        try {
+            const res = await bridgeClient.get(`/admin/products/${productId}/options`, { params: { fields: "*values" } });
+            return res.data;
+        } catch (error: unknown) {
+            console.error(`Failed to get options for product ${productId}:`, error);
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to get product options'
+            );
+        }
+    }
+
+    async getCustomProductDetail(id: string): Promise<CustomResponse<Product>> {
+        try {
+            const vendorId = getVendorId();
+            const res = await bridgeClient.get(`/custom/admin/products/detail/${id}`, {
+                headers: {
+                    "x-api-vendor": vendorId
+                }
+            });
+            return res.data;
+        } catch (error: unknown) {
+            console.error(`Failed to get product ${id}:`, error);
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to get product'
             );
         }
     }

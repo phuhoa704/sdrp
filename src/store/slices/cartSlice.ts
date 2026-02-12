@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Product, ProductVariant } from '@/types/product';
+import { logout, logoutFromMedusa } from './authSlice';
 
 export interface CartItem {
     product: Product;
@@ -62,6 +63,18 @@ const cartSlice = createSlice({
             state.mode = action.payload;
         },
     },
+    extraReducers: (builder) => {
+        builder.addCase(logout, (state) => {
+            state.items = [];
+            state.total = 0;
+            state.mode = 'RETAIL';
+        });
+        builder.addCase(logoutFromMedusa.fulfilled, (state) => {
+            state.items = [];
+            state.total = 0;
+            state.mode = 'RETAIL';
+        });
+    }
 });
 
 export const { addToCart, removeFromCart, updateQuantity, clearCart, setMode } = cartSlice.actions;

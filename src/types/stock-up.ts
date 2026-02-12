@@ -30,7 +30,7 @@ export interface StockUp {
     variant_id: string;
     metadata: Record<string, unknown>;
     vendor_id: string;
-    summary?: StockUpSummary[];
+    summary?: StockUpSummary;
     product_variant?: ProductVariant[];
     vendor?: Vendor;
 }
@@ -56,3 +56,4 @@ export interface StockUpQuery {
     fields?: string;
     filters?: StockUpFilters;
 }
+

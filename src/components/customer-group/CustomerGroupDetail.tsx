@@ -326,7 +326,7 @@ export const CustomerGroupDetail = ({ id, onBack }: Props) => {
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              className="w-full h-14 px-6 bg-slate-800 dark:bg-white/5 rounded-2xl border border-slate-700 dark:border-white/10 outline-none focus:border-emerald-500 transition-all text-sm font-bold text-white shadow-sm"
+              className="w-full h-14 px-6 bg-white placeholder:text-slate-400 dark:bg-white/5 rounded-2xl border border-slate-700 dark:border-white/10 outline-none focus:border-emerald-500 transition-all text-sm font-bold text-slate-800 dark:text-white shadow-sm"
               placeholder="Nhập tên nhóm mới..."
             />
           </div>

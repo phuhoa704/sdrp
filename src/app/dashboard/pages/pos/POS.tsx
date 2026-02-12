@@ -240,10 +240,10 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
       } else {
         refreshActiveTabDetails(activeTabId);
       }
-    } else if (!draftsLoading && regions.length > 0) {
+    } else if (!draftsLoading && regions.length > 0 && salesChannels.length > 0) {
       handleAddTab();
     }
-  }, [draftOrders, draftsLoading, currentChannel, regions.length, handleAddTab, activeTabId, handleSelectTab]);
+  }, [draftOrders, draftsLoading, currentChannel, regions.length, handleAddTab, activeTabId, handleSelectTab, salesChannels.length]);
 
   // Clean up timeouts on unmount
   useEffect(() => {
@@ -256,8 +256,9 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
     const selected = salesChannels.find(sc => sc.id === selectedSalesChannelId);
     if (selected) {
       setCurrentChannel(selected);
+      refreshDrafts();
     }
-  }, [selectedSalesChannelId, salesChannels]);
+  }, [selectedSalesChannelId, salesChannels, refreshDrafts]);
 
   const categories = useMemo(() => ["Tất cả", ...medusaCategories.map(c => c.name)], [medusaCategories]);
 

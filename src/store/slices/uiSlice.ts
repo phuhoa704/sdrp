@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { ViewState } from '@/types/view-state';
+import { logout, logoutFromMedusa } from './authSlice';
 
 interface UIState {
     currentView: ViewState;
@@ -68,6 +69,16 @@ const uiSlice = createSlice({
             state.notifications = [];
         },
     },
+    extraReducers: (builder) => {
+        builder.addCase(logout, (state) => {
+            state.selectedSalesChannelId = null;
+            state.currentView = 'HOME';
+        });
+        builder.addCase(logoutFromMedusa.fulfilled, (state) => {
+            state.selectedSalesChannelId = null;
+            state.currentView = 'HOME';
+        });
+    }
 });
 
 export const {

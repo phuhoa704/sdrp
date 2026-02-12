@@ -7,3 +7,5 @@ export * from './Breadcrumb';
 export * from './NavBar';
 export * from './Sidebar';
 export * from './AlertModal';
+export * from './Drawer';
+export * from './RichTextEditor';

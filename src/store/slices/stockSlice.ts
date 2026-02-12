@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { StockLocation } from '@/types/stock';
 import { stockLocationService } from '@/lib/api/medusa/stockLocationService';
+import { logout, logoutFromMedusa } from './authSlice';
 
 interface StockState {
     locations: StockLocation[];
@@ -59,6 +60,18 @@ const stockSlice = createSlice({
             .addCase(fetchStockLocations.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
+            })
+            .addCase(logout, (state) => {
+                state.locations = [];
+                state.selectedLocationId = null;
+                state.loading = false;
+                state.error = null;
+            })
+            .addCase(logoutFromMedusa.fulfilled, (state) => {
+                state.locations = [];
+                state.selectedLocationId = null;
+                state.loading = false;
+                state.error = null;
             });
     },
 });
