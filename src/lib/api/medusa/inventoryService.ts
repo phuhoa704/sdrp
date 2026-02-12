@@ -1,6 +1,9 @@
 import bridgeClient from '../bridgeClient';
 import axios from 'axios';
 import { InventoryItem, InventoryLevel } from '@/types/inventory-item';
+import { CustomResponse } from '@/types/custom-response';
+import { ProductVariant } from '@/types/product';
+import { getVendorId } from '@/lib/utils';
 
 
 export interface InventoryItemResponse {
@@ -14,7 +17,8 @@ class InventoryService {
      */
     async getInventoryItems(query?: Record<string, unknown>): Promise<{ inventory_items: InventoryItem[]; count: number; offset: number; limit: number }> {
         try {
-            const res = await bridgeClient.get('/admin/inventory-items', { params: query });
+            const vendorId = getVendorId()
+            const res = await bridgeClient.get('/admin/inventory-items', { params: query, headers: { 'x-api-vendor': vendorId } });
             return res.data;
         } catch (error: unknown) {
             console.error('Failed to fetch inventory items:', error);
@@ -148,6 +152,22 @@ class InventoryService {
                     : error instanceof Error
                         ? error.message
                         : 'Failed to update inventory level'
+            );
+        }
+    }
+
+    async getVariantByInventoryItemId(inventoryItemId: string): Promise<CustomResponse<ProductVariant>> {
+        try {
+            const res = await bridgeClient.get(`/custom/admin/products/variant/inventory-item/${inventoryItemId}`);
+            return res.data;
+        } catch (error: unknown) {
+            console.error(`Failed to fetch variant for inventory item ${inventoryItemId}:`, error);
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to fetch variant for inventory item'
             );
         }
     }

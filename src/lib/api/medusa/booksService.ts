@@ -30,9 +30,6 @@ class BooksService {
             const vendorId = getVendorId();
             const res = await bridgeClient.get(`/custom/inventory/goods-receipt/${id}`, {
                 headers: { 'x-api-vendor': vendorId },
-                params: {
-                    fields: "*product_variant"
-                }
             })
             return res.data;
         } catch (error: unknown) {

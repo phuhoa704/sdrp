@@ -3,15 +3,16 @@ import React, { useEffect, useState } from 'react'
 import { Card } from '../Card'
 import { StockUpType } from '@/types/stock-up'
 import { Button } from '../Button'
-import { cn } from '@/lib/utils'
+import { cn, formatDisplayNumber, parseDisplayNumber } from '@/lib/utils'
 import { SearchFilter } from '../filters/Search'
 import { TableView } from '../TableView'
 import { useInventoryItems } from '@/hooks/medusa/useInventory'
 
 import { useToast } from '@/contexts/ToastContext'
-import { booksService } from '@/lib/api/medusa/booksService'
 import { noImage } from '@/configs'
 import { useStockLocations } from '@/hooks'
+import { inventoryService } from '@/lib/api/medusa/inventoryService'
+import { booksService } from '@/lib/api/medusa/booksService'
 
 export const StockForm = ({ onBack, onSuccess, initialType }: { onBack?: () => void, onSuccess?: () => void, initialType?: StockUpType }) => {
   const { showToast } = useToast()
@@ -56,7 +57,7 @@ export const StockForm = ({ onBack, onSuccess, initialType }: { onBack?: () => v
   const { inventoryItems, loading, count } = useInventoryItems({
     q: searchTerm,
     limit: itemsPerPage,
-    offset: (currentPage - 1) * itemsPerPage
+    offset: (currentPage - 1) * itemsPerPage,
   })
   const { locations, loading: stockLocationsLoading } = useStockLocations({ limit: 100, fields: "id,name,-address" });
   const typeOpts = [
@@ -208,33 +209,54 @@ export const StockForm = ({ onBack, onSuccess, initialType }: { onBack?: () => v
               icon={isSubmitting ? undefined : <CheckCircle2 size={24} />}
               loading={isSubmitting}
               onClick={async () => {
-                const selected = Object.entries(itemInputs)
+                const draftSelected = Object.entries(itemInputs)
                   .filter(([_, data]) => data.quantity > 0)
                   .map(([itemId, data]) => ({
                     inventory_item_id: itemId,
-                    variant_id: itemId,
+                    variant_id: itemId, // Temporary, will be replaced
                     quantity: data.quantity,
                     price: data.price,
                     location_id: data.location_id,
                     inventory_level_id: data.inventory_level_id
                   }))
 
-                if (selected.length === 0) {
+                if (draftSelected.length === 0) {
                   showToast('Vui lòng nhập số lượng cho ít nhất 1 mặt hàng', 'warning')
                   return
                 }
 
                 setIsSubmitting(true)
                 try {
+                  const resolvedItems = await Promise.all(
+                    draftSelected.map(async (item) => {
+                      try {
+                        const res = await inventoryService.getVariantByInventoryItemId(item.inventory_item_id)
+                        return {
+                          ...item,
+                          variant_id: res.data.id
+                        }
+                      } catch (err) {
+                        console.error(`Failed to resolve variant for item ${item.inventory_item_id}`, err)
+                        return item
+                      }
+                    })
+                  )
+
                   await booksService.createStockup({
-                    title: formValues.title || `Nhập hàng ${new Date().toLocaleDateString()}`,
+                    title: formValues.title || `Nghiệp vụ kho ${new Date().toLocaleDateString()}`,
                     type: formValues.type,
                     summary: {
-                      items: selected,
-                      total: selected.reduce((acc, curr) => acc + (curr.quantity * curr.price), 0)
+                      items: resolvedItems,
+                      total: resolvedItems.reduce((acc, curr) => acc + (curr.quantity * curr.price), 0)
                     }
                   })
-                  showToast('Lập phiếu nhập hàng thành công', 'success')
+
+                  showToast(
+                    formValues.type === StockUpType.INBOUND
+                      ? 'Lập phiếu nhập hàng thành công'
+                      : 'Lập phiếu xuất kho thành công',
+                    'success'
+                  )
                   onSuccess?.()
                 } catch (err: any) {
                   showToast(err.message || 'Lỗi khi lập phiếu', 'error')
@@ -244,7 +266,7 @@ export const StockForm = ({ onBack, onSuccess, initialType }: { onBack?: () => v
               }}
               disabled={isSubmitting || Object.values(itemInputs).filter(i => i.quantity > 0).length === 0}
             >
-              Xác nhận nhập kho
+              {formValues.type === StockUpType.INBOUND ? 'Xác nhận nhập kho' : 'Xác nhận xuất kho'}
             </Button>
           </Card>
           <div className="p-6 bg-blue-50 dark:bg-blue-900/10 border-2 border-dashed border-blue-200 dark:border-blue-800/50 rounded-[32px] flex items-center gap-5">
@@ -370,10 +392,12 @@ export const StockForm = ({ onBack, onSuccess, initialType }: { onBack?: () => v
                   <td className="py-4 px-4">
                     <div className="relative">
                       <input
-                        type="number"
-                        min="0"
-                        value={input.price || ""}
-                        onChange={(e) => updateInput({ price: Number(e.target.value) })}
+                        type="text"
+                        value={formatDisplayNumber(input.price || 0)}
+                        onChange={(e) => {
+                          const val = parseDisplayNumber(e.target.value)
+                          updateInput({ price: val })
+                        }}
                         className="w-full bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-lg h-9 pl-2 pr-6 text-right text-xs font-black text-blue-600 outline-none focus:border-blue-500"
                         placeholder="0"
                       />

@@ -50,7 +50,10 @@ export const StockUp = () => {
     try {
       const response = await booksService.getStockupById(book.id)
       if (response.data?.data) {
-        setSelectedBookDetail(response.data.data)
+        setSelectedBookDetail({
+          ...response.data.data,
+          created_at: book.created_at,
+        })
       }
     } catch (err: any) {
       console.error('Failed to fetch stockup detail:', err)
@@ -232,7 +235,7 @@ export const StockUp = () => {
                 </td>
                 <td className="px-6 py-6 text-center">
                   <span className="text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-tighter bg-emerald-50 text-emerald-600 border border-emerald-100">
-
+                    Đã hoàn tất
                   </span>
                 </td>
                 <td className="px-8 py-6 text-right pr-10">

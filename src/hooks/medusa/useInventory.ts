@@ -8,10 +8,11 @@ interface Props {
   limit?: number;
   offset?: number;
   debounceMs?: number;
+  fields?: string;
 }
 
 export const useInventoryItems = (props: Props) => {
-  const { autoFetch = true, q, limit, offset, debounceMs = 500 } = props;
+  const { autoFetch = true, q, limit, offset, debounceMs = 500, fields } = props;
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +26,8 @@ export const useInventoryItems = (props: Props) => {
       const fetchQuery = query || {
         q,
         limit,
-        offset
+        offset,
+        fields
       };
       const response = await inventoryService.getInventoryItems(fetchQuery);
       setInventoryItems(response.inventory_items);
@@ -35,7 +37,7 @@ export const useInventoryItems = (props: Props) => {
     } finally {
       setLoading(false);
     }
-  }, [q, limit, offset]);
+  }, [q, limit, offset, fields]);
 
   useEffect(() => {
     if (!autoFetch) return;

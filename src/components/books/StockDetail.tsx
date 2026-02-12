@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal } from '../Modal';
 import { StockUp, StockUpType } from '@/types/stock-up';
 import { cn, formatDateByFormat, formatTime, formatCurrency } from '@/lib/utils';
-import { Building2, Package, Calendar, User, Hash, Receipt, Printer, X, FileText } from 'lucide-react';
+import { Building2, Package, Calendar, User, Receipt, Printer, FileText } from 'lucide-react';
 
 interface StockDetailProps {
   isOpen: boolean;
@@ -15,9 +15,8 @@ export const StockDetail: React.FC<StockDetailProps> = ({ isOpen, onClose, data,
   if (!isOpen) return null;
 
   const totalValue = data?.summary?.total || 0;
-  const totalItems = data?.summary?.items?.reduce((acc, s) => acc + s.quantity, 0) || 0;
+  const totalItems = data?.summary?.items?.length || 0;
   const code = data?.code?.toUpperCase();
-
   return (
     <Modal
       isOpen={isOpen}
@@ -94,7 +93,8 @@ export const StockDetail: React.FC<StockDetailProps> = ({ isOpen, onClose, data,
                 </thead>
                 <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                   {data.summary?.items.map((item, idx) => {
-                    const variant = data.product_variant?.find(v => v.id === item.variant_id);
+                    if (!item) return null
+                    const variant = data.product_variant?.find(v => v && v.id === item.variant_id);
                     return (
                       <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
                         <td className="px-6 py-4">
@@ -131,7 +131,6 @@ export const StockDetail: React.FC<StockDetailProps> = ({ isOpen, onClose, data,
             </div>
           </div>
 
-          {/* Summary Footer */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pt-4 border-t border-slate-100 dark:border-slate-800">
             <div className="space-y-4">
               <div className="flex items-center gap-2">
@@ -163,7 +162,7 @@ export const StockDetail: React.FC<StockDetailProps> = ({ isOpen, onClose, data,
                 </p>
                 <div className="pt-4 border-t border-white/20">
                   <p className="text-[10px] font-bold opacity-80 uppercase tracking-wider">
-                    Tổng số mặt hàng: <span className="text-white font-black">{totalItems} đơn vị</span>
+                    Tổng số mặt hàng: <span className="text-white font-black">{totalItems} sản phẩm</span>
                   </p>
                 </div>
               </div>
