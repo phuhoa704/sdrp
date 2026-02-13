@@ -36,6 +36,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
     subtitle: '',
     description: '',
     thumbnail: '',
+    images: [] as string[],
     has_variants: false,
     category_ids: [] as string[],
     tag_ids: [] as string[],
@@ -46,7 +47,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
     variantData: {} as Record<string, { price: number; sku?: string }>
   });
 
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { categories } = useCategories();
@@ -73,11 +74,13 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
         };
       });
 
+      const images = initialData.images?.map(img => img.url) || [];
       setFormData({
         title: initialData.title || '',
         subtitle: initialData.subtitle || '',
         description: initialData.description || '',
         thumbnail: initialData.thumbnail || '',
+        images: images,
         has_variants: (initialData.variants?.length || 0) > 1 || options.length > 0,
         category_ids: initialData.categories?.map(c => c.id) || [],
         tag_ids: initialData.tags?.map(t => t.id) || [],
@@ -102,15 +105,33 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
   }, [formData.options, formData.has_variants]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setImageFiles(prev => [...prev, ...files]);
+
+    const newImages: string[] = [];
+    let processedCount = 0;
+
+    files.forEach(file => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData({ ...formData, thumbnail: reader.result as string });
+        newImages.push(reader.result as string);
+        processedCount++;
+
+        if (processedCount === files.length) {
+          setFormData((prev: any) => {
+            const allImages = [...prev.images, ...newImages];
+            return {
+              ...prev,
+              images: allImages,
+              thumbnail: allImages[0] || prev.thumbnail
+            };
+          });
+        }
       };
       reader.readAsDataURL(file);
-    }
+    });
   };
 
   const addOption = () => {
@@ -189,7 +210,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
     // Process final data
     const finalData = {
       ...formData,
-      imageFile,
+      imageFiles,
+      images: formData.images.map((url: string) => ({ url })),
+      thumbnail: formData.images[0] || formData.thumbnail,
       variants: formData.has_variants ? generatedVariants.map(v => ({
         title: v,
         price: formData.variantData[v]?.price || 0,
@@ -687,35 +710,51 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
         <div className="lg:col-span-4 space-y-8">
           <section>
             <div className="flex items-center justify-between mb-4">
-              <label className={labelClass}>Hình ảnh đại diện</label>
+              <label className={labelClass}>Hình ảnh sản phẩm</label>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                {formData.images.length} ảnh
+              </span>
             </div>
             <input
               type="file"
               ref={fileInputRef}
               className="hidden"
               accept="image/*"
+              multiple
               onChange={handleImageChange}
             />
+
+            {/* Main Upload Area */}
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="aspect-square bg-white dark:bg-slate-800 rounded-[48px] border-4 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center p-10 group cursor-pointer hover:border-primary transition-all relative overflow-hidden shadow-sm"
+              className="aspect-square bg-white dark:bg-slate-800 rounded-[48px] border-4 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center p-10 group cursor-pointer hover:border-primary transition-all relative overflow-hidden shadow-sm mb-4"
             >
-              {formData.thumbnail ? (
+              {formData.images.length > 0 ? (
                 <>
-                  <img src={formData.thumbnail} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
+                  <img src={formData.images[0]} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
+                  <div className="absolute top-4 right-4 bg-primary text-white text-xs font-black px-3 py-1.5 rounded-full shadow-lg z-10">
+                    Ảnh chính
+                  </div>
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <div className="flex gap-2">
                       <button
                         onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
                         className="p-4 bg-white rounded-2xl text-primary hover:bg-slate-50 transition-all shadow-2xl"
                       >
-                        <Camera size={24} />
+                        <Plus size={24} />
                       </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setFormData({ ...formData, thumbnail: '' });
-                          setImageFile(null);
+                          setFormData((prev: any) => {
+                            const newImages = prev.images.slice(1);
+                            return {
+                              ...prev,
+                              images: newImages,
+                              thumbnail: newImages[0] || ''
+                            };
+                          });
+                          setImageFiles(prev => prev.slice(1));
                         }}
                         className="p-4 bg-white rounded-2xl text-rose-500 hover:bg-slate-50 transition-all shadow-2xl"
                       >
@@ -730,10 +769,41 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
                     <Camera size={48} />
                   </div>
                   <p className="text-sm font-black uppercase text-slate-800 dark:text-white tracking-widest">TẢI ẢNH LÊN</p>
-                  <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase">JPG, PNG (MAX 5MB)</p>
+                  <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase">Chọn nhiều ảnh (JPG, PNG)</p>
                 </div>
               )}
             </div>
+
+            {/* Image Gallery */}
+            {formData.images.length > 1 && (
+              <div className="grid grid-cols-3 gap-3">
+                {formData.images.slice(1).map((img: string, idx: number) => (
+                  <div
+                    key={idx}
+                    className="aspect-square bg-white dark:bg-slate-800 rounded-2xl border-2 border-slate-200 dark:border-slate-700 relative overflow-hidden group cursor-pointer hover:border-primary transition-all"
+                  >
+                    <img src={img} className="w-full h-full object-cover" alt="" />
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFormData((prev: any) => {
+                          const newImages = prev.images.filter((_: any, i: number) => i !== idx + 1);
+                          return {
+                            ...prev,
+                            images: newImages,
+                            thumbnail: newImages[0] || ''
+                          };
+                        });
+                        setImageFiles(prev => prev.filter((_, i) => i !== idx + 1));
+                      }}
+                      className="absolute top-2 right-2 p-2 bg-rose-500 text-white rounded-xl opacity-0 group-hover:opacity-100 transition-all shadow-lg hover:bg-rose-600"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
 
           <Card className="p-8 bg-slate-950 text-white border-none shadow-2xl rounded-[40px] space-y-8 relative overflow-hidden group">

@@ -1,6 +1,6 @@
 import { getVendorId } from '@/lib/utils';
 import bridgeClient from '../bridgeClient';
-import { Product, ProductOption, ProductVariant, ProductVariantUpdatePayload } from '@/types/product';
+import { Product, ProductOption, ProductVariant, ProductVariantImageUpdatePayload, ProductVariantUpdatePayload } from '@/types/product';
 import axios from 'axios';
 import { CommonResponse } from '@/types/common';
 import { CustomResponse } from '@/types/custom-response';
@@ -324,6 +324,22 @@ class ProductService {
                     : error instanceof Error
                         ? error.message
                         : 'Failed to get product'
+            );
+        }
+    }
+
+    async manageImagesOfProductVariant(productid: string, variantId: string, payload: ProductVariantImageUpdatePayload) {
+        try {
+            const res = await bridgeClient.post(`/admin/products/${productid}/variants/${variantId}/images/batch`, payload);
+            return res.data;
+        } catch (error: unknown) {
+            console.error(`Failed to manage images of product variant ${variantId} for product ${productid}:`, error);
+            throw new Error(
+                axios.isAxiosError(error)
+                    ? (error.response?.data as { message?: string } | undefined)?.message || error.message
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to manage images of product variant'
             );
         }
     }

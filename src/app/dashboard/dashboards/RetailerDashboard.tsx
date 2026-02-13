@@ -59,8 +59,6 @@ export default function RetailerDashboard({ onSelectNewsArticle, onSelectDisease
   const [searchQuery, setSearchQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
   const [promoIndex, setPromoIndex] = useState(0);
-  const [selectedDiseaseId, setSelectedDiseaseId] = useState<string | null>(null);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const { products: medusaProducts } = useMedusaProducts({ autoFetch: true, limit: 100 });
 

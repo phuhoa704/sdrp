@@ -51,6 +51,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const user = useAppSelector(selectCurrentUser);
@@ -145,6 +146,14 @@ export default function DashboardPage() {
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
   };
+
+  const handleToggleMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen(prev => !prev);
+  }, []);
+
+  const handleCloseMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen(false);
+  }, []);
 
   // Render content based on current view
   const renderContent = () => {
@@ -279,16 +288,21 @@ export default function DashboardPage() {
       <div className="flex bg-surface-light dark:bg-surface-dark transition-colors duration-300 min-h-screen">
         <Sidebar
           currentView={currentView}
-          setView={handleSetView}
+          setView={(view) => {
+            handleSetView(view);
+            setIsMobileMenuOpen(false);
+          }}
           role={user.role}
           isCollapsed={isSidebarCollapsed}
           toggleSidebar={handleToggleSidebar}
           isDarkMode={isDarkMode}
           toggleTheme={handleToggleTheme}
           onBrandChange={handleBrandChange}
+          isMobileMenuOpen={isMobileMenuOpen}
+          onCloseMobileMenu={handleCloseMobileMenu}
         />
 
-        <div className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
+        <div className={`flex-1 min-w-0 transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
           <Header
             title={user?.vendor ? user?.vendor?.name : 'Admin Console'}
             subtitle={user?.vendor ? user?.vendor?.address : undefined}
@@ -299,9 +313,10 @@ export default function DashboardPage() {
             onDiseaseLookup={handleDiseaseLookup}
             avatarUrl={user?.vendor?.logo || ""}
             onShowNotifications={handleShowNotifications}
+            onToggleMobileMenu={handleToggleMobileMenu}
           />
 
-          <main className="flex-1 overflow-y-auto px-3 lg:px-8 py-4">
+          <main className="flex-1 min-w-0 overflow-y-auto px-3 lg:px-8 py-4">
             {renderContent()}
           </main>
         </div>

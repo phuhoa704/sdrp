@@ -163,6 +163,7 @@ export interface ProductVariant {
 
     options: VariantOption[]
     prices: MoneyAmount[]
+    images?: ProductImage[]
 
     inventory_quantity?: number | null
     inventory_items?: ProductInventoryItem[];
@@ -242,4 +243,9 @@ export interface ProductVariantUpdatePayload {
     thumbnail?: string | null
     options?: VariantOption
     prices?: MoneyAmount[]
+}
+
+export interface ProductVariantImageUpdatePayload {
+    add: string[];
+    remove: string[]
 }

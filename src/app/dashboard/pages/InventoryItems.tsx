@@ -42,7 +42,7 @@ export const Inventory = () => {
             { label: 'DANH MỤC TỒN KHO (SKU)', href: '#' }
           ]}
         />
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 px-1">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 px-1">
           <div className="shrink-0">
             <div className="flex items-center gap-2 mb-1">
               <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
@@ -50,19 +50,20 @@ export const Inventory = () => {
               </span>
               <Boxes size={12} className='text-amber-500 animate-pulse' />
             </div>
-            <h2 className="text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-none">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-tight sm:leading-none">
               Quản Lý <span className="text-primary font-black">Tồn Kho Biến Thể</span>
             </h2>
-            <p className="text-slate-500 dark:text-slate-400 font-medium text-lg">Theo dõi chi tiết theo từng mã SKU và vị trí kho thực tế</p>
+            <p className="text-slate-500 dark:text-slate-400 font-medium text-sm sm:text-lg mt-1">Theo dõi chi tiết theo từng mã SKU và vị trí kho thực tế</p>
           </div>
 
           <div className="flex items-center gap-3">
-            <Button variant='secondary' className='text-xs'>
+            <Button variant='secondary' className='h-12 rounded-2xl text-xs px-4'>
               <Download size={16} />
-              Xuất báo cáo
+              <span className="hidden sm:inline ml-2">Xuất báo cáo</span>
+              <span className="sm:hidden ml-2">Xuất</span>
             </Button>
             <Button
-              className="h-12 rounded-2xl bg-white text-primary text-xs border-2 border-primary"
+              className="h-12 rounded-2xl bg-white text-primary text-xs border-2 border-primary px-4"
               icon={<Plus size={16} />}
               onClick={() => setIsTypeModalOpen(true)}>
               TẠO PHIẾU

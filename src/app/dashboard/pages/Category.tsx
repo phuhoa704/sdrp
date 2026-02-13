@@ -149,7 +149,7 @@ export default function Category() {
             { label: 'LOẠI HÀNG', href: '#' }
           ]}
         />
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 px-1">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 px-1">
           <div className="shrink-0">
             <div className="flex items-center gap-2 mb-1">
               <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
@@ -157,24 +157,24 @@ export default function Category() {
               </span>
               <Tags size={12} className='text-amber-500 animate-pulse' />
             </div>
-            <h2 className="text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-none">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-tight sm:leading-none">
               Cấu Trúc <span className="text-emerald-600 font-black">Loại Hàng</span>
             </h2>
-            <p className="text-slate-500 dark:text-slate-400 font-medium text-lg">Quản lý phân cấp và thứ tự hiển thị trên ứng dụng khách hàng</p>
+            <p className="text-slate-500 dark:text-slate-400 font-medium text-sm sm:text-lg mt-1">Quản lý phân cấp và thứ tự hiển thị trên ứng dụng khách hàng</p>
           </div>
 
           <div className="flex items-center gap-3">
             <Button
               variant='secondary'
-              className='h-12 rounded-2xl text-xs font-semibold'
+              className='h-12 rounded-2xl text-[10px] sm:text-xs font-semibold px-4'
               icon={<ListOrdered size={20} className='text-primary' />}
               onClick={() => setIsRankingOpen(true)}
             >
-              CHỈNH SỬA RANK
+              RANK
             </Button>
             <Button
               variant='primary'
-              className="h-12 rounded-2xl text-xs font-semibold"
+              className="h-12 rounded-2xl text-[10px] sm:text-xs font-semibold px-4"
               icon={<Plus size={20} />}
               onClick={handleCreate}
             >

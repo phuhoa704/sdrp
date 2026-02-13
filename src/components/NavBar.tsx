@@ -1,7 +1,7 @@
 
 import React, { Fragment, useState } from 'react';
 import { ConfirmModal } from '@/components';
-import { LogOut, Bell, MonitorPlay, BrainCircuit, Sparkles, BookOpen, Zap, User, Wrench, ChevronDown, Info, Settings } from 'lucide-react';
+import { LogOut, Bell, MonitorPlay, BrainCircuit, Sparkles, BookOpen, Zap, User, Wrench, ChevronDown, Info, Settings, Menu } from 'lucide-react';
 import { UserRole } from '@/types/enum';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +15,7 @@ interface HeaderProps {
   onDiseaseLookup: () => void;
   avatarUrl?: string;
   onShowNotifications: () => void;
+  onToggleMobileMenu?: () => void;
 }
 
 const NEWS = [
@@ -24,7 +25,18 @@ const NEWS = [
   "Kỹ thuật canh tác lúa hữu cơ giảm 30% chi phí phân bón"
 ]
 
-export const Header: React.FC<HeaderProps> = ({ title, subtitle, role, onLogout, onGoToPOS, onAIDiagnosis, onDiseaseLookup, avatarUrl = "https://picsum.photos/100/100", onShowNotifications }) => {
+export const Header: React.FC<HeaderProps> = ({
+  title,
+  subtitle,
+  role,
+  onLogout,
+  onGoToPOS,
+  onAIDiagnosis,
+  onDiseaseLookup,
+  avatarUrl = "https://picsum.photos/100/100",
+  onShowNotifications,
+  onToggleMobileMenu
+}) => {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isToolsOpen, setIsToolsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -32,9 +44,15 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, role, onLogout,
   return (
     <header className="flex items-center justify-between py-4 px-4 lg:px-8 sticky top-0 bg-[#F8FAFC]/80 dark:bg-slate-950/80 z-[90] backdrop-blur-2xl border-b border-white/80 dark:border-slate-800/40 transition-all duration-500 h-16 lg:h-20 inner-border-glow">
       <div className="flex items-center gap-2 lg:gap-4 min-w-0 shrink">
+        <button
+          onClick={onToggleMobileMenu}
+          className="p-2 -ml-2 lg:hidden text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+        >
+          <Menu size={24} />
+        </button>
         <div className="overflow-hidden">
           <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">{title}</h1>
-          {subtitle && <p className="text-xs font-semibold text-emerald-500 mt-0.5">{subtitle}</p>}
+          {subtitle && <p className="text-xs font-semibold text-emerald-500 mt-0.5 line-clamp-1">{subtitle}</p>}
         </div>
       </div>
       <div className="flex-1 max-w-lg mx-2 hidden xl:flex items-center overflow-hidden">

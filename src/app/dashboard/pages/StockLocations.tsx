@@ -96,7 +96,7 @@ export const StockLocations = () => {
             { label: 'VỊ TRÍ KHO', href: '#' }
           ]}
         />
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 px-1">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 px-1">
           <div className="shrink-0">
             <div className="flex items-center gap-2 mb-1">
               <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
@@ -104,14 +104,14 @@ export const StockLocations = () => {
               </span>
               <Store size={12} className='text-amber-500 animate-pulse' />
             </div>
-            <h2 className="text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-none">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-tight sm:leading-none">
               Quản lý <span className="text-emerald-600 font-black">Vị trí kho</span>
             </h2>
           </div>
 
           <div className="flex items-center gap-3">
             <Button
-              className="h-14 rounded-2xl bg-white text-primary border-2 border-primary"
+              className="h-12 sm:h-14 rounded-2xl bg-white text-primary border-2 border-primary text-xs sm:text-sm px-4"
               icon={<Plus size={20} />}
               onClick={handleCreate}
             >

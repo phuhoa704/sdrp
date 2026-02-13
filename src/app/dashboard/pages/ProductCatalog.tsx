@@ -4,7 +4,6 @@ import { Fragment, useMemo, useState, useEffect } from 'react';
 import {
   Package,
   Plus,
-  ShoppingCart,
   ChevronDown,
   Edit3,
   Trash2,
@@ -18,13 +17,15 @@ import {
   MapPin,
   ChevronLeft,
   ChevronRight,
+  Image,
 } from 'lucide-react';
 import { Breadcrumb, Card, Button, ConfirmModal, AlertModal, Drawer } from '@/components';
 import { ProductModal } from '@/components/product/ProductModal';
 import { ProductForm } from '@/components/form/product/ProductForm';
 import { ProductVariantsModal } from '@/components/product/ProductVariantsModal';
 import { ProductVariantUpdateForm } from '@/components/form/product/ProductVariantUpdateForm';
-import { Product, ProductVariant } from '@/types/product';
+import { ProductVariantImageForm } from '@/components/form/product/ProductVariantImageForm';
+import { Product, ProductVariant, ProductImage } from '@/types/product';
 import { productService } from '@/lib/api/medusa/productService';
 import { uploadService } from '@/lib/api/medusa/uploadService';
 import { useCategories, useMedusaProducts } from '@/hooks';
@@ -64,6 +65,10 @@ export default function ProductCatalog() {
   const [isVariantDrawerOpen, setIsVariantDrawerOpen] = useState(false);
   const [selectedVariantToUpdate, setSelectedVariantToUpdate] = useState<{ productId: string, variant: ProductVariant } | null>(null);
   const [isUpdatingVariant, setIsUpdatingVariant] = useState(false);
+
+  const [isVariantImageDrawerOpen, setIsVariantImageDrawerOpen] = useState(false);
+  const [selectedVariantForImage, setSelectedVariantForImage] = useState<{ productId: string, product: Product, variant: ProductVariant } | null>(null);
+  const [isUpdatingVariantImage, setIsUpdatingVariantImage] = useState(false);
 
   const [isFetchingDetail, setIsFetchingDetail] = useState(false);
 
@@ -152,31 +157,6 @@ export default function ProductCatalog() {
       setIsFetchingDetail(false);
     }
   };
-
-  const handleRestock = async (p: Product) => {
-    setIsFetchingDetail(true);
-    try {
-      // Fetch variants for this product
-      const response = await productService.getVariants(p.id, {
-        order: 'variant_rank',
-        limit: 10,
-        fields: 'title,sku,thumbnail,*options,created_at,*inventory_items.inventory.location_levels,inventory_quantity,manage_inventory'
-      });
-      setVariantsList(response.variants || []);
-      setSelectedVariantProduct(p);
-      setIsVariantsModalOpen(true);
-    } catch (err) {
-      console.error("Failed to fetch product variants:", err);
-      setAlertConfig({
-        isOpen: true,
-        title: 'Lỗi',
-        message: 'Không thể tải danh sách biến thể',
-        variant: 'danger'
-      });
-    } finally {
-      setIsFetchingDetail(false);
-    }
-  };
   const handleUpdateVariants = async () => {
     if (!selectedVariantProduct) return;
     try {
@@ -217,8 +197,6 @@ export default function ProductCatalog() {
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
 
   const processedProducts = useMemo(() => {
-    // We already filtered via API for medusaProducts
-    // If there were localProducts, we'd handle them here too, but medusaProducts is the main focus
     return medusaProducts;
   }, [medusaProducts]);
 
@@ -233,13 +211,10 @@ export default function ProductCatalog() {
     const isCurrentlyExpanded = expandedProducts.includes(id);
 
     if (isCurrentlyExpanded) {
-      // Collapse
       setExpandedProducts(prev => prev.filter(p => p !== id));
     } else {
-      // Expand and fetch variants
       setExpandedProducts(prev => [...prev, id]);
 
-      // Only fetch if we haven't loaded variants for this product yet
       if (!productVariants[id]) {
         fetchProductVariants(id);
       }
@@ -271,7 +246,6 @@ export default function ProductCatalog() {
       showToast('Cập nhật biến thể thành công', 'success');
       setIsVariantDrawerOpen(false);
       setSelectedVariantToUpdate(null);
-      // Reload the expanded product's variants
       fetchProductVariants(selectedVariantToUpdate.productId);
     } catch (err: any) {
       showToast(err.message || 'Không thể cập nhật biến thể', 'error');
@@ -280,19 +254,80 @@ export default function ProductCatalog() {
     }
   };
 
+  const handleOpenVariantImageDrawer = async (productId: string, variant: ProductVariant) => {
+    try {
+      setIsFetchingDetail(true);
+      const response = await productService.getProduct(productId, {
+        fields: '*images'
+      });
+      setSelectedVariantForImage({
+        productId,
+        product: response.product,
+        variant
+      });
+      setIsVariantImageDrawerOpen(true);
+    } catch (err: any) {
+      showToast(err.message || 'Không thể tải thông tin sản phẩm', 'error');
+    } finally {
+      setIsFetchingDetail(false);
+    }
+  };
+
+  const handleSaveVariantImages = async (selectedImageIds: string[]) => {
+    if (!selectedVariantForImage) return;
+
+    try {
+      const currentImageIds = selectedVariantForImage.variant.images?.map(img => img.id) || [];
+      const imagesToAdd = selectedImageIds.filter(id => !currentImageIds.includes(id));
+      const imagesToRemove = currentImageIds.filter(id => !selectedImageIds.includes(id));
+
+      await productService.manageImagesOfProductVariant(
+        selectedVariantForImage.productId,
+        selectedVariantForImage.variant.id,
+        {
+          add: imagesToAdd,
+          remove: imagesToRemove
+        }
+      );
+
+      showToast('Cập nhật ảnh biến thể thành công', 'success');
+      setIsVariantImageDrawerOpen(false);
+      setSelectedVariantForImage(null);
+      fetchProductVariants(selectedVariantForImage.productId);
+    } catch (err: any) {
+      showToast(err.message || 'Không thể cập nhật ảnh biến thể', 'error');
+    }
+  };
+
+
   const handleSaveProduct = async (data: any) => {
     setIsSaving(true);
     try {
-      let currentThumbnail: string | undefined = undefined;
+      const finalImages: string[] = [];
 
-      if (data.imageFile) {
-        const uploadResponse = await uploadService.upload(data.imageFile);
-        if (uploadResponse.uploads && uploadResponse.uploads.length > 0) {
-          currentThumbnail = uploadResponse.uploads[0].url;
+      if (data.imageFiles && data.imageFiles.length > 0) {
+        for (const file of data.imageFiles) {
+          try {
+            const uploadResponse = await uploadService.upload(file);
+            if (uploadResponse.uploads && uploadResponse.uploads.length > 0) {
+              finalImages.push(uploadResponse.uploads[0].url);
+            }
+          } catch (uploadErr) {
+            console.error('Failed to upload image:', uploadErr);
+          }
         }
-      } else if (data.thumbnail && !data.thumbnail.startsWith('data:')) {
-        currentThumbnail = data.thumbnail;
       }
+
+      if (data.images && Array.isArray(data.images)) {
+        data.images.forEach((img: any) => {
+          const url = typeof img === 'string' ? img : img.url;
+          if (url && !url.startsWith('data:') && !finalImages.includes(url)) {
+            finalImages.push(url);
+          }
+        });
+      }
+
+      const currentThumbnail = finalImages[0] || data.thumbnail || undefined;
 
       const productOptions = data.has_variants
         ? data.options.map((o: any) => ({
@@ -308,8 +343,8 @@ export default function ProductCatalog() {
         status: "published",
         is_giftcard: false,
         discountable: true,
-        images: currentThumbnail ? [{ url: currentThumbnail }] : [],
-        thumbnail: currentThumbnail || undefined,
+        images: finalImages.map(url => ({ url })),
+        thumbnail: currentThumbnail,
         handle: data.handle || undefined,
         mid_code: data.mid_code || undefined,
         hs_code: data.hs_code || undefined,
@@ -404,7 +439,7 @@ export default function ProductCatalog() {
             ]}
           />
 
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 px-1">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 px-1">
             <div className="shrink-0">
               <div className="flex items-center gap-2 mb-1">
                 <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
@@ -412,13 +447,13 @@ export default function ProductCatalog() {
                 </span>
                 <Zap size={12} className='text-amber-500 animate-pulse' />
               </div>
-              <h2 className="text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-none">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-tight sm:leading-none">
                 Danh mục <span className="text-emerald-600 font-black">Hàng hóa</span>
               </h2>
             </div>
 
             <div className="flex items-center gap-3">
-              <Button className="h-14 rounded-2xl bg-white text-primary border-2 border-primary" icon={<Plus size={20} />} onClick={() => { setEditingProduct(null); setIsProductFormOpen(true); }}>THÊM MỚI</Button>
+              <Button className="h-12 sm:h-14 rounded-2xl bg-white text-primary border-2 border-primary text-xs sm:text-sm" icon={<Plus size={20} />} onClick={() => { setEditingProduct(null); setIsProductFormOpen(true); }}>THÊM MỚI</Button>
             </div>
           </div>
 
@@ -564,7 +599,7 @@ export default function ProductCatalog() {
                   </tr>
                   {isExpanded && (
                     <tr>
-                      <td colSpan={8} className="px-10 py-10 bg-slate-50/40 dark:bg-slate-900/40 border-t border-b dark:border-slate-800">
+                      <td colSpan={5} className="px-4 py-6 md:px-10 md:py-10 bg-slate-50/40 dark:bg-slate-900/40 border-t border-b dark:border-slate-800">
                         <div className="animate-slide-up space-y-8">
                           <div className="flex flex-wrap gap-6 items-start">
                             <Card className="p-5 bg-white dark:bg-slate-900 border-none shadow-sm flex items-center gap-4">
@@ -601,8 +636,8 @@ export default function ProductCatalog() {
                                 <p className="text-sm font-bold text-slate-500">Đang tải biến thể...</p>
                               </div>
                             ) : productVariants[p.id] && productVariants[p.id].length > 0 ? (
-                              <div className="overflow-hidden border border-slate-100 dark:border-slate-800 rounded-3xl bg-white dark:bg-slate-900 shadow-inner-glow">
-                                <table className="w-full text-left">
+                              <div className="overflow-x-auto scrollbar-hide border border-slate-100 dark:border-slate-800 rounded-3xl bg-white dark:bg-slate-900 shadow-inner-glow">
+                                <table className="w-full text-left min-w-[700px]">
                                   <thead className="bg-slate-50 dark:bg-slate-800 text-[9px] font-black dark:text-slate-400 text-slate-700 uppercase tracking-widest border-b dark:border-slate-700">
                                     <tr>
                                       <th className="px-6 py-4">SKU</th>
@@ -631,7 +666,7 @@ export default function ProductCatalog() {
                                         <td className="px-6 py-4 text-right">
                                           <p className="text-sm font-black text-primary">{formatCurrency(getVariantPrice(v), currencyCode)}</p>
                                         </td>
-                                        <td className="px-6 py-4 text-right pr-10">
+                                        <td className="px-6 py-4 text-right pr-10 flex items-center justify-end gap-2">
                                           <button
                                             onClick={(e) => {
                                               e.stopPropagation();
@@ -641,6 +676,15 @@ export default function ProductCatalog() {
                                             className="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-blue-500 disabled:opacity-50"
                                           >
                                             <Edit3 size={16} />
+                                          </button>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleOpenVariantImageDrawer(p.id, v);
+                                            }}
+                                            className='p-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-emerald-500 disabled:opacity-50'
+                                          >
+                                            <Image size={16} />
                                           </button>
                                         </td>
                                       </tr>
@@ -797,6 +841,39 @@ export default function ProductCatalog() {
               variant={selectedVariantToUpdate.variant}
               onSave={handleUpdateVariant}
               loading={isUpdatingVariant}
+            />
+          </div>
+        </Drawer>
+      )}
+
+      {isVariantImageDrawerOpen && selectedVariantForImage && (
+        <Drawer
+          isOpen={isVariantImageDrawerOpen}
+          onClose={() => {
+            setIsVariantImageDrawerOpen(false);
+            setSelectedVariantForImage(null);
+          }}
+          title="Quản lý Ảnh Biến thể"
+          icon={Image}
+          width="lg"
+        >
+          <div className="space-y-6">
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Sản phẩm</p>
+              <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                {selectedVariantForImage.product.title}
+              </p>
+              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Quy cách</p>
+                <p className="text-xs font-black text-primary uppercase">{selectedVariantForImage.variant.title}</p>
+              </div>
+            </div>
+
+            <ProductVariantImageForm
+              productImages={selectedVariantForImage.product.images || []}
+              currentImageIds={selectedVariantForImage.variant.images?.map(img => img.id) || []}
+              onSave={handleSaveVariantImages}
+              loading={isUpdatingVariantImage}
             />
           </div>
         </Drawer>
