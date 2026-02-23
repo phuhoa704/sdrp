@@ -34,7 +34,7 @@ export const TableView = <T,>({ columns, data, isLoading, emptyMessage, renderRo
           <thead>
             <tr className={cn(`bg-primary dark:bg-slate-800/50 text-[10px] font-black text-white dark:text-slate-500 uppercase tracking-[0.15em] border-b border-slate-100 dark:border-slate-800`, headerClassName || "")}>
               {columns.map((column, index) => (
-                <th key={index} className={`py-5 px-4 first:pl-8 last:pr-8 ${column.className || ''}`} style={{ width: column.width }}>
+                <th key={index} className={cn(`py-5 px-4 first:pl-8 last:pr-8`, column.className || '')} style={{ width: column.width }}>
                   {column.title}
                 </th>
               ))}
@@ -42,13 +42,15 @@ export const TableView = <T,>({ columns, data, isLoading, emptyMessage, renderRo
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {isLoading && data.length === 0 ? (
-              <tr>
-                <td colSpan={columns.length} className="py-20">
-                  <div className="flex justify-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                  </div>
-                </td>
-              </tr>
+              Array.from({ length: 5 }).map((_, rowIndex) => (
+                <tr key={rowIndex}>
+                  {columns.map((_, colIndex) => (
+                    <td key={colIndex} className="py-6 px-4 first:pl-8 last:pr-8">
+                      <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse w-full"></div>
+                    </td>
+                  ))}
+                </tr>
+              ))
             ) : (data.length > 0 ? (
               renderRow ? (
                 data.map((item, index) => renderRow(item, index))

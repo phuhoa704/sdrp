@@ -19,6 +19,7 @@ import { Card } from '@/components/Card';
 import { StockAuditVoucher } from '@/types/stock';
 import { Product } from '@/types/product';
 import { StockAuditForm } from '@/components/form/stock/StockAuditForm';
+import { SearchFilter } from '@/components/filters/Search';
 
 interface Props {
   localProducts: Product[];
@@ -111,19 +112,14 @@ export default function StockCheck({ localProducts }: Props) {
 
       {!isAuditFormOpen && (
         <Fragment>
-          <div className="flex flex-col md:flex-row items-center gap-4">
-            <div className="relative flex-1 group w-full">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors" size={18} />
-              <input
-                type="text"
-                placeholder="Theo mã phiếu kiểm..."
-                className="w-full bg-slate-900/40 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500/30 transition-all text-slate-200 placeholder-slate-600"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+          <Card className="flex flex-col xl:flex-row gap-4">
+            <SearchFilter
+              handleSearchChange={setSearchTerm}
+              searchTerm={searchTerm}
+              placeholder='Theo mã phiếu kiểm...'
+            />
 
-            <div className="flex bg-slate-900/40 p-1 rounded-2xl border border-white/5 scrollbar-hide overflow-x-auto w-full md:w-auto">
+            <div className="flex dark:bg-slate-900/40 bg-slate-100 p-1 rounded-2xl border border-white/5 scrollbar-hide overflow-x-auto w-full md:w-auto">
               <button
                 onClick={() => setActiveTab('all')}
                 className={cn(
@@ -169,7 +165,7 @@ export default function StockCheck({ localProducts }: Props) {
                 Đã hủy
               </button>
             </div>
-          </div>
+          </Card>
 
           <Card noPadding className="overflow-hidden shadow-xl bg-white dark:bg-slate-900 rounded-[32px] border-none">
             <div className="overflow-x-auto">

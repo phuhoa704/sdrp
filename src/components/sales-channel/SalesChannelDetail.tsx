@@ -12,6 +12,9 @@ import { TableView } from '@/components/TableView';
 import { ProductSelectionModal } from './ProductSelectionModal';
 import { salesChannelService } from '@/lib/api/medusa/salesChannelService';
 import { useToast } from '@/contexts/ToastContext';
+import { noImage } from '@/configs';
+import { MetadataDrawer } from '../MetadataDrawer';
+import { Metadata } from '@/types/metadata';
 
 interface SalesChannelDetailProps {
   salesChannel: SalesChannel;
@@ -35,6 +38,8 @@ export const SalesChannelDetail: React.FC<SalesChannelDetailProps> = ({
   const [isRemoving, setIsRemoving] = useState(false);
   const [productToRemove, setProductToRemove] = useState<string | null>(null);
   const productLimit = 10;
+
+  const [isMetadataDrawerOpen, setIsMetadataDrawerOpen] = useState(false);
 
   const { products, count, loading, refresh: refreshProducts } = useProducts({
     sales_channel_id: salesChannel.id,
@@ -78,6 +83,10 @@ export const SalesChannelDetail: React.FC<SalesChannelDetailProps> = ({
     }
   };
 
+  const handleSaveMetadata = (metadata: Metadata) => {
+    console.log(metadata);
+  }
+
   return (
     <div className="animate-fade-in space-y-6 pb-20">
       <div className="flex items-center gap-4 mb-2">
@@ -95,10 +104,9 @@ export const SalesChannelDetail: React.FC<SalesChannelDetailProps> = ({
         />
       </div>
 
-      {/* Main Info Card */}
       <Card noPadding className="overflow-hidden border-none shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900">
         <div className="p-8 border-b dark:border-slate-800 flex items-start justify-between">
-          <div className="flex items-center gap-6">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6">
             <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500 shadow-inner">
               <Database size={32} />
             </div>
@@ -118,17 +126,8 @@ export const SalesChannelDetail: React.FC<SalesChannelDetailProps> = ({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-10 rounded-xl border-slate-100 dark:border-slate-800"
-              icon={<Edit3 size={16} />}
-              onClick={() => onEdit(salesChannel)}
-            >
-              CHỈNH SỬA
-            </Button>
-            <button className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all text-slate-400 border border-slate-100 dark:border-slate-800">
-              <MoreHorizontal size={20} />
+            <button onClick={() => onEdit(salesChannel)} className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all text-slate-400 border border-slate-100 dark:border-slate-800">
+              <Edit3 size={16} />
             </button>
           </div>
         </div>
@@ -142,9 +141,8 @@ export const SalesChannelDetail: React.FC<SalesChannelDetailProps> = ({
         </div>
       </Card>
 
-      {/* Products Section */}
       <Card noPadding className="overflow-hidden border-none shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 mt-8">
-        <div className="p-6 border-b dark:border-slate-800 flex items-center justify-between">
+        <div className="p-6 border-b dark:border-slate-800 flex flex-col lg:flex-row items-start lg:items-center justify-between">
           <div className="flex items-center gap-3">
             <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tight uppercase">SẢN PHẨM TRÊN KÊNH</h3>
             <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-[10px] font-black text-slate-500">{count}</span>
@@ -170,10 +168,6 @@ export const SalesChannelDetail: React.FC<SalesChannelDetailProps> = ({
                 placeholder="Tìm kiếm sản phẩm trên kênh..."
               />
             </div>
-            <button className="h-12 px-5 flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl text-xs font-black text-slate-600 dark:text-slate-400 hover:border-emerald-500/50 transition-all">
-              <Filter size={16} />
-              BỘ LỌC
-            </button>
           </div>
 
           <TableView
@@ -203,11 +197,11 @@ export const SalesChannelDetail: React.FC<SalesChannelDetailProps> = ({
                 <td className="py-5 px-4">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800 bg-slate-50">
-                      <img src={product.thumbnail || '/placeholder.png'} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                      <img src={product.thumbnail || noImage} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
                     </div>
                     <div>
-                      <p className="text-sm font-black text-slate-800 dark:text-white leading-tight mb-0.5">{product.title}</p>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">{product.handle}</p>
+                      <p className="text-sm font-black text-slate-800 dark:text-white leading-tight mb-0.5 line-clamp-2">{product.title}</p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter line-clamp-1">{product.handle}</p>
                     </div>
                   </div>
                 </td>
@@ -271,7 +265,7 @@ export const SalesChannelDetail: React.FC<SalesChannelDetailProps> = ({
                 {Object.keys(salesChannel.metadata || {}).length} KEYS
               </span>
             </div>
-            <ArrowUpRight size={18} className="text-slate-300 group-hover:text-blue-500 transition-colors cursor-pointer" />
+            <ArrowUpRight onClick={() => setIsMetadataDrawerOpen(true)} size={18} className="text-slate-300 group-hover:text-blue-500 transition-colors cursor-pointer" />
           </div>
           <div className="p-6 bg-slate-50/50 dark:bg-slate-800/50 min-h-[100px] flex items-center justify-center">
             <p className="text-xs font-bold text-slate-400 uppercase italic">Không có dữ liệu metadata</p>
@@ -316,6 +310,16 @@ export const SalesChannelDetail: React.FC<SalesChannelDetailProps> = ({
         title="Xác nhận xóa sản phẩm"
         message="Bạn có chắc chắn muốn xóa sản phẩm này khỏi kênh bán hàng? Hành động này không thể hoàn tác."
         isLoading={isManaging}
+      />
+
+      <MetadataDrawer
+        isOpen={isMetadataDrawerOpen}
+        onClose={() => {
+          setIsMetadataDrawerOpen(false);
+        }}
+        metadata={salesChannel.metadata || {}}
+        onSave={handleSaveMetadata}
+        title={`Metadata: ${salesChannel.name}`}
       />
     </div>
   );

@@ -112,6 +112,23 @@ export default function OrderHistory({ onGoToWholesale }: OrderHistoryProps) {
         title=''
         maxWidth='6xl'
         maxHeight='85vh'
+        footer={
+          <div className="p-10 md:p-12 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between shrink-0 gap-8 shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
+            <div>
+              <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Giá trị đơn hàng sỉ</p>
+              <div className="flex items-baseline gap-3">
+                <p className="text-4xl md:text-5xl font-black text-emerald-600">{selectedOrderDetails?.total.toLocaleString()}đ</p>
+                <span className="text-sm text-slate-400 font-bold italic">(Đã bao gồm VAT 8%)</span>
+              </div>
+            </div>
+            <div className="flex gap-4 w-full md:w-auto">
+              <Button variant="secondary" className="h-16 rounded-[20px] px-10 font-bold flex-1 md:flex-none dark:bg-slate-800 shadow-sm border-slate-200 text-white hover:bg-slate-800" onClick={() => alert("Đang tải đơn đặt hàng...")}>
+                <Download size={24} /> <span className="hidden sm:inline">Tải PDF</span>
+              </Button>
+              <Button className="h-16 rounded-[20px] px-14 font-black shadow-2xl shadow-emerald-500/30 flex-1 md:flex-none text-base tracking-tight" onClick={() => setSelectedOrderDetails(null)}>Đóng chi tiết</Button>
+            </div>
+          </div>
+        }
       >
         <div className="p-8 md:p-10 bg-[#0f172a] text-white flex justify-between items-center shrink-0">
           <div className="flex items-center gap-8">
@@ -228,22 +245,6 @@ export default function OrderHistory({ onGoToWholesale }: OrderHistoryProps) {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        <div className="p-10 md:p-12 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between shrink-0 gap-8 shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
-          <div>
-            <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Giá trị đơn hàng sỉ</p>
-            <div className="flex items-baseline gap-3">
-              <p className="text-4xl md:text-5xl font-black text-emerald-600">{selectedOrderDetails?.total.toLocaleString()}đ</p>
-              <span className="text-sm text-slate-400 font-bold italic">(Đã bao gồm VAT 8%)</span>
-            </div>
-          </div>
-          <div className="flex gap-4 w-full md:w-auto">
-            <Button variant="secondary" className="h-16 rounded-[20px] px-10 font-bold flex-1 md:flex-none dark:bg-slate-800 shadow-sm border-slate-200 text-white hover:bg-slate-800" onClick={() => alert("Đang tải đơn đặt hàng...")}>
-              <Download size={24} /> <span className="hidden sm:inline">Tải PDF</span>
-            </Button>
-            <Button className="h-16 rounded-[20px] px-14 font-black shadow-2xl shadow-emerald-500/30 flex-1 md:flex-none text-base tracking-tight" onClick={() => setSelectedOrderDetails(null)}>Đóng chi tiết</Button>
           </div>
         </div>
       </Modal>

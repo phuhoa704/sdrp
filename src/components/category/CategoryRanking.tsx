@@ -78,18 +78,21 @@ const SortableItem = ({ category, index, isChild }: SortableItemProps) => {
         {isChild ? <Tags size={20} /> : <Folder size={20} className="fill-current opacity-20" />}
         {!isChild && <Folder size={20} className="absolute" />}
       </div>
+      <div className="flex-1 flex flex-col md:flex-row justify-between md:justify-center">
+        <div className="flex-1">
+          <h3 className="text-base font-black text-slate-800 dark:text-white uppercase tracking-wide">{category.name}</h3>
+          <p className="text-xs text-slate-400 font-medium mt-0.5">
+            {isChild ? 'Danh mục con' : 'Danh mục chính'} • ID: {category.id.slice(category.id.length - 8, category.id.length)}
+          </p>
+        </div>
 
-      <div className="flex-1">
-        <h3 className="text-base font-black text-slate-800 dark:text-white uppercase tracking-wide">{category.name}</h3>
-        <p className="text-xs text-slate-400 font-medium mt-0.5">
-          {isChild ? 'Danh mục con' : 'Danh mục chính'} • ID: {category.id.slice(category.id.length - 8, category.id.length)}
-        </p>
-      </div>
-
-      <div className="px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-        <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-          Display Order: {index + 1}
-        </p>
+        <div className="">
+          <div className="px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Display Order: {index + 1}
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -179,13 +182,13 @@ export const CategoryRanking = ({ categories, onCancel, onSave }: Props) => {
 
   return (
     <div className="animate-fade-in space-y-10 pb-32">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start lg:items-center justify-between gap-2 lg:gap-0">
         <div className="flex items-center gap-6">
           <button onClick={onCancel} className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:bg-slate-50 transition-all border border-slate-200 dark:border-slate-800">
             <ArrowLeft size={24} className="text-slate-500" />
           </button>
           <div>
-            <h2 className="text-3xl font-black text-slate-800 dark:text-white tracking-tight leading-none">Chỉnh sửa thứ tự (Ranking)</h2>
+            <h2 className="text-xl md:text-3xl font-black text-slate-800 dark:text-white tracking-tight leading-none">Chỉnh sửa thứ tự (Ranking)</h2>
             <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em] mt-2">Kéo thả để sắp xếp lại thứ tự hiển thị</p>
           </div>
         </div>

@@ -90,7 +90,6 @@ export const StockLocationDetail = ({ id, onBack }: Props) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-          {/* Main Info Card */}
           <Card className="p-8 relative overflow-hidden group">
             <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-all">
               <button
@@ -108,7 +107,7 @@ export const StockLocationDetail = ({ id, onBack }: Props) => {
                 </div>
                 <div>
                   <h3 className="text-lg font-black text-slate-900 dark:text-white mb-1">{location.name}</h3>
-                  <p className="text-sm font-bold text-slate-500 leading-relaxed uppercase tracking-tight">
+                  <p className="text-xs lg:text-sm font-bold text-slate-500 leading-relaxed uppercase tracking-tight">
                     {addressString || 'Chưa cập nhật địa chỉ'}
                   </p>
                 </div>
@@ -116,7 +115,6 @@ export const StockLocationDetail = ({ id, onBack }: Props) => {
             </div>
           </Card>
 
-          {/* Fulfillment Providers Panels - Placeholder/Mockup */}
           <Card className="p-0 overflow-hidden">
             <div className="px-8 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-slate-800/20">
               <div className="flex items-center gap-3">
@@ -155,7 +153,6 @@ export const StockLocationDetail = ({ id, onBack }: Props) => {
         </div>
 
         <div className="space-y-6">
-          {/* Sales Channels Sidebar Panel */}
           <Card className="p-0 overflow-hidden">
             <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
@@ -169,7 +166,7 @@ export const StockLocationDetail = ({ id, onBack }: Props) => {
                 <Edit3 size={16} />
               </button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="px-3 py-4 lg:p-6 space-y-4">
               {location.sales_channels && location.sales_channels.length > 0 ? (
                 <div className="space-y-3">
                   {location.sales_channels.map(sc => (
@@ -195,7 +192,6 @@ export const StockLocationDetail = ({ id, onBack }: Props) => {
             </div>
           </Card>
 
-          {/* Fulfillment Providers Sidebar Panel */}
           <Card className="p-0 overflow-hidden">
             <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
@@ -214,13 +210,15 @@ export const StockLocationDetail = ({ id, onBack }: Props) => {
                   This Stock Location is not connected to any fulfillment providers.
                 </p>
               </div>
-              <Button
-                variant="secondary"
-                size="sm"
-                className="rounded-xl px-4 text-[9px] font-black tracking-widest uppercase border-slate-200 dark:border-slate-700 h-9"
-              >
-                Connect Providers
-              </Button>
+              <div className="flex justify-center">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="rounded-xl px-4 text-[9px] font-black tracking-widest uppercase border-slate-200 dark:border-slate-700 h-9"
+                >
+                  Connect Providers
+                </Button>
+              </div>
             </div>
           </Card>
         </div>

@@ -238,7 +238,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onCancel, onSave, init
   );
 
   return (
-    <div className="w-9/12 mx-auto py-10 px-4 animate-fade-in pb-32">
+    <div className="w-full lg:w-9/12 mx-auto py-10 px-4 animate-fade-in pb-32">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
         <div className="flex items-center gap-6">

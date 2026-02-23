@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ShoppingCart, Trash2, User, Store, Truck,
   Ticket, Percent, Minus, Plus, X,
@@ -13,7 +13,7 @@ import { usePromotions } from '@/hooks';
 import { getPromotionUIData } from '@/lib/helpers';
 import { TableLoading } from '@/components/TableLoading';
 import { draftOrderService } from '@/lib/api/medusa/draftOrderService';
-import { formatDisplayNumber, parseDisplayNumber } from '@/lib/utils';
+
 
 const CartItem = ({ item, onRemoveItem, onUpdateQty }: any) => {
   const [qty, setQty] = useState(item.quantity);
@@ -110,8 +110,10 @@ export const POSCart: React.FC<POSCartProps> = ({
   loadingTabId, isSyncing = false
 }) => {
   const [showPromoModal, setShowPromoModal] = useState(false);
-  const [discountType, setDiscountType] = useState<'amount' | 'percent'>('amount');
+  const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('fixed');
   const [discountValue, setDiscountValue] = useState(0);
+  const discountDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const [isUpdatingDiscount, setIsUpdatingDiscount] = useState(false);
   const [promoSearch, setPromoSearch] = useState("");
   const [selectedPromoId, setSelectedPromoId] = useState<string | null>(null);
 
@@ -127,6 +129,13 @@ export const POSCart: React.FC<POSCartProps> = ({
     q: promoSearch || undefined
   });
 
+  useEffect(() => {
+    if (Object.keys(activeTab?.metadata || {}).length > 0) {
+      setDiscountValue(activeTab.metadata.discount_value || 0);
+      setDiscountType(activeTab.metadata.discount_type || 'fixed');
+    }
+  }, [activeTab?.metadata])
+
   const filteredPromos = useMemo(() => {
     return apiPromotions.filter(p => p.status === "active");
   }, [apiPromotions]);
@@ -135,7 +144,7 @@ export const POSCart: React.FC<POSCartProps> = ({
     if (!activeTab?.id || !promo.code) return;
 
     try {
-      // await draftOrderService.createDraftOrderEdit(activeTab.id)
+      await draftOrderService.createDraftOrderEdit(activeTab.id)
       setPromotionLoading(true)
       const res = await draftOrderService.addPromotionToDraftOrder(activeTab.id, promo.code);
 
@@ -143,7 +152,7 @@ export const POSCart: React.FC<POSCartProps> = ({
       setShowPromoModal(false);
       setIsPromoExpanded(false);
       onUpdateDiscount(res.draft_order_preview.discount_total);
-      // await draftOrderService.confirmDraftOrderEdit(activeTab.id)
+      await draftOrderService.confirmDraftOrderEdit(activeTab.id)
     } catch (err) {
       console.error('Failed to apply promotion:', err);
     } finally {
@@ -151,14 +160,40 @@ export const POSCart: React.FC<POSCartProps> = ({
     }
   };
 
-  const handleManualDiscountChange = (val: number) => {
-    setDiscountValue(val);
-    if (discountType === 'percent') {
-      onUpdateDiscount(Math.round((subtotal * val) / 100));
-    } else {
-      onUpdateDiscount(val);
-    }
-  };
+  const handleManualDiscountChange = useCallback((val: number, type: 'fixed' | 'percent') => {
+    // Clamp percent to 0-100
+    const clamped = type === 'percent' ? Math.min(100, Math.max(0, val)) : Math.max(0, val);
+    setDiscountValue(clamped);
+
+    // Clear existing debounce
+    if (discountDebounceRef.current) clearTimeout(discountDebounceRef.current);
+
+    // Skip API call if value is 0
+    if (clamped === 0) return;
+
+    if (!activeTab?.id) return;
+
+    discountDebounceRef.current = setTimeout(async () => {
+      try {
+        setIsUpdatingDiscount(true);
+        await draftOrderService.updateDraftOrder(activeTab.id, {
+          metadata: {
+            discount_type: type,
+            discount_value: clamped,
+          }
+        });
+        // Recompute actual discount amount for UI
+        const discountAmount = type === 'percent'
+          ? Math.round((subtotal * clamped) / 100)
+          : clamped;
+        onUpdateDiscount(discountAmount);
+      } catch (err) {
+        console.error('Failed to update discount:', err);
+      } finally {
+        setIsUpdatingDiscount(false);
+      }
+    }, 600);
+  }, [activeTab?.id, subtotal, onUpdateDiscount]);
 
   const handleProcessCheckout = () => {
     if (paymentMethod === 'qr') {
@@ -331,8 +366,8 @@ export const POSCart: React.FC<POSCartProps> = ({
 
   return (
     <div
-      className="bg-white dark:bg-slate-900 border-l dark:border-slate-800 flex flex-col shrink-0 shadow-[-10px_0_30px_rgba(0,0,0,0.03)] h-full relative"
-      style={{ width: `${width}px` }}
+      className="bg-white dark:bg-slate-900 border-l dark:border-slate-800 flex flex-col shrink-0 lg:shrink shadow-[-10px_0_30px_rgba(0,0,0,0.03)] h-full relative w-full lg:w-auto"
+      style={{ width: typeof window !== 'undefined' && window.innerWidth < 1024 ? '100%' : `${width}px` }}
     >
       {isCreatingShipping && (
         <div className="fixed inset-0 z-[2000] bg-blue-600/10 backdrop-blur-sm animate-fade-in flex items-center justify-center cursor-wait">
@@ -472,19 +507,38 @@ export const POSCart: React.FC<POSCartProps> = ({
             {isManualDiscountExpanded && (
               <div className="px-3 pb-3 space-y-2 animate-fade-in">
                 <div className="flex p-0.5 bg-emerald-800 dark:bg-slate-800 rounded-lg border border-emerald-700 dark:border-slate-700">
-                  <button onClick={() => setDiscountType('amount')} className={`flex-1 py-1 text-[9px] font-black rounded ${discountType === 'amount' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-400'}`}>VNĐ</button>
-                  <button onClick={() => setDiscountType('percent')} className={`flex-1 py-1 text-[9px] font-black rounded ${discountType === 'percent' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-400'}`}>%</button>
+                  <button
+                    onClick={() => {
+                      setDiscountType('fixed');
+                      setDiscountValue(0);
+                    }}
+                    className={`flex-1 py-1 text-[9px] font-black rounded ${discountType === 'fixed' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-400'}`}
+                  >VNĐ</button>
+                  <button
+                    onClick={() => {
+                      setDiscountType('percent');
+                      setDiscountValue(0);
+                    }}
+                    className={`flex-1 py-1 text-[9px] font-black rounded ${discountType === 'percent' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-400'}`}
+                  >%</button>
                 </div>
-                <input
-                  type="text"
-                  value={formatDisplayNumber(discountValue || '')}
-                  onChange={(e) => {
-                    const val = parseDisplayNumber(e.target.value)
-                    handleManualDiscountChange(val)
-                  }}
-                  placeholder="Mức giảm..."
-                  className="w-full h-8 px-3 bg-white/10 dark:bg-slate-800 border border-white/20 dark:border-slate-700 placeholder:text-emerald-100/50 rounded-lg text-xs font-black outline-none"
-                />
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={discountValue || ''}
+                    min={0}
+                    max={discountType === 'percent' ? 100 : undefined}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value) || 0;
+                      handleManualDiscountChange(val, discountType);
+                    }}
+                    placeholder={discountType === 'percent' ? '0 – 100%' : 'Mức giảm...'}
+                    className="w-full h-8 px-3 pr-8 bg-white/10 dark:bg-slate-800 border border-white/20 dark:border-slate-700 placeholder:text-emerald-100/50 rounded-lg text-xs font-black outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-black text-emerald-200/60 pointer-events-none">
+                    {isUpdatingDiscount ? '...' : (discountType === 'percent' ? '%' : 'đ')}
+                  </span>
+                </div>
               </div>
             )}
           </div>
@@ -514,8 +568,11 @@ export const POSCart: React.FC<POSCartProps> = ({
           )}
           <div className="flex justify-between text-[10px] font-bold text-emerald-100 dark:text-slate-500 uppercase">
             <span>Khuyến mãi / Giảm giá</span>
-            <span className={activeTab.discount > 0 ? 'text-rose-400' : 'text-white'}>
-              {activeTab.discount > 0 ? `-${activeTab.discount.toLocaleString()}đ` : '0đ'}
+            <span className={isUpdatingDiscount ? 'animate-pulse' : (activeTab.discount > 0 ? 'text-rose-400' : 'text-white')}>
+              {isUpdatingDiscount
+                ? <span className="inline-block w-16 h-3 bg-white/20 rounded animate-pulse" />
+                : (activeTab.discount > 0 ? `-${activeTab.discount.toLocaleString()}đ` : '0đ')
+              }
             </span>
           </div>
           <div className="flex justify-between items-end pt-2 border-t border-white/10">
@@ -523,10 +580,14 @@ export const POSCart: React.FC<POSCartProps> = ({
               <span className="text-[9px] font-black text-emerald-100 dark:text-slate-500 uppercase tracking-widest leading-none mb-1">TỔNG THANH TOÁN</span>
               <span className="text-[8px] text-emerald-200 dark:text-emerald-500 font-black uppercase italic">Đã gồm VAT 8%</span>
             </div>
-            <span className="text-3xl font-black text-white leading-none tracking-tighter">
-              {totalAmount.toLocaleString()}
-              <span className="text-sm ml-1 font-bold">đ</span>
-            </span>
+            {isUpdatingDiscount ? (
+              <span className="inline-block w-28 h-8 bg-white/20 rounded-lg animate-pulse" />
+            ) : (
+              <span className="text-3xl font-black text-white leading-none tracking-tighter">
+                {totalAmount.toLocaleString()}
+                <span className="text-sm ml-1 font-bold">đ</span>
+              </span>
+            )}
           </div>
         </div>
 

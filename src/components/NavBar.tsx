@@ -93,7 +93,7 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
 
               {isToolsOpen && (
-                <div className="absolute top-full right-0 mt-3 w-80 bg-white dark:bg-slate-900 rounded-[32px] shadow-2xl border border-slate-100 dark:border-slate-800 z-30 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <div className="absolute top-full -right-[200%] md:right-0 mt-3 w-80 bg-white dark:bg-slate-900 rounded-[32px] shadow-2xl border border-slate-100 dark:border-slate-800 z-30 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                   <div className="p-6 pb-2">
                     <div className="flex items-center gap-2 mb-6 text-slate-400">
                       <Wrench size={14} className="text-emerald-500" />

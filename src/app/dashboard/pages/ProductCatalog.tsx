@@ -636,7 +636,7 @@ export default function ProductCatalog() {
                                 <p className="text-sm font-bold text-slate-500">Đang tải biến thể...</p>
                               </div>
                             ) : productVariants[p.id] && productVariants[p.id].length > 0 ? (
-                              <div className="overflow-x-auto scrollbar-hide border border-slate-100 dark:border-slate-800 rounded-3xl bg-white dark:bg-slate-900 shadow-inner-glow">
+                              <div className="overflow-x-auto scrollbar-hide border border-slate-200 dark:border-slate-800 rounded-3xl bg-white dark:bg-slate-900 shadow-inner-glow">
                                 <table className="w-full text-left min-w-[700px]">
                                   <thead className="bg-slate-50 dark:bg-slate-800 text-[9px] font-black dark:text-slate-400 text-slate-700 uppercase tracking-widest border-b dark:border-slate-700">
                                     <tr>

@@ -4,9 +4,11 @@ import { Product } from '@/types/product';
 
 export interface UseProductsOptions {
     q?: string;
+    id?: string | string[];
     category_id?: string | string[];
     sales_channel_id?: string | string[];
     tags?: string | string[];
+    price_list_id?: string | string[];
     limit?: number;
     offset?: number;
     autoFetch?: boolean;
@@ -14,11 +16,14 @@ export interface UseProductsOptions {
 }
 
 export const useProducts = (options: UseProductsOptions = {}) => {
-    const { q, category_id, sales_channel_id, tags, limit = 10, offset = 0, autoFetch = true, fields } = options;
+    const { q, id, category_id, sales_channel_id, price_list_id, tags, limit = 10, offset = 0, autoFetch = true, fields } = options;
     const [products, setProducts] = useState<Product[]>([]);
     const [count, setCount] = useState<number>(0);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+
+    // Memoize options to prevent unnecessary re-renders when the parent passes an object literal
+    const memoOptions = JSON.stringify({ q, id, category_id, sales_channel_id, price_list_id, tags, limit, offset, fields });
 
     const fetchProducts = useCallback(async () => {
         setLoading(true);
@@ -26,8 +31,10 @@ export const useProducts = (options: UseProductsOptions = {}) => {
         try {
             const data = await productService.getProducts({
                 q,
+                id,
                 category_id,
                 sales_channel_id,
+                price_list_id,
                 tags,
                 limit,
                 offset,
@@ -40,13 +47,13 @@ export const useProducts = (options: UseProductsOptions = {}) => {
         } finally {
             setLoading(false);
         }
-    }, [q, category_id, sales_channel_id, tags, limit, offset, fields]);
+    }, [memoOptions]);
 
     useEffect(() => {
         if (autoFetch) {
             fetchProducts();
         }
-    }, [autoFetch, fetchProducts, q, category_id, sales_channel_id, tags, limit, offset]);
+    }, [autoFetch, fetchProducts]);
 
     const deleteProduct = useCallback(async (id: string) => {
         setLoading(true);

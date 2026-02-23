@@ -23,6 +23,20 @@ export const StockDetail: React.FC<StockDetailProps> = ({ isOpen, onClose, data,
       onClose={onClose}
       title={data ? `Chi tiết phiếu: ${code}` : 'Đang tải...'}
       maxWidth="4xl"
+      footer={
+        <div className="flex justify-end gap-3 pt-6">
+          <button className="h-12 px-8 flex items-center gap-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl text-xs font-black text-slate-600 dark:text-slate-300 transition-all uppercase tracking-widest">
+            <Printer size={18} />
+            In chứng từ
+          </button>
+          <button
+            onClick={onClose}
+            className="h-12 px-8 bg-emerald-500/10 text-emerald-500 rounded-2xl text-xs font-black hover:bg-emerald-500/20 transition-all uppercase tracking-widest"
+          >
+            Đóng
+          </button>
+        </div>
+      }
     >
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
@@ -167,19 +181,6 @@ export const StockDetail: React.FC<StockDetailProps> = ({ isOpen, onClose, data,
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-6">
-            <button className="h-12 px-8 flex items-center gap-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl text-xs font-black text-slate-600 dark:text-slate-300 transition-all uppercase tracking-widest">
-              <Printer size={18} />
-              In chứng từ
-            </button>
-            <button
-              onClick={onClose}
-              className="h-12 px-8 bg-emerald-500/10 text-emerald-500 rounded-2xl text-xs font-black hover:bg-emerald-500/20 transition-all uppercase tracking-widest"
-            >
-              Đóng
-            </button>
           </div>
         </div>
       ) : null}

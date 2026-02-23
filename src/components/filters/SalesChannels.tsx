@@ -30,7 +30,7 @@ export const SalesChannelsFilter = ({ selectedChannelId, handleChannelSelect }: 
             onClick={() => handleChannelSelect("all")}
           >
             <Layers size={14} />
-            <span className="hidden sm:inline">Tất cả kênh</span>
+            <span className="inline">Tất cả kênh</span>
           </button>
           {salesChannels.map((channel) => (
             <button
@@ -44,7 +44,7 @@ export const SalesChannelsFilter = ({ selectedChannelId, handleChannelSelect }: 
               onClick={() => handleChannelSelect(channel.id)}
             >
               <Store size={14} />
-              <span className="hidden sm:inline">{channel.name}</span>
+              <span className="inline">{channel.name}</span>
             </button>
           ))}
         </>

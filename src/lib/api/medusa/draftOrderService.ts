@@ -61,10 +61,11 @@ class DraftOrderService {
      * Get a single draft order by ID
      * @param id ID of the draft order
      */
-    async getDraftOrder(id: string): Promise<{ draft_order: DraftOrder }> {
+    async getDraftOrder(id: string): Promise<DraftOrder> {
         try {
-            const res = await bridgeClient.get(`/admin/draft-orders/${id}`, { params: { fields: "+customer_id" } });
-            return res.data;
+            const vendorId = getVendorId();
+            const res = await bridgeClient.get<CustomResponse<DraftOrder>>(`/custom/admin/orders/${id}/draft`, { params: { fields: "+customer_id" }, headers: { 'x-api-vendor': vendorId } });
+            return res.data.data;
         } catch (error: unknown) {
             console.error(`Failed to fetch Medusa draft order ${id}:`, error);
             throw new Error(

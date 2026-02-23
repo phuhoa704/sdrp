@@ -147,7 +147,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({ initialData, onSave,
   };
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6 pb-20">
-      <div className="-mx-6 px-6 py-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 mb-8">
+      <div className="-mx-6 px-6 py-4 flex flex-col lg:flex-row items-start lg:items-center justify-between border-b border-slate-100 dark:border-slate-800 mb-8 gap-2 lg:gap-0">
         <div className="flex items-center gap-4">
           <button onClick={onBack} className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:bg-slate-50 transition-all border border-slate-200 dark:border-slate-800">
             <ArrowLeft size={24} className="text-slate-500" />

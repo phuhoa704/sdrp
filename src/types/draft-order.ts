@@ -1,3 +1,5 @@
+import { Metadata } from "./metadata";
+
 export enum DraftOrderStatus {
     PENDING = 'pending',
     COMPLETED = 'completed',
@@ -99,6 +101,9 @@ export interface DraftOrder {
     updated_at: string;
     display_id?: number;
     summary: PaymentSummary;
+    discount?: number;
+    sub_total?: number;
+    metadata: Metadata;
 }
 
 export interface DraftOrderListResponse {

@@ -1,6 +1,5 @@
 import { Breadcrumb, Button } from '@/components'
 import { InputSearch } from '@/components/Search';
-import { TableLoading } from '@/components/TableLoading';
 import { useCollections } from '@/hooks/medusa/useCollections';
 import { Plus, Zap } from 'lucide-react'
 import React, { Fragment, useState } from 'react'
@@ -12,6 +11,7 @@ import { collectionService } from '@/lib/api/medusa/collectionService';
 import { CollectionCard } from '@/components/collection/CollectionCard';
 import { Empty } from '@/components/Empty';
 import { useToast } from '@/contexts/ToastContext';
+import { CardLoading } from '@/components/CardLoading';
 
 export default function Collection() {
   const { showToast } = useToast();
@@ -117,9 +117,7 @@ export default function Collection() {
           <Error error={error} />
         )}
         {loading ? (
-          <div>
-            <TableLoading />
-          </div>
+          <CardLoading />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {collections.length > 0 ? collections.map((collection: ProductCollection) => (

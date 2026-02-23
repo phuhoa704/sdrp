@@ -64,7 +64,7 @@ export const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
           }}
         />
 
-        <div className="max-h-[400px] overflow-y-auto pr-2">
+        <div className="max-h-[400px] overflow-y-auto pr-2 scrollbar-hide">
           <TableView
             columns={[
               { title: "", className: "w-10" },
@@ -141,7 +141,7 @@ export const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
           />
         </div>
 
-        <div className="flex items-center justify-between pt-4 border-t dark:border-slate-800">
+        <div className="flex flex-col md:flex-row items-center justify-between pt-4 border-t dark:border-slate-800 gap-2 md:gap-0">
           <p className="text-xs font-bold text-slate-400">
             Đã chọn: <span className="text-emerald-500">{selectedIds.length}</span> sản phẩm mới
           </p>

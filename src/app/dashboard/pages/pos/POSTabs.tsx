@@ -20,7 +20,7 @@ interface POSTabsProps {
 
 export const POSTabs: React.FC<POSTabsProps> = ({ tabs, activeTabId, onSelectTab, onAddTab, onRemoveTab, isAddingTab, deletingTabIds = [], loadingTabId }) => {
   return (
-    <div className="flex items-center gap-1 h-full pt-2 overflow-x-auto no-scrollbar max-w-full">
+    <div className="flex items-center gap-1 h-full pt-2 overflow-x-auto scrollbar-hide max-w-full">
       {tabs.map((tab) => {
         const isDeleting = deletingTabIds.includes(tab.id);
         const isLoadingDetails = loadingTabId === tab.id;
@@ -37,7 +37,7 @@ export const POSTabs: React.FC<POSTabsProps> = ({ tabs, activeTabId, onSelectTab
             ) : (
               <Receipt size={14} />
             )}
-            {`Đơn hàng ${tab.label}`}
+            {`${tab.label}`}
 
             {isDeleting ? (
               <Loader2 size={12} className="animate-spin text-rose-500 ml-1" />

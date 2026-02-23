@@ -219,7 +219,7 @@ export const POSCatalog: React.FC<POSCatalogProps> = ({
                   <h4 className="font-bold text-[13px] text-slate-800 dark:text-slate-100 line-clamp-1 leading-tight">{p.title}</h4>
                   <p className="text-[10px] text-slate-400 font-medium truncate">{p.activeIngredient}</p>
                   <div className="flex items-center justify-between mt-2">
-                    <p className="text-primary font-black text-base">{minPrice.toLocaleString()}đ - {maxPrice.toLocaleString()}đ</p>
+                    <p className="text-primary font-black text-xs lg:text-base">{minPrice.toLocaleString()}đ - {maxPrice.toLocaleString()}đ</p>
                     {p.isWikiMatch && (
                       <span className="text-[8px] font-bold text-green-600 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded border border-green-100 dark:border-green-800/50">Đặc trị</span>
                     )}

@@ -7,6 +7,7 @@ import {
   User,
   Store,
   Eye,
+  Package,
 } from 'lucide-react';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { Card } from '@/components/Card';
@@ -159,7 +160,14 @@ export default function RetailOrders() {
                 className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer border-b border-slate-50 dark:border-slate-800/50 last:border-none text-xs"
                 onClick={() => handleSelectOrder(item)}
               >
-                <td className='py-5 px-4 pl-8 text-slate-700 dark:text-slate-200 font-bold'>{item.id}</td>
+                <td className='py-5 px-4 pl-8 text-slate-700 dark:text-slate-200 font-bold'>
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                      <Package size={16} />
+                    </div>
+                    <span className="font-bold text-slate-700 dark:text-slate-200">{item.id}</span>
+                  </div>
+                </td>
                 <td className='py-5 px-4 text-slate-700 dark:text-slate-200'>
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400">
@@ -169,8 +177,8 @@ export default function RetailOrders() {
                   </div>
                 </td>
                 <td className='py-5 px-4'>
-                  <div className="flex flex-col items-center">
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{formatRelativeTime(item.date)}</span>
+                  <div className="flex flex-col items-center justify-center">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200 text-center">{formatRelativeTime(item.date)}</span>
                     <span className="text-[10px] font-medium text-slate-400 mt-0.5">{formatTime(item.date)}</span>
                   </div>
                 </td>

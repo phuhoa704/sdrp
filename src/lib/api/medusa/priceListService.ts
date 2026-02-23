@@ -26,8 +26,12 @@ class PriceListService {
 
     async getPriceListById(id: string): Promise<PriceList> {
         try {
-            const response = await bridgeClient.get<PriceList>(`/admin/price-lists/${id}`);
-            return response.data;
+            const response = await bridgeClient.get<{ price_list: PriceList }>(`/admin/price-lists/${id}`, {
+                params: {
+                    fields: "*prices"
+                }
+            });
+            return response.data.price_list;
         } catch (error) {
             console.error('Failed to fetch price list:', error);
             throw error;

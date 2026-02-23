@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { BRIDGE_API_URL } from './config';
+import qs from 'qs';
 
 const bridgeClient = axios.create({
     baseURL: BRIDGE_API_URL,
@@ -7,6 +8,9 @@ const bridgeClient = axios.create({
     headers: {
         'Content-Type': 'application/json',
         // 'ngrok-skip-browser-warning': 'true',
+    },
+    paramsSerializer: (params) => {
+        return qs.stringify(params, { arrayFormat: 'brackets' });
     },
 });
 

@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { logout, logoutFromMedusa } from "./authSlice";
+import { Metadata } from "@/types/metadata";
 
 export interface POSItem {
     id: string;
@@ -23,6 +24,7 @@ export interface OrderTab {
     shippingPartner?: string;
     branch?: string;
     subtotal: number;
+    metadata: Metadata
 }
 
 interface POSState {

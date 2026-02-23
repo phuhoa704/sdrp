@@ -239,7 +239,6 @@ export default function Category() {
                       isChild ? "bg-blue-50 dark:bg-blue-900/20 text-blue-500" : "bg-emerald-50 dark:bg-emerald-900/20 text-primary"
                     )}>
                       {isChild ? <Tags size={14} /> : <Folder size={16} className="fill-current opacity-20" />}
-                      {!isChild && <Folder size={16} className="absolute" />}
                     </div>
                     <span className="uppercase tracking-wide text-sm">{category.name}</span>
                   </div>

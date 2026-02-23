@@ -23,6 +23,7 @@ import { Card } from '@/components/Card';
 import { cn } from '@/lib/utils';
 import { Modal } from '@/components/Modal';
 import { CashbookForm } from '@/components/form/cashbook/CashbookForm';
+import { SearchFilter } from '@/components/filters/Search';
 
 interface Transaction {
   id: string;
@@ -176,7 +177,7 @@ export default function Cashbook() {
         <Card className="lg:col-span-4 p-8 bg-slate-900 border-none shadow-2xl rounded-[40px] flex items-center justify-between overflow-hidden relative group">
           <div className="relative z-10">
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Tổng tồn quỹ hiện tại</p>
-            <p className="text-4xl font-black text-white">-12,050,000đ</p>
+            <p className="text-4xl font-black text-slate-800 dark:text-white">-12,050,000đ</p>
             <div className="mt-6 flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-full border border-white/10 w-fit">
               <div className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></div>
               <span className="text-[9px] font-black text-slate-400 uppercase">Tất cả chi nhánh & ngân hàng</span>
@@ -213,19 +214,14 @@ export default function Cashbook() {
         </Card>
       </div>
 
-      <div className="flex flex-col md:flex-row items-center gap-4">
-        <div className="relative flex-1 group w-full">
-          <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors" size={20} />
-          <input
-            type="text"
-            placeholder="Tìm theo mã phiếu, đối tác hoặc lý do..."
-            className="w-full bg-slate-950/20 dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-[24px] py-4 pl-14 pr-4 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/30 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-500 shadow-inner-glow"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+      <Card className="flex flex-col md:flex-row items-center gap-4">
+        <SearchFilter
+          handleSearchChange={setSearchTerm}
+          searchTerm={searchTerm}
+          placeholder='Tìm theo mã phiếu, đối tác hoặc lý do...'
+        />
 
-        <div className="flex bg-slate-900/40 p-1 rounded-2xl border border-white/5 scrollbar-hide overflow-x-auto w-full md:w-auto">
+        <div className="flex bg-slate-50 dark:bg-slate-900/40 p-1 rounded-2xl border border-white/5 scrollbar-hide overflow-x-auto w-full md:w-auto">
           {[
             { id: 'all', label: 'Tất cả' },
             { id: 'income', label: 'Phiếu thu' },
@@ -249,7 +245,7 @@ export default function Cashbook() {
             <Download size={16} />
           </button>
         </div>
-      </div>
+      </Card>
 
       <Card noPadding className="overflow-hidden shadow-xl bg-white dark:bg-slate-900 rounded-[32px] border dark:border-white/5">
         <div className="overflow-x-auto overflow-y-hidden">

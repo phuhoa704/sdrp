@@ -7,6 +7,7 @@ import { ProductTypeCard } from '@/components/productType/ProductTypeCard';
 import { ProductType } from '@/types/product-type';
 import { TableLoading } from '@/components/TableLoading';
 import { Empty } from '@/components/Empty';
+import { CardLoading } from '@/components/CardLoading';
 
 export const ProductTypes = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -77,7 +78,7 @@ export const ProductTypes = () => {
           </div>
         </div>
         {loading ? (
-          <TableLoading />
+          <CardLoading />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {productTypes.length > 0 ? productTypes.map((prdType) => (

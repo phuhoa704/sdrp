@@ -148,7 +148,7 @@ export const ProductTypeForm: React.FC<ProductTypeProps> = ({ onCancel, onSave, 
 
   return (
     <div className="min-h-screen px-4 animate-fade-in relative z-50">
-      <div className="sticky top-0 z-40 -mx-6 px-6 py-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 mb-8">
+      <div className="sticky top-0 z-40 -mx-6 px-6 py-4 flex flex-col md:flex-row items-start lg:items-center justify-between border-b border-slate-100 dark:border-slate-800 mb-8 gap-2 lg:gap-0">
         <div className="flex items-center gap-4">
           <button onClick={onCancel} className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:bg-slate-50 transition-all border border-slate-200 dark:border-slate-800">
             <ArrowLeft size={24} className="text-slate-500" />
@@ -260,11 +260,11 @@ export const ProductTypeForm: React.FC<ProductTypeProps> = ({ onCancel, onSave, 
                 width: '60px',
                 className: 'text-center'
               },
-              { title: 'PRODUCT' },
-              { title: 'PHÂN LOẠI' },
-              { title: 'SALES CHANNELS', className: 'text-center' },
-              { title: 'VARIANTS' },
-              { title: 'STATUS', className: 'text-right' },
+              { title: 'Sản phẩm' },
+              { title: 'Phân loại' },
+              { title: 'Kênh bán hàng', className: 'text-center' },
+              { title: 'Biến thể' },
+              { title: 'Trạng thái', className: 'text-right' },
             ]}
             data={products}
             pagination={{

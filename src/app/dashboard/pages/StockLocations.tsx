@@ -11,6 +11,8 @@ import { StockLocationForm } from '@/components/form/stockLocation/StockLocation
 import { stockLocationService } from '@/lib/api/medusa/stockLocationService'
 import { useToast } from '@/contexts/ToastContext'
 import { StockLocationDetail } from '@/components/stock-location/StockLocationDetail'
+import { cn } from '@/lib/utils'
+import { CardLoading } from '@/components/CardLoading'
 
 export const StockLocations = () => {
   const [searchTerm, setSearchTerm] = useState('')
@@ -128,18 +130,23 @@ export const StockLocations = () => {
           <Error error={error} />
         )}
         {loading && locations.length === 0 ? (
-          <div className="flex justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          </div>
+          <CardLoading />
         ) : locations.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {locations.map((item) => (
               <Card
                 key={item.id}
                 onClick={() => setSelectedLocationId(item.id)}
-                className="group p-6 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer border-slate-100 dark:border-slate-800 relative overflow-hidden"
+                className={cn(
+                  "group p-6 transition-all duration-300 cursor-pointer border-slate-100 dark:border-slate-800 relative z-0",
+                  activeMenuId === item.id
+                    ? "shadow-2xl -translate-y-1 z-[110]"
+                    : "hover:shadow-2xl hover:-translate-y-1"
+                )}
               >
-                <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
+                <div className="absolute inset-0 overflow-hidden rounded-[24px] pointer-events-none">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
+                </div>
 
                 <div className="relative z-10">
                   <div className="flex justify-between items-start mb-4">

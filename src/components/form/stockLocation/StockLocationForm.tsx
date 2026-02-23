@@ -73,7 +73,7 @@ export const StockLocationForm: React.FC<StockLocationFormProps> = ({
 
   return (
     <div className="min-h-screen px-4 animate-fade-in relative z-50">
-      <div className="-mx-6 px-6 py-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 mb-8">
+      <div className="-mx-6 px-6 py-4 flex flex-col md:flex-row items-start lg:items-center justify-between border-b border-slate-100 dark:border-slate-800 mb-8 gap-2 md:gap-0">
         <div className="flex items-center gap-4">
           <button
             onClick={onCancel}

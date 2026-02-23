@@ -22,6 +22,15 @@ export const OrderDetail = ({ order, onClose, isDetailLoading }: OrderDetailProp
       title=''
       maxWidth='5xl'
       maxHeight='85vh'
+      footer={
+        <div className="p-8 border-t dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-center shrink-0">
+          <div>
+            <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Tổng thanh toán</p>
+            <p className="text-3xl font-black text-emerald-600">{order.total.toLocaleString()}đ</p>
+          </div>
+          <Button className="px-10 rounded-2xl" onClick={onClose}>Đóng</Button>
+        </div>
+      }
     >
       <div className="relative w-full max-w-5xl h-[85vh] bg-white dark:bg-slate-900 overflow-hidden shadow-2xl animate-slide-up flex flex-col border dark:border-slate-800">
         <div className="p-8 bg-slate-900 text-white flex justify-between items-center shrink-0">
@@ -41,7 +50,7 @@ export const OrderDetail = ({ order, onClose, isDetailLoading }: OrderDetailProp
             <X size={28} />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-8 no-scrollbar bg-slate-50/30 dark:bg-slate-950/20">
+        <div className="flex-1 overflow-y-auto p-3 lg:p-8 no-scrollbar bg-slate-50/30 dark:bg-slate-950/20">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
             <Card className="p-6">
               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"><User size={14} /> Khách hàng</h4>
@@ -103,13 +112,6 @@ export const OrderDetail = ({ order, onClose, isDetailLoading }: OrderDetailProp
               </tr>
             )}
           />
-        </div>
-        <div className="p-8 border-t dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-center shrink-0">
-          <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Tổng thanh toán</p>
-            <p className="text-3xl font-black text-emerald-600">{order.total.toLocaleString()}đ</p>
-          </div>
-          <Button className="px-10 rounded-2xl" onClick={onClose}>Đóng</Button>
         </div>
       </div>
     </Modal>

@@ -12,6 +12,7 @@ import React, { Fragment, useState } from 'react'
 import { CustomerGroupDetail } from '@/components/customer-group/CustomerGroupDetail';
 import { TableLoading } from '@/components/TableLoading';
 import { Empty } from '@/components/Empty';
+import { CardLoading } from '@/components/CardLoading';
 
 export const CustomerGroup = () => {
   const { showToast } = useToast();
@@ -119,7 +120,7 @@ export const CustomerGroup = () => {
           />
         </Card>
         {loading ? (
-          <TableLoading />
+          <CardLoading />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {customerGroups.length > 0 ? (

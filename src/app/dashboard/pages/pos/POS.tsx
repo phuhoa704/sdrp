@@ -6,7 +6,9 @@ import {
   History, Receipt, User, Calendar, MapPin, ChevronDown, Check,
   GripVertical,
   Sun,
-  Moon
+  Moon,
+  ShoppingCart,
+  LayoutGrid
 } from 'lucide-react';
 import { Product } from '@/types/product';
 import { B2COrder } from '@/types/b2corder';
@@ -34,6 +36,8 @@ import { OrderTab } from '@/store/slices/posSlice';
 import { CustomerModal } from '@/components/pos/customerModal';
 import { SalesChannel } from '@/types/sales-channel';
 import { useToast } from '@/contexts/ToastContext';
+import { cn } from '@/lib/utils';
+import { noImage } from '@/configs';
 
 interface POSScreenProps {
   onBack: () => void;
@@ -67,6 +71,7 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
   const [showAlertDrawer, setShowAlertDrawer] = useState(false);
   const [showHistoryDrawer, setShowHistoryDrawer] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [mobileView, setMobileView] = useState<'catalog' | 'cart'>('catalog');
 
   const [cartWidth, setCartWidth] = useState(500);
   const [isResizingActive, setIsResizingActive] = useState(false);
@@ -94,12 +99,12 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
   const refreshActiveTabDetails = useCallback(async (id: string) => {
     try {
       const res = await draftOrderService.getDraftOrder(id);
-      if (res.draft_order) {
-        let customerInfo = res.draft_order.email ? { name: res.draft_order.email.split('@')[0], phone: '', address: '' } : null;
+      if (res) {
+        let customerInfo = res.email ? { name: res.email.split('@')[0], phone: '', address: '' } : null;
 
-        if (res.draft_order.customer_id) {
+        if (res.customer_id) {
           try {
-            const customerRes = await customerService.getCustomer(res.draft_order.customer_id);
+            const customerRes = await customerService.getCustomer(res.customer_id);
             if (customerRes.customer) {
               customerInfo = {
                 name: `${customerRes.customer.first_name || ''} ${customerRes.customer.last_name || ''}`.trim() || customerRes.customer.email,
@@ -113,10 +118,10 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
         }
 
         setActiveTab(prev => ({
-          id: res.draft_order.id,
-          label: res.draft_order.id,
+          id: res.id,
+          label: res.id,
           fulfillment: "pickup",
-          items: res.draft_order.items.map((item: any) => ({
+          items: res.items.map((item: any) => ({
             id: item.product_id,
             lineItemId: item.id,
             name: item.title,
@@ -127,42 +132,16 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
             tech_specs: item.variant_sku
           })),
           customer: customerInfo,
-          discount: res.draft_order.discount_total || 0,
-          shippingFee: res.draft_order.shipping_total || 0,
-          subtotal: res.draft_order.total || 0,
+          discount: res.discount || 0,
+          shippingFee: res.shipping_total || 0,
+          subtotal: res.sub_total || 0,
+          metadata: res.metadata || {}
         }));
       }
     } catch (err) {
       console.error("Failed to refresh active tab details:", err);
     }
   }, []);
-
-  const updateActiveTab = useCallback((draftOrderPreview: DraftOrder) => {
-    try {
-      setActiveTab(prev => ({
-        id: prev?.id || "",
-        label: prev?.label || "",
-        items: draftOrderPreview.items.map((item: any) => ({
-          id: item.product_id,
-          lineItemId: item.id,
-          name: item.title,
-          price: item.unit_price,
-          quantity: item.quantity,
-          variant: item.variant_title || 'Default',
-          image: item.thumbnail || '',
-          tech_specs: item.variant_sku
-        })),
-        customer: prev?.customer || null,
-        discount: draftOrderPreview.discount_total || 0,
-        fulfillment: 'pickup',
-        shippingFee: draftOrderPreview.shipping_total || 0,
-        branch: currentChannel?.name || "",
-        subtotal: draftOrderPreview.subtotal || 0,
-      }))
-    } catch (error) {
-      console.error("Failed to update active tab:", error);
-    }
-  }, [])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -228,11 +207,12 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
         label: `Đơn ${draft.display_id}`,
         items: [],
         customer: draft.email ? { name: draft.email.split('@')[0], phone: '', address: '' } : null,
-        discount: draft.discount_total || 0,
+        discount: draft.discount || 0,
         fulfillment: 'pickup',
         shippingFee: draft.shipping_total || 0,
         branch: currentChannel?.name || "",
-        subtotal: draft.subtotal || 0,
+        subtotal: draft.sub_total || 0,
+        metadata: draft.metadata || {}
       }));
       setTabs(mappedTabs);
       if (!activeTabId || !mappedTabs.find(t => t.id === activeTabId)) {
@@ -481,25 +461,25 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-[#F1F5F9] dark:bg-slate-950 flex flex-col overflow-hidden animate-fade-in">
-      <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-6 h-16 flex items-center justify-between shrink-0 relative z-[200]">
-        <div className="flex items-center gap-6 h-full">
+    <div className="fixed inset-0 z-[100] bg-[#F1F5F9] dark:bg-slate-950 flex flex-col overflow-hidden animate-fade-in pb-[72px] lg:pb-0">
+      <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-3 sm:px-6 h-16 flex items-center justify-between shrink-0 relative z-[200]">
+        <div className="flex items-center gap-3 sm:gap-6 h-full min-w-0">
           <button onClick={onBack} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
             <ArrowLeft size={20} className="text-slate-500" />
           </button>
           <div className="relative h-full flex items-center" ref={branchMenuRef}>
             <button
               onClick={() => setIsBranchMenuOpen(!isBranchMenuOpen)}
-              className="h-10 px-3 bg-slate-50 dark:bg-slate-800 rounded-xl border dark:border-slate-700 flex items-center gap-2 group cursor-pointer hover:bg-white transition-all shadow-sm"
+              className="h-10 px-2 sm:px-3 bg-slate-50 dark:bg-slate-800 rounded-xl border dark:border-slate-700 flex items-center gap-2 group cursor-pointer hover:bg-white transition-all shadow-sm max-w-[140px] sm:max-w-none"
             >
-              <div className="w-6 h-6 bg-primary/20 text-primary rounded-lg flex items-center justify-center"><MapPin size={14} /></div>
-              <div className="flex flex-col pr-4 border-r dark:border-slate-700 text-left">
-                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Chi nhánh</p>
-                <p className="text-[11px] font-black text-slate-700 dark:text-slate-200 truncate max-w-[120px]">
+              <div className="w-6 h-6 bg-primary/20 text-primary rounded-lg flex items-center justify-center shrink-0"><MapPin size={14} /></div>
+              <div className="flex flex-col pr-2 sm:pr-4 border-r dark:border-slate-700 text-left min-w-0">
+                <p className="hidden sm:block text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Chi nhánh</p>
+                <p className="text-[10px] sm:text-[11px] font-black text-slate-700 dark:text-slate-200 truncate">
                   {currentChannel?.name || "Chọn chi nhánh"}
                 </p>
               </div>
-              <ChevronDown size={14} className={`text-slate-400 transition-transform duration-300 ${isBranchMenuOpen ? 'rotate-180 text-primary' : 'group-hover:text-primary'}`} />
+              <ChevronDown size={14} className={`text-slate-400 shrink-0 transition-transform duration-300 ${isBranchMenuOpen ? 'rotate-180 text-primary' : 'group-hover:text-primary'}`} />
             </button>
 
             {isBranchMenuOpen && (
@@ -530,18 +510,20 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
             )}
           </div>
           <div className="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 hidden sm:block" />
-          <POSTabs
-            tabs={tabs}
-            activeTabId={activeTabId}
-            onSelectTab={handleSelectTab}
-            onAddTab={handleAddTab}
-            onRemoveTab={handleRemoveTab}
-            isAddingTab={isAddingTab}
-            deletingTabIds={deletingTabIds}
-            loadingTabId={loadingTabId}
-          />
+          <div className="flex-1 min-w-0 h-full">
+            <POSTabs
+              tabs={tabs}
+              activeTabId={activeTabId}
+              onSelectTab={handleSelectTab}
+              onAddTab={handleAddTab}
+              onRemoveTab={handleRemoveTab}
+              isAddingTab={isAddingTab}
+              deletingTabIds={deletingTabIds}
+              loadingTabId={loadingTabId}
+            />
+          </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="hidden lg:flex items-center gap-3">
           <button onClick={handleToggleTheme} className="p-2.5 bg-blue-500/20 rounded-xl hover:bg-slate-200/50 hover:text-white transition-all shadow-sm">
             {isDarkMode ? (
               <Sun size={20} className="text-amber-400" />
@@ -557,35 +539,102 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
         </div>
       </div>
       <div className="flex-1 flex overflow-hidden relative">
-        <POSCatalog searchQuery={searchQuery} setSearchQuery={setSearchQuery} selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} categories={categories} filteredProducts={filteredProducts} allProducts={allProducts} onProductClick={setProductToConfigure} onOpenAI={() => setShowAIModal(true)} onOpenDisease={(id) => setDiseaseToShow(id)} loading={productsLoading} />
-        <div onMouseDown={startResizing} className={`absolute top-0 bottom-0 w-4 -ml-2 cursor-col-resize z-[150] group flex items-center justify-center transition-all ${isResizingActive ? 'pointer-events-auto' : ''}`} style={{ right: `${cartWidth - 8}px` }}>
+        <div className={cn("flex-1 flex flex-col min-w-0 h-full", mobileView === 'cart' && "hidden lg:flex")}>
+          <POSCatalog
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+            categories={categories}
+            filteredProducts={filteredProducts}
+            allProducts={allProducts}
+            onProductClick={setProductToConfigure}
+            onOpenAI={() => setShowAIModal(true)}
+            onOpenDisease={(id) => setDiseaseToShow(id)}
+            loading={productsLoading}
+          />
+        </div>
+
+        {/* Resizing divider - hidden on mobile */}
+        <div onMouseDown={startResizing} className={`hidden lg:flex absolute top-0 bottom-0 w-4 -ml-2 cursor-col-resize z-[150] group items-center justify-center transition-all ${isResizingActive ? 'pointer-events-auto' : ''}`} style={{ right: `${cartWidth - 8}px` }}>
           <div className={`w-[2px] h-full transition-colors duration-300 ${isResizingActive ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-800 group-hover:bg-primary/50'}`} />
           <div className={`absolute w-7 h-14 bg-white dark:bg-slate-900 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center justify-center shadow-xl ${isResizingActive ? 'border-primary scale-110' : 'border-slate-200 dark:border-slate-700 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 translate-x-2'}`}>
             <GripVertical size={18} className={`${isResizingActive ? 'text-primary' : 'text-slate-400'}`} />
           </div>
         </div>
-        <POSCart
-          width={cartWidth}
-          activeTab={activeTab || { items: [], customer: null, discount: 0, fulfillment: 'pickup', shippingFee: 0 }}
-          subtotal={subtotal}
-          vatAmount={vatAmount}
-          totalAmount={totalAmount}
-          isCreatingShipping={isCreatingShipping}
-          onUpdateQty={updateItemQty}
-          onRemoveItem={removeItem}
-          onClearCart={() => setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, items: [] } : t))}
-          onSetFulfillment={(f) => setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, fulfillment: f, shippingFee: f === 'pickup' ? 0 : 30000, shippingPartner: f === 'delivery' ? 'GHTK' : undefined } : t))}
-          onUpdateShippingFee={(fee) => setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, shippingFee: fee } : t))}
-          onSetShippingPartner={(partner) => setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, shippingPartner: partner } : t))}
-          onUpdateDiscount={(amount) => setActiveTab(prev => {
-            if (!prev) return prev;
-            return { ...prev, discount: amount };
-          })}
-          onOpenCustomerModal={() => setShowCustomerModal(true)}
-          onCheckout={handleCheckout}
-          loadingTabId={loadingTabId}
-          isSyncing={isSyncing}
-        />
+
+        <div className={cn("h-full bg-white dark:bg-slate-900", mobileView === 'catalog' ? "hidden lg:block" : "w-full lg:block")}>
+          <POSCart
+            width={mobileView === 'cart' ? window.innerWidth : cartWidth}
+            activeTab={activeTab || { items: [], customer: null, discount: 0, fulfillment: 'pickup', shippingFee: 0 }}
+            subtotal={subtotal}
+            vatAmount={vatAmount}
+            totalAmount={totalAmount}
+            isCreatingShipping={isCreatingShipping}
+            onUpdateQty={updateItemQty}
+            onRemoveItem={removeItem}
+            onClearCart={() => setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, items: [] } : t))}
+            onSetFulfillment={(f) => setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, fulfillment: f, shippingFee: f === 'pickup' ? 0 : 30000, shippingPartner: f === 'delivery' ? 'GHTK' : undefined } : t))}
+            onUpdateShippingFee={(fee) => setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, shippingFee: fee } : t))}
+            onSetShippingPartner={(partner) => setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, shippingPartner: partner } : t))}
+            onUpdateDiscount={(amount) => setActiveTab(prev => {
+              if (!prev) return prev;
+              return { ...prev, discount: amount };
+            })}
+            onOpenCustomerModal={() => setShowCustomerModal(true)}
+            onCheckout={handleCheckout}
+            loadingTabId={loadingTabId}
+            isSyncing={isSyncing}
+          />
+        </div>
+      </div>
+
+      {/* Mobile Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 h-[72px] bg-white dark:bg-slate-900 border-t dark:border-slate-800 lg:hidden z-[300] flex items-center px-4 gap-2">
+        {/* Utilities Section */}
+        <div className="flex items-center gap-2 pr-2 border-r dark:border-slate-800 shrink-0">
+          <button onClick={handleToggleTheme} className="w-10 h-10 flex items-center justify-center bg-blue-500/10 rounded-xl text-blue-500 active:scale-90 transition-transform">
+            {isDarkMode ? <Sun size={18} className="text-amber-500" /> : <Moon size={18} />}
+          </button>
+          <button onClick={() => setShowHistoryDrawer(true)} className="w-10 h-10 flex items-center justify-center bg-emerald-500/10 rounded-xl text-emerald-600 active:scale-90 transition-transform">
+            <History size={18} />
+          </button>
+          <button onClick={() => setShowAlertDrawer(true)} className="relative w-10 h-10 flex items-center justify-center bg-rose-500/10 rounded-xl text-rose-500 active:scale-90 transition-transform">
+            <AlertTriangle size={18} />
+            {criticalProducts.length > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-600 text-white text-[8px] font-black rounded-full border border-white flex items-center justify-center animate-pulse">{criticalProducts.length}</span>}
+          </button>
+        </div>
+
+        {/* View Toggle Section */}
+        <div className="flex-1 flex items-center gap-2 min-w-0">
+          <button
+            onClick={() => setMobileView('catalog')}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 h-12 rounded-2xl transition-all font-black text-[10px] uppercase tracking-tight truncate px-2",
+              mobileView === 'catalog' ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-slate-50 dark:bg-slate-800 text-slate-400"
+            )}
+          >
+            <LayoutGrid size={18} className="shrink-0" />
+            <span className="hidden xs:block truncate">Thực đơn</span>
+          </button>
+          <button
+            onClick={() => setMobileView('cart')}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 h-12 rounded-2xl transition-all relative font-black text-[10px] uppercase tracking-tight truncate px-2",
+              mobileView === 'cart' ? "bg-emerald-600 text-white shadow-lg shadow-emerald-500/20" : "bg-slate-50 dark:bg-slate-800 text-slate-400"
+            )}
+          >
+            <div className="relative shrink-0">
+              <ShoppingCart size={18} />
+              {activeTab && activeTab.items.length > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-rose-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border border-white dark:border-slate-950">
+                  {activeTab.items.reduce((sum, i) => sum + i.quantity, 0)}
+                </span>
+              )}
+            </div>
+            <span className="hidden xs:block truncate">Giỏ hàng</span>
+          </button>
+        </div>
       </div>
       {showAlertDrawer && (
         <div className="fixed inset-0 z-[10600] flex justify-end animate-fade-in">
@@ -596,11 +645,14 @@ const POS: React.FC<POSScreenProps> = ({ onBack }) => {
               <button onClick={() => setShowAlertDrawer(false)} className="p-2 hover:bg-white/10 rounded-full"><X size={24} /></button>
             </div>
             <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
-              {criticalProducts.map((p: any) => (
+              {criticalProducts.map((p) => (
                 <Card key={p.id} className="p-4 border-rose-100 dark:border-rose-900/30 hover:border-rose-300 transition-all">
                   <div className="flex gap-4">
-                    <img src={p.thumbnail} className="w-16 h-16 rounded-xl object-cover border dark:border-slate-800" alt={p.title} />
-                    <div className="flex-1 min-w-0"><h4 className="font-bold text-sm dark:text-white truncate">{p.title}</h4><p className="text-[10px] text-slate-400 mt-1 uppercase font-bold">{(p as any).metadata?.active_ingredient || ''}</p></div>
+                    <img src={p.thumbnail || noImage} className="w-16 h-16 rounded-xl object-cover border dark:border-slate-800" alt={p.title} />
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-sm text-slate-800 dark:text-white truncate">{p.title}</h4>
+                      <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold">{""}</p>
+                    </div>
                   </div>
                   <Button variant="soft" size="sm" fullWidth className="mt-4" onClick={() => { setProductToConfigure(p); setShowAlertDrawer(false); }}>Kiểm tra / Nhập thêm</Button>
                 </Card>
