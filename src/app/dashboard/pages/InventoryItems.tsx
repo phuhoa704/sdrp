@@ -10,6 +10,7 @@ import { InventoryItemsDetail } from '@/components/inventory-items/InventoryItem
 import { FormTypeModal } from '@/components/books/FormTypeModal';
 import { StockForm } from '@/components/books/StockForm';
 import { StockUpType } from '@/types/stock-up';
+import { cn } from '@/lib/utils';
 
 export const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -18,10 +19,14 @@ export const Inventory = () => {
   const [isTypeModalOpen, setIsTypeModalOpen] = useState(false);
   const [isStockFormOpen, setIsStockFormOpen] = useState(false);
   const [selectedStockType, setSelectedStockType] = useState<StockUpType>(StockUpType.INBOUND);
+  const [findBy, setFindBy] = useState<'product' | 'sku'>('product')
   const limit = 10;
   const offset = (currentPage - 1) * limit;
   const { inventoryItems, loading, error, count, refresh } = useInventoryItems({ q: searchTerm, limit, offset });
-
+  const findByOpts = [
+    { id: 'product', label: "Tìm theo sản phẩm" },
+    { id: 'sku', label: "Tìm theo biến thể" },
+  ]
   if (isStockFormOpen) return (
     <StockForm
       initialType={selectedStockType}
@@ -71,6 +76,21 @@ export const Inventory = () => {
           </div>
         </div>
         <Card className='flex flex-col xl:flex-row gap-4'>
+          <div className="flex justify-end">
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+              {findByOpts.map((opt) => (
+                <button
+                  key={opt.id}
+                  onClick={() => setFindBy(opt.id as 'product' | 'sku')}
+                  className={cn(
+                    "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all",
+                    findBy === opt.id ? "bg-white dark:bg-slate-700 text-emerald-500 shadow-sm" : "text-slate-400"
+                  )}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <SearchFilter
             searchTerm={searchTerm}
             handleSearchChange={setSearchTerm}

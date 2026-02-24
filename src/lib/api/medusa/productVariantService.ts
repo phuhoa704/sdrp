@@ -76,9 +76,9 @@ class ProductVariantService {
         }
     }
 
-    async getProductByInventoryItemId(inventoryItemId: string): Promise<CustomResponse<ProductByVariant[]>> {
+    async getProductByInventoryItemId(inventoryItemId: string): Promise<CustomResponse<ProductByVariant & { product: Product }[]>> {
         try {
-            const res = await bridgeClient.get<CustomResponse<ProductByVariant[]>>(`/custom/admin/products/variant/${inventoryItemId}`);
+            const res = await bridgeClient.get<CustomResponse<ProductByVariant & { product: Product }[]>>(`/custom/admin/products/variant/inventory-item/${inventoryItemId}`);
             return res.data;
         } catch (error: unknown) {
             console.error(`Failed to get product by inventory item ID ${inventoryItemId}:`, error);

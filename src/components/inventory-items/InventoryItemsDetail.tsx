@@ -35,7 +35,7 @@ export const InventoryItemsDetail = ({ item, onClose }: Props) => {
       const response = await inventoryService.getInventoryItem(item.id);
       setInventoryItem(response.inventory_item);
       const productResponse = await productVariantService.getProductByInventoryItemId(item.id);
-      setProduct(productResponse.data[0].product);
+      setProduct(productResponse.data.product);
     } catch (error) {
       console.error('Failed to fetch inventory item:', error);
     } finally {
