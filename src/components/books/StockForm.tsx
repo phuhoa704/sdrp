@@ -131,7 +131,7 @@ export const StockForm = ({ onBack, onSuccess, initialType }: { onBack?: () => v
                     </div>
                   </div>
                 </div>
-                <div className="space-y-2">
+                {formValues.type === StockUpType.INBOUND && <div className="space-y-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">
                     Nhà cung cấp
                     <span className="text-rose-500">*</span>
@@ -162,7 +162,7 @@ export const StockForm = ({ onBack, onSuccess, initialType }: { onBack?: () => v
                       ))}
                     </div>
                   </div>
-                </div>
+                </div>}
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">
                     Mã phiếu

@@ -38,3 +38,17 @@ export interface PriceList {
     updated_at: string,
     deleted_at: string
 }
+
+export interface ManagePricesInPriceListPayload {
+    create?: {
+        variant_id: string;
+        amount: number;
+        currency_code: string;
+    }[],
+    update?: {
+        id: string;
+        amount: number;
+        currency_code: string;
+    }[],
+    delete?: string[]
+}

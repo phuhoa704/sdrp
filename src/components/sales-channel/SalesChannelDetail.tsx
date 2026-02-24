@@ -37,6 +37,7 @@ export const SalesChannelDetail: React.FC<SalesChannelDetailProps> = ({
   const [productPage, setProductPage] = useState(1);
   const [isRemoving, setIsRemoving] = useState(false);
   const [productToRemove, setProductToRemove] = useState<string | null>(null);
+  const [isUpdateMetadata, setIsUpdateMetadata] = useState(false)
   const productLimit = 10;
 
   const [isMetadataDrawerOpen, setIsMetadataDrawerOpen] = useState(false);
@@ -83,8 +84,18 @@ export const SalesChannelDetail: React.FC<SalesChannelDetailProps> = ({
     }
   };
 
-  const handleSaveMetadata = (metadata: Metadata) => {
-    console.log(metadata);
+  const handleSaveMetadata = async (metadata: Metadata) => {
+    try {
+      setIsUpdateMetadata(true)
+      await salesChannelService.updateSalesChannel(salesChannel.id, { metadata })
+      showToast('Cập nhật metadata thành công', 'success')
+      setIsMetadataDrawerOpen(false)
+      onRefresh()
+    } catch (error: any) {
+      showToast(error.message || 'Không thể cập nhật metadata', 'error')
+    } finally {
+      setIsUpdateMetadata(false)
+    }
   }
 
   return (

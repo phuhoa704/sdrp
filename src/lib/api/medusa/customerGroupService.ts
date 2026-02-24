@@ -3,11 +3,12 @@ import bridgeClient from "../bridgeClient";
 import axios from "axios";
 import { getVendorId } from "@/lib/utils";
 import { CustomGetResponse, CustomResponse } from "@/types/custom-response";
+import { Metadata } from "@/types/metadata";
 
 export interface CustomerGroup {
     id: string;
     name: string;
-    metadata: Record<string, any> | null;
+    metadata: Metadata;
     rules: Record<string, any>;
     customers: Customer[];
     created_at: string;
@@ -26,7 +27,7 @@ export interface CreateCustomerGroup {
 }
 
 export interface UpdateCustomerGroup {
-    name: string;
+    name?: string;
     metadata?: Record<string, any> | null;
 }
 

@@ -66,9 +66,7 @@ export default function ProductCatalog() {
   const [selectedVariantToUpdate, setSelectedVariantToUpdate] = useState<{ productId: string, variant: ProductVariant } | null>(null);
   const [isUpdatingVariant, setIsUpdatingVariant] = useState(false);
 
-  const [isVariantImageDrawerOpen, setIsVariantImageDrawerOpen] = useState(false);
   const [selectedVariantForImage, setSelectedVariantForImage] = useState<{ productId: string, product: Product, variant: ProductVariant } | null>(null);
-  const [isUpdatingVariantImage, setIsUpdatingVariantImage] = useState(false);
 
   const [isFetchingDetail, setIsFetchingDetail] = useState(false);
 
@@ -90,7 +88,7 @@ export default function ProductCatalog() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchTerm);
-    }, 500); // 500ms debounce
+    }, 500);
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
@@ -242,10 +240,26 @@ export default function ProductCatalog() {
     if (!selectedVariantToUpdate) return;
     setIsUpdatingVariant(true);
     try {
+      if (selectedVariantForImage) {
+        const { selectedImageIds } = payload;
+        const currentImageIds = selectedVariantForImage.variant.images?.map(img => img.id) || [];
+        const imagesToAdd = selectedImageIds.filter((id: string) => !currentImageIds.includes(id));
+        const imagesToRemove = currentImageIds.filter(id => !selectedImageIds.includes(id));
+
+        await productService.manageImagesOfProductVariant(
+          selectedVariantForImage.productId,
+          selectedVariantForImage.variant.id,
+          {
+            add: imagesToAdd,
+            remove: imagesToRemove
+          }
+        );
+      }
       await productService.updateVariant(selectedVariantToUpdate.productId, selectedVariantToUpdate.variant.id, payload);
       showToast('Cập nhật biến thể thành công', 'success');
       setIsVariantDrawerOpen(false);
       setSelectedVariantToUpdate(null);
+      setSelectedVariantForImage(null);
       fetchProductVariants(selectedVariantToUpdate.productId);
     } catch (err: any) {
       showToast(err.message || 'Không thể cập nhật biến thể', 'error');
@@ -254,8 +268,10 @@ export default function ProductCatalog() {
     }
   };
 
-  const handleOpenVariantImageDrawer = async (productId: string, variant: ProductVariant) => {
+
+  const handleOpenUpdateVariant = async (productId: string, variant: ProductVariant) => {
     try {
+      setIsVariantDrawerOpen(true);
       setIsFetchingDetail(true);
       const response = await productService.getProduct(productId, {
         fields: '*images'
@@ -265,39 +281,16 @@ export default function ProductCatalog() {
         product: response.product,
         variant
       });
-      setIsVariantImageDrawerOpen(true);
-    } catch (err: any) {
-      showToast(err.message || 'Không thể tải thông tin sản phẩm', 'error');
+      setSelectedVariantToUpdate({
+        productId,
+        variant
+      });
+    } catch (error: any) {
+      showToast(error.message || 'Xảy ra lỗi khi tải thông tin sản phẩm', 'error');
     } finally {
       setIsFetchingDetail(false);
     }
-  };
-
-  const handleSaveVariantImages = async (selectedImageIds: string[]) => {
-    if (!selectedVariantForImage) return;
-
-    try {
-      const currentImageIds = selectedVariantForImage.variant.images?.map(img => img.id) || [];
-      const imagesToAdd = selectedImageIds.filter(id => !currentImageIds.includes(id));
-      const imagesToRemove = currentImageIds.filter(id => !selectedImageIds.includes(id));
-
-      await productService.manageImagesOfProductVariant(
-        selectedVariantForImage.productId,
-        selectedVariantForImage.variant.id,
-        {
-          add: imagesToAdd,
-          remove: imagesToRemove
-        }
-      );
-
-      showToast('Cập nhật ảnh biến thể thành công', 'success');
-      setIsVariantImageDrawerOpen(false);
-      setSelectedVariantForImage(null);
-      fetchProductVariants(selectedVariantForImage.productId);
-    } catch (err: any) {
-      showToast(err.message || 'Không thể cập nhật ảnh biến thể', 'error');
-    }
-  };
+  }
 
 
   const handleSaveProduct = async (data: any) => {
@@ -670,21 +663,11 @@ export default function ProductCatalog() {
                                           <button
                                             onClick={(e) => {
                                               e.stopPropagation();
-                                              setSelectedVariantToUpdate({ productId: p.id, variant: v });
-                                              setIsVariantDrawerOpen(true);
+                                              handleOpenUpdateVariant(p.id, v);
                                             }}
                                             className="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-blue-500 disabled:opacity-50"
                                           >
                                             <Edit3 size={16} />
-                                          </button>
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleOpenVariantImageDrawer(p.id, v);
-                                            }}
-                                            className='p-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-emerald-500 disabled:opacity-50'
-                                          >
-                                            <Image size={16} />
                                           </button>
                                         </td>
                                       </tr>
@@ -814,7 +797,7 @@ export default function ProductCatalog() {
         />
       )}
 
-      {isVariantDrawerOpen && selectedVariantToUpdate && (
+      {isVariantDrawerOpen && selectedVariantToUpdate && selectedVariantForImage && (
         <Drawer
           isOpen={isVariantDrawerOpen}
           onClose={() => {
@@ -841,39 +824,8 @@ export default function ProductCatalog() {
               variant={selectedVariantToUpdate.variant}
               onSave={handleUpdateVariant}
               loading={isUpdatingVariant}
-            />
-          </div>
-        </Drawer>
-      )}
-
-      {isVariantImageDrawerOpen && selectedVariantForImage && (
-        <Drawer
-          isOpen={isVariantImageDrawerOpen}
-          onClose={() => {
-            setIsVariantImageDrawerOpen(false);
-            setSelectedVariantForImage(null);
-          }}
-          title="Quản lý Ảnh Biến thể"
-          icon={Image}
-          width="lg"
-        >
-          <div className="space-y-6">
-            <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Sản phẩm</p>
-              <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                {selectedVariantForImage.product.title}
-              </p>
-              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Quy cách</p>
-                <p className="text-xs font-black text-primary uppercase">{selectedVariantForImage.variant.title}</p>
-              </div>
-            </div>
-
-            <ProductVariantImageForm
               productImages={selectedVariantForImage.product.images || []}
               currentImageIds={selectedVariantForImage.variant.images?.map(img => img.id) || []}
-              onSave={handleSaveVariantImages}
-              loading={isUpdatingVariantImage}
             />
           </div>
         </Drawer>

@@ -85,6 +85,7 @@ export default function Customers() {
   const [selectedUser, setSelectedUser] = useState<Customer | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [menuPosition, setMenuPosition] = useState<{ top: number; right: number } | null>(null);
   const limit = 10;
 
   const { customers, count, loading, error, refresh, deleteCustomer } = useCustomers({
@@ -328,48 +329,25 @@ export default function Customers() {
               </td>
               <td className="px-8 py-6 text-right">
                 <div className="relative inline-block">
-                  <button onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveMenuId(activeMenuId === c.id ? null : c.id);
-                  }} className="p-2 text-slate-500  dark:hover:text-white rounded-lg hover:bg-white/5 transition-all">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (activeMenuId === c.id) {
+                        setActiveMenuId(null);
+                        setMenuPosition(null);
+                      } else {
+                        const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+                        setMenuPosition({
+                          top: rect.bottom + 8,
+                          right: window.innerWidth - rect.right,
+                        });
+                        setActiveMenuId(c.id);
+                      }
+                    }}
+                    className="p-2 text-slate-500 dark:hover:text-white rounded-lg hover:bg-white/5 transition-all"
+                  >
                     <MoreHorizontal size={18} />
                   </button>
-                  {activeMenuId === c.id && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-10"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveMenuId(null);
-                        }}
-                      />
-                      <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xl z-20 overflow-hidden animate-in fade-in zoom-in duration-200">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(c);
-                            setActiveMenuId(null);
-                          }}
-                          className="w-full px-4 py-3 text-left text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors"
-                        >
-                          <Edit3 size={16} className="text-blue-500" />
-                          Chỉnh sửa
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setCustomerToDelete(c);
-                            setIsDeleteModalOpen(true);
-                            setActiveMenuId(null);
-                          }}
-                          className="w-full px-4 py-3 text-left text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 flex items-center gap-3 transition-colors border-t border-slate-50 dark:border-slate-800/50"
-                        >
-                          <Trash2 size={16} />
-                          Xóa khách hàng
-                        </button>
-                      </div>
-                    </>
-                  )}
                 </div>
               </td>
             </tr>
@@ -554,6 +532,50 @@ export default function Customers() {
           <ChevronRight className="ml-auto text-emerald-500/30 group-hover:text-emerald-500 transition-all" size={24} />
         </Card>
       </div>
+
+      {activeMenuId && menuPosition && (() => {
+        const customer = customers.find(c => c.id === activeMenuId);
+        if (!customer) return null;
+        return (
+          <>
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => { setActiveMenuId(null); setMenuPosition(null); }}
+              onScroll={() => { setActiveMenuId(null); setMenuPosition(null); }}
+            />
+            <div
+              className="fixed z-50 w-48 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 !mt-0"
+              style={{ top: menuPosition.top, right: menuPosition.right }}
+            >
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEdit(customer);
+                  setActiveMenuId(null);
+                  setMenuPosition(null);
+                }}
+                className="w-full px-4 py-3 text-left text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors"
+              >
+                <Edit3 size={16} className="text-blue-500" />
+                Chỉnh sửa
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCustomerToDelete(customer);
+                  setIsDeleteModalOpen(true);
+                  setActiveMenuId(null);
+                  setMenuPosition(null);
+                }}
+                className="w-full px-4 py-3 text-left text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 flex items-center gap-3 transition-colors border-t border-slate-100 dark:border-slate-800/50"
+              >
+                <Trash2 size={16} />
+                Xóa khách hàng
+              </button>
+            </div>
+          </>
+        );
+      })()}
 
       <CustomerFilterModal
         isOpen={isFilterModalOpen}

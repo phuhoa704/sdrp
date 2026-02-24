@@ -1,4 +1,4 @@
-import { Breadcrumb, Button, Card, ConfirmModal } from '@/components'
+import { Button, Card } from '@/components'
 import { useToast } from '@/contexts/ToastContext'
 import { customerGroupService } from '@/lib/api/medusa/customerGroupService'
 import { formatDate, cn } from '@/lib/utils'
@@ -13,14 +13,15 @@ import {
   Mail,
   Phone,
   Edit3,
-  Check,
-  Search
+  Check
 } from 'lucide-react'
 import React, { useEffect, useState, useRef } from 'react'
 import { Drawer } from '@/components/Drawer'
 import { Customer } from '@/types/customer'
 import { useCustomers } from '@/hooks/medusa/useCustomer'
 import { SearchFilter } from '../filters/Search'
+import { MetadataDrawer } from '../MetadataDrawer'
+import { Metadata } from '@/types/metadata'
 
 interface Props {
   id: string
@@ -34,13 +35,12 @@ export const CustomerGroupDetail = ({ id, onBack }: Props) => {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false)
   const [isAddCustomersDrawerOpen, setIsAddCustomersDrawerOpen] = useState(false)
   const [isBrandMenuOpen, setIsBrandMenuOpen] = useState(false)
+  const [isMetadataDrawerOpen, setIsMetadataDrawerOpen] = useState(false)
+  const [isUpdateMetadata, setIsUpdateMetadata] = useState(false)
   const brandMenuRef = useRef<HTMLDivElement>(null)
-
-  // For Edit Name
   const [newName, setNewName] = useState('')
   const [isUpdating, setIsUpdating] = useState(false)
 
-  // For Add Customers Selection
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([])
   const { customers: allCustomers, loading: customersLoading } = useCustomers({ query: { limit: 100, q: searchQuery } })
@@ -116,10 +116,77 @@ export const CustomerGroupDetail = ({ id, onBack }: Props) => {
     }
   }
 
+  const handleSaveMetadata = async (metadata: Metadata) => {
+    try {
+      setIsUpdateMetadata(true)
+      await customerGroupService.updateCustomerGroup(id, { metadata })
+      showToast('Cập nhật metadata thành công', 'success')
+      setIsMetadataDrawerOpen(false)
+      fetchDetail()
+    } catch (error: any) {
+      showToast(error.message || 'Không thể cập nhật metadata', 'error')
+    } finally {
+      setIsUpdateMetadata(false)
+    }
+  }
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className='space-y-6 animate-pulse'>
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-xl" />
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-48 bg-slate-200 dark:bg-slate-700 rounded-xl" />
+              <div className="h-5 w-16 bg-slate-100 dark:bg-slate-800 rounded-full" />
+            </div>
+            <div className="h-3 w-32 bg-slate-100 dark:bg-slate-800 rounded-lg" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <Card className='shadow-xl p-0 space-y-4'>
+              <div className="flex justify-between">
+                <div className="h-4 w-28 bg-slate-200 dark:bg-slate-700 rounded-xl" />
+                <div className="h-4 w-16 bg-slate-200 dark:bg-slate-700 rounded-xl" />
+              </div>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex justify-between items-center py-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-xl shrink-0" />
+                    <div className="space-y-1.5">
+                      <div className="h-3 w-36 bg-slate-200 dark:bg-slate-700 rounded" />
+                      <div className="h-2.5 w-20 bg-slate-100 dark:bg-slate-800 rounded" />
+                    </div>
+                  </div>
+                  <div className="h-3 w-16 bg-slate-200 dark:bg-slate-700 rounded" />
+                </div>
+              ))}
+            </Card>
+          </div>
+          <div className="space-y-6">
+            <Card className="shadow-xl p-0 space-y-4">
+              <div className="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded-lg" />
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="space-y-1.5">
+                  <div className="h-2.5 w-16 bg-slate-100 dark:bg-slate-800 rounded" />
+                  <div className="h-4 w-32 bg-slate-200 dark:bg-slate-700 rounded" />
+                </div>
+              ))}
+            </Card>
+            <Card className="shadow-xl p-0 space-y-4">
+              <div className="h-4 w-28 bg-slate-200 dark:bg-slate-700 rounded-lg" />
+              <div className="h-10 w-full bg-slate-100 dark:bg-slate-800 rounded-2xl" />
+              <div className="h-10 w-full bg-slate-100 dark:bg-slate-800 rounded-2xl" />
+            </Card>
+            <Card className="shadow-xl p-0 space-y-4">
+              <div className="h-4 w-28 bg-slate-200 dark:bg-slate-700 rounded-lg" />
+              <div className="h-10 w-full bg-slate-100 dark:bg-slate-800 rounded-2xl" />
+              <div className="h-10 w-full bg-slate-100 dark:bg-slate-800 rounded-2xl" />
+            </Card>
+          </div>
+        </div>
       </div>
     )
   }
@@ -143,7 +210,6 @@ export const CustomerGroupDetail = ({ id, onBack }: Props) => {
           </div>
         </div>
 
-        {/* Header More Dropdown */}
         <div className="relative" ref={brandMenuRef}>
           <button
             onClick={() => setIsBrandMenuOpen(!isBrandMenuOpen)}
@@ -171,7 +237,6 @@ export const CustomerGroupDetail = ({ id, onBack }: Props) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Basic Info */}
         <div className="lg:col-span-2 space-y-8">
           <Card className="p-0 overflow-hidden">
             <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
@@ -240,7 +305,6 @@ export const CustomerGroupDetail = ({ id, onBack }: Props) => {
           </Card>
         </div>
 
-        {/* Info Sidebar */}
         <div className="space-y-8">
           <Card className="p-8">
             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
@@ -271,9 +335,10 @@ export const CustomerGroupDetail = ({ id, onBack }: Props) => {
           <Card className="p-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <MoreHorizontal size={14} /> Metadata
+                Metadata
+                <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[9px] font-black text-slate-500">{Object.keys(group.metadata || {}).length} KEYS</span>
               </h3>
-              <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[9px] font-black text-slate-500">{Object.keys(group.metadata || {}).length} KEYS</span>
+              <Edit3 size={14} className='text-primary cursor-pointer' onClick={() => setIsMetadataDrawerOpen(true)} />
             </div>
             <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
               <pre className="text-[10px] font-mono text-slate-500 dark:text-slate-400 overflow-x-auto">
@@ -285,9 +350,9 @@ export const CustomerGroupDetail = ({ id, onBack }: Props) => {
           <Card className="p-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <Trash2 size={14} /> JSON
+                JSON
+                <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[9px] font-black text-slate-500">{Object.keys(group || {}).length} KEYS</span>
               </h3>
-              <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[9px] font-black text-slate-500">{Object.keys(group || {}).length} KEYS</span>
             </div>
             <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
               <pre className="text-[10px] font-mono text-slate-500 dark:text-slate-400 overflow-x-auto max-h-64 no-scrollbar">
@@ -298,7 +363,6 @@ export const CustomerGroupDetail = ({ id, onBack }: Props) => {
         </div>
       </div>
 
-      {/* Drawers */}
       <Drawer
         isOpen={isEditDrawerOpen}
         onClose={() => setIsEditDrawerOpen(false)}
@@ -410,6 +474,13 @@ export const CustomerGroupDetail = ({ id, onBack }: Props) => {
           </div>
         </div>
       </Drawer>
+
+      <MetadataDrawer
+        isOpen={isMetadataDrawerOpen}
+        onClose={() => setIsMetadataDrawerOpen(false)}
+        metadata={group.metadata}
+        onSave={handleSaveMetadata}
+      />
     </div>
   )
 }

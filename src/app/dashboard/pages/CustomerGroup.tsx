@@ -83,7 +83,7 @@ export const CustomerGroup = () => {
   }
   return (
     <Fragment>
-      <div className="pb-32 animate-fade-in space-y-8 min-h-full relative font-sans">
+      <div className="pb-32 animate-fade-in space-y-4 min-h-full relative font-sans">
         <Breadcrumb
           items={[
             { label: 'CRM', href: '#' },
@@ -91,7 +91,7 @@ export const CustomerGroup = () => {
           ]}
         />
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 px-1">
-          <div className="shrink-0">
+          <div className="shrink-0 space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
                 CUSTOMER RELATION MANAGEMENT

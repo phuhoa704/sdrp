@@ -6,6 +6,7 @@ import { Button } from '@/components/Button';
 import { InputSearch } from '@/components/Search';
 import { Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { noImage } from '@/configs';
 
 interface ProductSelectionModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface ProductSelectionModalProps {
   onSelect: (productIds: string[]) => void;
   alreadySelectedIds: string[];
   isLoading: boolean;
+  title?: string;
 }
 
 export const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
@@ -20,7 +22,8 @@ export const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
   onClose,
   onSelect,
   alreadySelectedIds,
-  isLoading: isSubmitting
+  isLoading: isSubmitting,
+  title
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -51,7 +54,7 @@ export const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="THÊM SẢN PHẨM VÀO KÊNH BÁN HÀNG"
+      title={title || "THÊM SẢN PHẨM VÀO KÊNH BÁN HÀNG"}
       maxWidth="6xl"
     >
       <div className="space-y-6 p-4">
@@ -111,7 +114,7 @@ export const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800 shrink-0">
                         <img
-                          src={product.thumbnail || '/placeholder.png'}
+                          src={product.thumbnail || noImage}
                           alt={product.title}
                           className="w-full h-full object-cover"
                         />
@@ -158,7 +161,7 @@ export const ProductSelectionModal: React.FC<ProductSelectionModalProps> = ({
               loading={isSubmitting}
               disabled={selectedIds.length === 0}
             >
-              THÊM VÀO KÊNH
+              THÊM
             </Button>
           </div>
         </div>

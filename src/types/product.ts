@@ -243,6 +243,7 @@ export interface ProductVariantUpdatePayload {
     thumbnail?: string | null
     options?: VariantOption
     prices?: MoneyAmount[]
+    selectedImageIds?: string[]
 }
 
 export interface ProductVariantImageUpdatePayload {

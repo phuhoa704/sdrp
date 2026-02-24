@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Tag, Banknote, Save } from 'lucide-react';
-import { ProductVariant, ProductVariantUpdatePayload } from '@/types/product';
+import { Tag, Banknote, Save, Check } from 'lucide-react';
+import { ProductImage, ProductVariant, ProductVariantUpdatePayload } from '@/types/product';
 import { Button } from '@/components/Button';
 import { cn, formatDisplayNumber, parseDisplayNumber } from '@/lib/utils';
 
@@ -8,18 +8,31 @@ interface ProductVariantUpdateFormProps {
   variant: ProductVariant;
   onSave: (payload: ProductVariantUpdatePayload) => Promise<void>;
   loading?: boolean;
+  currentImageIds: string[];
+  productImages: ProductImage[];
 }
 
 export const ProductVariantUpdateForm: React.FC<ProductVariantUpdateFormProps> = ({
   variant,
   onSave,
-  loading
+  loading,
+  currentImageIds,
+  productImages
 }) => {
+  const [selectedImageIds, setSelectedImageIds] = useState<string[]>(currentImageIds);
   const [sku, setSku] = useState(variant.sku || '');
   const [price, setPrice] = useState(
     variant.prices?.find(p => p.currency_code === 'vnd')?.amount ||
     (variant.metadata?.price as number) || 0
   );
+
+  const toggleImage = (imageId: string) => {
+    setSelectedImageIds(prev =>
+      prev.includes(imageId)
+        ? prev.filter(id => id !== imageId)
+        : [...prev, imageId]
+    );
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +51,8 @@ export const ProductVariantUpdateForm: React.FC<ProductVariantUpdateFormProps> =
           updated_at: '',
           deleted_at: null
         }
-      ]
+      ],
+      selectedImageIds
     };
 
     onSave(payload);
@@ -49,6 +63,56 @@ export const ProductVariantUpdateForm: React.FC<ProductVariantUpdateFormProps> =
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
+      <div>
+        <label className={labelClass}>
+          Chọn ảnh cho biến thể ({selectedImageIds.length}/{productImages.length})
+        </label>
+
+        {productImages.length === 0 ? (
+          <div className="text-center py-12 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700">
+            <p className="text-sm font-bold text-slate-400">Sản phẩm chưa có ảnh nào</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {productImages.map((image) => {
+              const isSelected = selectedImageIds.includes(image.id);
+              return (
+                <div
+                  key={image.id}
+                  onClick={() => toggleImage(image.id)}
+                  className={cn(
+                    "relative aspect-square rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 border-4",
+                    isSelected
+                      ? "border-primary shadow-xl shadow-primary/20 scale-105"
+                      : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
+                  )}
+                >
+                  <img
+                    src={image.url}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+
+                  <div
+                    className={cn(
+                      "absolute inset-0 transition-all duration-300",
+                      isSelected
+                        ? "bg-primary/20"
+                        : "bg-black/0 hover:bg-black/10"
+                    )}
+                  />
+
+                  {isSelected && (
+                    <div className="absolute top-2 right-2 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg animate-in zoom-in duration-200">
+                      <Check size={20} className="text-white" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
       <div className="space-y-6">
         <div>
           <label className={labelClass}>Mã SKU</label>

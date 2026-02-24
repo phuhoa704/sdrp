@@ -1,5 +1,6 @@
 import { PriceList } from "@/types/price";
 import bridgeClient from "../bridgeClient";
+import { ManagePricesInPriceListPayload } from "@/types/price-list";
 
 interface PriceListResponse {
     limit: number;
@@ -24,13 +25,9 @@ class PriceListService {
         }
     }
 
-    async getPriceListById(id: string): Promise<PriceList> {
+    async getPriceListById(id: string, params?: Record<string, unknown>): Promise<PriceList> {
         try {
-            const response = await bridgeClient.get<{ price_list: PriceList }>(`/admin/price-lists/${id}`, {
-                params: {
-                    fields: "*prices"
-                }
-            });
+            const response = await bridgeClient.get<{ price_list: PriceList }>(`/admin/price-lists/${id}`, { params });
             return response.data.price_list;
         } catch (error) {
             console.error('Failed to fetch price list:', error);
@@ -67,12 +64,22 @@ class PriceListService {
         }
     }
 
-    async managePrices(priceListId: string, data: any): Promise<PriceList> {
+    async managePrices(priceListId: string, data: ManagePricesInPriceListPayload): Promise<PriceList> {
         try {
             const response = await bridgeClient.post<PriceList>(`/admin/price-lists/${priceListId}/prices/batch`, data);
             return response.data;
         } catch (error) {
             console.error('Failed to manage price list items:', error);
+            throw error;
+        }
+    }
+
+    async removeProductFromPriceList(priceListId: string, productIds: string[]): Promise<PriceList> {
+        try {
+            const response = await bridgeClient.post<PriceList>(`/admin/price-lists/${priceListId}/products`, { remove: productIds });
+            return response.data;
+        } catch (error) {
+            console.error('Failed to remove product from price list:', error);
             throw error;
         }
     }
